@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InputText - ERP Components Bible</title>
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">ERP Components</h1>
+                <p class="sidebar-subtitle">Design System</p>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <h2 class="nav-section-title">Getting Started</h2>
+                    <ul class="nav-list">
+                        <li><a href="../index.html" class="nav-link">Overview</a></li>
+                        <li><a href="../pages/design-principles.html" class="nav-link">Design Principles</a></li>
+                        <li><a href="../pages/color-system.html" class="nav-link">Color System</a></li>
+                        <li><a href="../pages/typography.html" class="nav-link">Typography</a></li>
+                        <li><a href="../pages/spacing.html" class="nav-link">Spacing & Layout</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <h2 class="nav-section-title">Components</h2>
+                    <ul class="nav-list">
+                        <li><a href="autocomplete.html" class="nav-link">AutoComplete</a></li>
+                        <li><a href="button.html" class="nav-link">Button</a></li>
+                        <li><a href="calendar.html" class="nav-link">Calendar</a></li>
+                        <li><a href="checkbox.html" class="nav-link">Checkbox</a></li>
+                        <li><a href="dropdown.html" class="nav-link">Dropdown</a></li>
+                        <li><a href="header.html" class="nav-link">Header</a></li>
+                        <li><a href="inline-message.html" class="nav-link">InlineMessage</a></li>
+                        <li><a href="input-switch.html" class="nav-link">InputSwitch</a></li>
+                        <li><a href="inputtext.html" class="nav-link active">InputText</a></li>
+                        <li><a href="modal.html" class="nav-link">Modal</a></li>
+                        <li><a href="search-box.html" class="nav-link">SearchBox</a></li>
+                        <li><a href="tag.html" class="nav-link">Tag</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <h2 class="nav-section-title">Visual Styles</h2>
+                    <ul class="nav-list">
+                        <li><a href="../pages/borders.html" class="nav-link">Borders & Radius</a></li>
+                        <li><a href="../pages/shadows.html" class="nav-link">Shadows</a></li>
+                        <li><a href="../pages/elevation.html" class="nav-link">Elevation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-section">
+                    <h2 class="nav-section-title">Patterns</h2>
+                    <ul class="nav-list">
+                        <li><a href="../pages/interaction-patterns.html" class="nav-link">Interaction Patterns</a></li>
+                        <li><a href="../pages/accessibility.html" class="nav-link">Accessibility</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <header class="page-header">
+                    <h1 class="page-title">InputText</h1>
+                    <p class="page-subtitle">Text input component for user data entry</p>
+                </header>
+
+                <section class="content-section">
+                    <div class="component-overview">
+                        <h2>Overview</h2>
+                        <h3>Purpose</h3>
+                        <p>InputText is a single-line text input component used for collecting user-entered text data. It supports validation states, disabled state, and provides clear visual feedback for user interactions.</p>
+                        
+                        <h3>When to Use</h3>
+                        <ul>
+                            <li>Collecting short text input (names, codes, numbers)</li>
+                            <li>Form fields requiring text entry</li>
+                            <li>Search inputs (when combined with search icon)</li>
+                            <li>Any scenario requiring single-line text input</li>
+                        </ul>
+                        
+                        <h3>When Not to Use</h3>
+                        <ul>
+                            <li>Multi-line text input (use Textarea component instead)</li>
+                            <li>Selecting from predefined options (use Dropdown instead)</li>
+                            <li>Date/time input (use Calendar component instead)</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Variants</h2>
+                    <div class="variant-grid">
+                        <div class="variant-card">
+                            <h4>Default</h4>
+                            <p>Standard enabled state with white background and grey border.</p>
+                            <div class="example-preview">
+                                <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #181819;">Label</label>
+                                <input type="text" placeholder="Enter text" style="width: 100%; height: 40px; padding: 8px 12px; border: 1px solid #CED0D6; border-radius: 4px; font-family: 'Sarabun', sans-serif; font-size: 14px;">
+                            </div>
+                        </div>
+                        
+                        <div class="variant-card">
+                            <h4>Disabled</h4>
+                            <p>Non-interactive state with light grey background and muted text.</p>
+                            <div class="example-preview">
+                                <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #181819;">Label</label>
+                                <input type="text" value="Disabled text" disabled style="width: 100%; height: 40px; padding: 8px 12px; border: 1px solid #CED0D6; border-radius: 4px; background: #F2F6FC; color: #84868A; font-family: 'Sarabun', sans-serif; font-size: 14px;">
+                            </div>
+                        </div>
+                        
+                        <div class="variant-card">
+                            <h4>Error</h4>
+                            <p>Validation error state with red border and error message.</p>
+                            <div class="example-preview">
+                                <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #181819;">Label <span style="color: #F03737;">*</span></label>
+                                <input type="text" value="Invalid input" style="width: 100%; height: 40px; padding: 8px 12px; border: 1px solid #F03737; border-radius: 4px; font-family: 'Sarabun', sans-serif; font-size: 14px;">
+                                <span style="display: block; margin-top: 4px; font-size: 12px; color: #F03737;">Error message text</span>
+                            </div>
+                        </div>
+                        
+                        <div class="variant-card">
+                            <h4>Focused</h4>
+                            <p>Active focus state with primary blue border.</p>
+                            <div class="example-preview">
+                                <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #181819;">Label</label>
+                                <input type="text" value="Focused input" autofocus style="width: 100%; height: 40px; padding: 8px 12px; border: 1px solid #1C70F7; border-radius: 4px; outline: none; font-family: 'Sarabun', sans-serif; font-size: 14px;">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Usage Guidelines</h2>
+                    <div class="usage-guidelines">
+                        <div class="guideline-section">
+                            <h4>For Designers</h4>
+                            <h5>Visual Design</h5>
+                            <ul>
+                                <li>Always include a clear label above the input field</li>
+                                <li>Use placeholder text sparingly and only for helpful hints</li>
+                                <li>Maintain consistent spacing: 4px gap between label and input</li>
+                                <li>Use required indicator (*) in error color (#F03737) for mandatory fields</li>
+                            </ul>
+                            
+                            <h5>Layout Considerations</h5>
+                            <ul>
+                                <li>Input height is fixed at 40px for consistency</li>
+                                <li>Maintain 8px vertical spacing between form fields</li>
+                                <li>Error messages appear 4px below the input field</li>
+                                <li>Align labels consistently (left-aligned is standard)</li>
+                            </ul>
+                            
+                            <h5>Content Guidelines</h5>
+                            <ul>
+                                <li>Labels should be concise and descriptive</li>
+                                <li>Error messages should be specific and actionable</li>
+                                <li>Placeholder text should not replace labels</li>
+                                <li>Use helper text (12px, #585A5C) for additional context when needed</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="guideline-section">
+                            <h4>For Developers</h4>
+                            <h5>Implementation</h5>
+                            <ul>
+                                <li>Use PrimeVue InputText component as base</li>
+                                <li>Apply Pass Through API for custom styling</li>
+                                <li>Implement validation logic for error states</li>
+                                <li>Ensure proper form integration with v-model</li>
+                            </ul>
+                            
+                            <h5>Props API</h5>
+                            <table class="accessibility-table">
+                                <thead>
+                                    <tr>
+                                        <th>Prop</th>
+                                        <th>Type</th>
+                                        <th>Default</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>modelValue</td>
+                                        <td>String</td>
+                                        <td>''</td>
+                                        <td>Two-way binding value</td>
+                                    </tr>
+                                    <tr>
+                                        <td>label</td>
+                                        <td>String</td>
+                                        <td>undefined</td>
+                                        <td>Label text displayed above input</td>
+                                    </tr>
+                                    <tr>
+                                        <td>required</td>
+                                        <td>Boolean</td>
+                                        <td>false</td>
+                                        <td>Shows required indicator (*)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>disabled</td>
+                                        <td>Boolean</td>
+                                        <td>false</td>
+                                        <td>Disables the input field</td>
+                                    </tr>
+                                    <tr>
+                                        <td>error</td>
+                                        <td>Boolean</td>
+                                        <td>false</td>
+                                        <td>Shows error state styling</td>
+                                    </tr>
+                                    <tr>
+                                        <td>errorMessage</td>
+                                        <td>String</td>
+                                        <td>''</td>
+                                        <td>Error message text displayed below input</td>
+                                    </tr>
+                                    <tr>
+                                        <td>placeholder</td>
+                                        <td>String</td>
+                                        <td>''</td>
+                                        <td>Placeholder text</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h5>Events</h5>
+                            <table class="accessibility-table">
+                                <thead>
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Payload</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>update:modelValue</td>
+                                        <td>value: String</td>
+                                        <td>Emitted when input value changes</td>
+                                    </tr>
+                                    <tr>
+                                        <td>blur</td>
+                                        <td>event: FocusEvent</td>
+                                        <td>Emitted when input loses focus</td>
+                                    </tr>
+                                    <tr>
+                                        <td>focus</td>
+                                        <td>event: FocusEvent</td>
+                                        <td>Emitted when input gains focus</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Accessibility Considerations</h2>
+                    
+                    <h3>Keyboard Interaction</h3>
+                    <table class="accessibility-table">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tab</td>
+                                <td>Moves focus to the input field</td>
+                            </tr>
+                            <tr>
+                                <td>Shift + Tab</td>
+                                <td>Moves focus to previous element</td>
+                            </tr>
+                            <tr>
+                                <td>Arrow Keys</td>
+                                <td>Navigate within text (when focused)</td>
+                            </tr>
+                            <tr>
+                                <td>Home / End</td>
+                                <td>Move cursor to start/end of text</td>
+                            </tr>
+                            <tr>
+                                <td>Escape</td>
+                                <td>Clear input (if implemented)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3>Screen Reader Behavior</h3>
+                    <ul>
+                        <li><strong>Role:</strong> textbox (implicit from input type="text")</li>
+                        <li><strong>Label:</strong> Associated label is announced when field receives focus</li>
+                        <li><strong>State:</strong> Disabled state is announced; error state should be communicated via aria-invalid and aria-describedby</li>
+                        <li><strong>Required:</strong> aria-required="true" should be set for required fields</li>
+                        <li><strong>Error Message:</strong> Error message should be linked via aria-describedby</li>
+                    </ul>
+                    
+                    <h3>Contrast and Focus Rules</h3>
+                    <ul>
+                        <li><strong>Focus Indicator:</strong> Primary blue border (#1C70F7) with 1px width provides clear focus indication</li>
+                        <li><strong>Contrast Ratio:</strong> Text color (#181819) on white background meets WCAG AA (21:1)</li>
+                        <li><strong>Placeholder Contrast:</strong> Placeholder text (#B4B4B4) meets WCAG AA minimum (4.5:1)</li>
+                        <li><strong>Error Text:</strong> Error message color (#F03737) meets WCAG AA contrast requirements</li>
+                        <li><strong>Focus Order:</strong> Input should follow logical tab order within form</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Spacing and Layout</h2>
+                    
+                    <h3>Padding</h3>
+                    <ul>
+                        <li><strong>Internal Padding:</strong> 8px vertical, 12px horizontal (total height: 40px)</li>
+                        <li><strong>Label Padding:</strong> No padding, positioned 4px above input</li>
+                        <li><strong>Error Message Padding:</strong> No padding, positioned 4px below input</li>
+                    </ul>
+                    
+                    <h3>Margins</h3>
+                    <ul>
+                        <li><strong>Default Margin:</strong> 8px vertical spacing between form fields</li>
+                        <li><strong>Spacing from Adjacent Elements:</strong> 8px minimum gap</li>
+                        <li><strong>Container Margin:</strong> Follows parent container spacing rules</li>
+                    </ul>
+                    
+                    <h3>Alignment</h3>
+                    <ul>
+                        <li><strong>Text Alignment:</strong> Left-aligned text within input</li>
+                        <li><strong>Label Alignment:</strong> Left-aligned above input</li>
+                        <li><strong>Error Message Alignment:</strong> Left-aligned below input</li>
+                        <li><strong>Responsive Behavior:</strong> Full width on mobile, constrained by container on desktop</li>
+                    </ul>
+                    
+                    <h3>Dimensions</h3>
+                    <ul>
+                        <li><strong>Minimum Width:</strong> 200px recommended</li>
+                        <li><strong>Maximum Width:</strong> Container width or 100%</li>
+                        <li><strong>Height:</strong> Fixed at 40px</li>
+                        <li><strong>Responsive Sizing:</strong> Width adapts to container, height remains constant</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Usage Examples</h2>
+                    
+                    <h3>Common Pattern 1: Basic Text Input</h3>
+                    <p><strong>Scenario:</strong> Simple form field for user name entry</p>
+                    
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span>Vue.js Implementation</span>
+                            <button class="copy-button">Copy</button>
+                        </div>
+                        <pre><code>&lt;template&gt;
+  &lt;div class="input-wrapper"&gt;
+    &lt;label v-if="label" class="input-label"&gt;
+      {{ label }}
+    &lt;/label&gt;
+    &lt;InputText
+      :model-value="modelValue"
+      @update:model-value="$emit('update:modelValue', $event)"
+      :placeholder="placeholder"
+      :pt="{
+        root: { class: 'custom-input' }
+      }"
+    /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import InputText from 'primevue/inputtext'
+
+defineProps({
+  modelValue: String,
+  label: String,
+  placeholder: String
+})
+
+defineEmits(['update:modelValue'])
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-label {
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  color: #181819;
+  letter-spacing: 0.14px;
+}
+
+.custom-input {
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #CED0D6;
+  border-radius: 4px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px;
+  line-height: 24px;
+  color: #181819;
+  background: #FFFFFF;
+}
+
+.custom-input:focus {
+  border-color: #1C70F7;
+  outline: none;
+}
+&lt;/style&gt;</code></pre>
+                    </div>
+                    
+                    <h3>Common Pattern 2: Required Field with Validation</h3>
+                    <p><strong>Scenario:</strong> Form field with required indicator and error handling</p>
+                    
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span>Vue.js Implementation</span>
+                            <button class="copy-button">Copy</button>
+                        </div>
+                        <pre><code>&lt;template&gt;
+  &lt;div class="input-wrapper"&gt;
+    &lt;label v-if="label" class="input-label"&gt;
+      {{ label }}
+      &lt;span v-if="required" class="required-indicator"&gt;*&lt;/span&gt;
+    &lt;/label&gt;
+    &lt;InputText
+      :model-value="modelValue"
+      @update:model-value="handleUpdate"
+      @blur="validate"
+      :class="{ 'p-inputtext-error': error }"
+      :pt="{
+        root: { class: 'custom-input' }
+      }"
+    /&gt;
+    &lt;span v-if="error && errorMessage" class="error-message"&gt;
+      {{ errorMessage }}
+    &lt;/span&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref } from 'vue'
+import InputText from 'primevue/inputtext'
+
+const props = defineProps({
+  modelValue: String,
+  label: String,
+  required: Boolean,
+  errorMessage: String
+})
+
+const emit = defineEmits(['update:modelValue'])
+
+const error = ref(false)
+
+const handleUpdate = (value) => {
+  emit('update:modelValue', value)
+  if (error.value) {
+    validate()
+  }
+}
+
+const validate = () => {
+  if (props.required && !props.modelValue) {
+    error.value = true
+  } else {
+    error.value = false
+  }
+}
+&lt;/script&gt;
+
+&lt;style scoped&gt;
+.required-indicator {
+  color: #F03737;
+}
+
+.p-inputtext-error {
+  border-color: #F03737;
+}
+
+.error-message {
+  font-family: 'Sarabun', sans-serif;
+  font-size: 12px;
+  line-height: 20px;
+  color: #F03737;
+}
+&lt;/style&gt;</code></pre>
+                    </div>
+                    
+                    <h3>Edge Case: Disabled State</h3>
+                    <p><strong>Scenario:</strong> Input field that should be non-editable based on user permissions or workflow state</p>
+                    
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span>Vue.js Implementation</span>
+                            <button class="copy-button">Copy</button>
+                        </div>
+                        <pre><code>&lt;template&gt;
+  &lt;div class="input-wrapper"&gt;
+    &lt;label class="input-label"&gt;{{ label }}&lt;/label&gt;
+    &lt;InputText
+      :model-value="modelValue"
+      :disabled="disabled"
+      :pt="{
+        root: { 
+          class: 'custom-input',
+          style: disabled ? 'background: #F2F6FC; color: #84868A;' : ''
+        }
+      }"
+    /&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import InputText from 'primevue/inputtext'
+
+defineProps({
+  modelValue: String,
+  label: String,
+  disabled: Boolean
+})
+&lt;/script&gt;</code></pre>
+                    </div>
+                    
+                    <p><strong>Considerations:</strong></p>
+                    <ul>
+                        <li>Disabled inputs should still be visible to show context</li>
+                        <li>Consider showing a tooltip explaining why the field is disabled</li>
+                        <li>Ensure disabled state is communicated to screen readers</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>Code Snippets</h2>
+                    
+                    <h3>Basic Usage</h3>
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span>Vue.js</span>
+                            <button class="copy-button">Copy</button>
+                        </div>
+                        <pre><code>&lt;template&gt;
+  &lt;InputText
+    v-model="value"
+    placeholder="Enter text"
+  /&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref } from 'vue'
+import InputText from 'primevue/inputtext'
+
+const value = ref('')
+&lt;/script&gt;</code></pre>
+                    </div>
+                    
+                    <h3>With Label and Validation</h3>
+                    <div class="code-block">
+                        <div class="code-block-header">
+                            <span>Vue.js</span>
+                            <button class="copy-button">Copy</button>
+                        </div>
+                        <pre><code>&lt;template&gt;
+  &lt;div class="form-field"&gt;
+    &lt;label class="field-label"&gt;
+      Username
+      &lt;span class="required"&gt;*&lt;/span&gt;
+    &lt;/label&gt;
+    &lt;InputText
+      v-model="username"
+      :class="{ 'error': hasError }"
+      @blur="validate"
+    /&gt;
+    &lt;span v-if="hasError" class="error-text"&gt;
+      Username is required
+    &lt;/span&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script setup&gt;
+import { ref } from 'vue'
+import InputText from 'primevue/inputtext'
+
+const username = ref('')
+const hasError = ref(false)
+
+const validate = () => {
+  hasError.value = !username.value
+}
+&lt;/script&gt;</code></pre>
+                    </div>
+                </section>
+
+                <section class="content-section">
+                    <h2>Related Components</h2>
+                    <ul>
+                        <li><a href="textarea.html">Textarea</a> - For multi-line text input</li>
+                        <li><a href="dropdown.html">Dropdown</a> - For selecting from predefined options</li>
+                        <li><a href="autocomplete.html">AutoComplete</a> - For searchable text input with suggestions</li>
+                        <li><a href="calendar.html">Calendar</a> - For date input</li>
+                    </ul>
+                </section>
+
+                <section class="content-section">
+                    <h2>References</h2>
+                    <ul>
+                        <li><a href="https://v3.primevue.org/inputtext/" target="_blank" rel="noopener">PrimeVue InputText Documentation</a></li>
+                        <li><a href="../pages/color-system.html">Design System - Color System</a></li>
+                        <li><a href="../pages/typography.html">Design System - Typography</a></li>
+                        <li><a href="../pages/spacing.html">Design System - Spacing & Layout</a></li>
+                    </ul>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="../scripts/navigation.js"></script>
+</body>
+</html>
+
