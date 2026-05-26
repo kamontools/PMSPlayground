@@ -6,6 +6,22 @@
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section">
+        <h2 class="nav-section-title">PMS LivingOS</h2>
+        <ul class="nav-list">
+          <li>
+            <router-link to="/prototype/pms-ju-drawer" class="nav-link" active-class="active">
+              ตัวช่วย JU (drawer)
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/room-price-quiz" class="nav-link" active-class="active">
+              🏠 รู้มั้ย ห้องราคาเท่าไหร่?
+            </router-link>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
         <h2 class="nav-section-title">Getting Started</h2>
         <ul class="nav-list">
           <li>

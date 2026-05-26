@@ -47,6 +47,18 @@
         <section class="content-section">
           <h2>Quick Links</h2>
           <div class="quick-links">
+            <router-link to="/migrate-permissions" class="quick-link-card">
+              <h3>Permission Migration</h3>
+              <p>Login, select project, suggest admin, and submit for CS approval</p>
+            </router-link>
+            <router-link to="/prototype/pms-ju-drawer" class="quick-link-card">
+              <h3>PMS — ตัวช่วย JU</h3>
+              <p>โปรโตไทป์หน้า PMS LivingOS พร้อมปุ่ม JU และลิ้นชักแจ้งเตือน</p>
+            </router-link>
+            <router-link to="/room-price-quiz" class="quick-link-card">
+              <h3>🏠 รู้มั้ย ห้องราคาเท่าไหร่?</h3>
+              <p>แบบทดสอบ 8 ข้อ ประเมินราคาห้องเช่าของคุณ พร้อมเปรียบเทียบกับราคาตลาด</p>
+            </router-link>
             <router-link to="/components/inputtext" class="quick-link-card">
               <h3>InputText</h3>
               <p>Text input component with validation states</p>
