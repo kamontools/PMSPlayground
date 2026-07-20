@@ -5,7 +5,8 @@ import PageView from '../views/PageView.vue'
 import MigratePermissions from '../views/MigratePermissions.vue'
 import PmsJuDrawer from '../views/PmsJuDrawer.vue'
 import RoomPriceQuiz from '../views/RoomPriceQuiz.vue'
-
+import PmsCloneTool from '../views/PmsCloneTool.vue'
+import PmsSidebarDemo from '../views/PmsSidebarDemo.vue'
 const routes = [
   {
     path: '/',
@@ -21,6 +22,16 @@ const routes = [
     path: '/room-price-quiz',
     name: 'RoomPriceQuiz',
     component: RoomPriceQuiz
+  },
+  {
+    path: '/prototype/pms-clone-tool',
+    name: 'PmsCloneTool',
+    component: PmsCloneTool
+  },
+  {
+    path: '/prototype/pms-sidebar-demo',
+    name: 'PmsSidebarDemo',
+    component: PmsSidebarDemo
   },
   {
     path: '/migrate-permissions',

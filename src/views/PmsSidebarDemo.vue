@@ -84,56 +84,24 @@
         <template v-for="(section, si) in SIDEBAR_SECTIONS" :key="si">
           <div class="divider"></div>
 
-          <template v-if="si === 2">
-            <div class="icon-btn-row">
-              <button
-                v-for="item in section.slice(0, 2)"
-                :key="item.id"
-                class="icon-btn"
-                :class="{ active: activeId === item.id }"
-                @click="selectLeaf(item)"
-              >
-                <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
-                <span class="lbl">{{ item.label }}</span>
+          <div
+            v-for="item in section"
+            :key="item.id"
+            class="menu-item"
+            :class="{ active: activeId === item.id, 'mega-open': openRowId === item.id }"
+            @mouseenter="item.lv3 && item.lv3.length ? openMega($event.currentTarget, item.lv1, item) : closeMegaSoon()"
+            @mouseleave="item.lv3 && item.lv3.length ? scheduleClose() : null"
+            @click="selectLeaf(item)"
+          >
+            <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
+            <span class="lbl">{{ item.label }}</span>
+            <span class="right-actions">
+              <button class="star-btn" :class="{ starred: isFavorited(item.id) }" @click.stop="toggleFavorite({ id: item.id, label: item.label, path: item.lv1, icon: item.icon })" title="เพิ่มในรายการโปรด">
+                <svg viewBox="0 0 20 20" :fill="isFavorited(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
               </button>
-            </div>
-            <div
-              v-for="item in section.slice(2)"
-              :key="item.id"
-              class="menu-item"
-              :class="{ active: activeId === item.id }"
-              @click="selectLeaf(item)"
-            >
-              <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
-              <span class="lbl">{{ item.label }}</span>
-              <span class="right-actions">
-                <button class="star-btn" :class="{ starred: isFavorited(item.id) }" @click.stop="toggleFavorite({ id: item.id, label: item.label, path: item.lv1, icon: item.icon })" title="เพิ่มในรายการโปรด">
-                  <svg viewBox="0 0 20 20" :fill="isFavorited(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
-                </button>
-              </span>
-            </div>
-          </template>
-
-          <template v-else>
-            <div
-              v-for="item in section"
-              :key="item.id"
-              class="menu-item"
-              :class="{ active: activeId === item.id, 'mega-open': openRowId === item.id }"
-              @mouseenter="item.lv3 && item.lv3.length ? openMega($event.currentTarget, item.lv1, item) : closeMegaSoon()"
-              @mouseleave="item.lv3 && item.lv3.length ? scheduleClose() : null"
-              @click="selectLeaf(item)"
-            >
-              <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
-              <span class="lbl">{{ item.label }}</span>
-              <span class="right-actions">
-                <button class="star-btn" :class="{ starred: isFavorited(item.id) }" @click.stop="toggleFavorite({ id: item.id, label: item.label, path: item.lv1, icon: item.icon })" title="เพิ่มในรายการโปรด">
-                  <svg viewBox="0 0 20 20" :fill="isFavorited(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
-                </button>
-                <svg v-if="item.lv3 && item.lv3.length" class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
-              </span>
-            </div>
-          </template>
+              <svg v-if="item.lv3 && item.lv3.length" class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
+            </span>
+          </div>
         </template>
 
         <div class="rail-bottom-space"></div>

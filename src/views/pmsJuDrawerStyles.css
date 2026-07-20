@@ -146,70 +146,48 @@
   flex-shrink: 0;
 }
 .ju-btn-inner {
+  width: 34px; height: 34px;
   background: #fff;
   border: 1.5px solid var(--gray-200, #dde1e7);
+  border-radius: var(--radius-sm, 6px);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   position: relative;
-  transition: transform .12s, border-color .15s, box-shadow .15s;
-  padding: 5px 8px;
+  transition: background .12s, border-color .15s;
   overflow: visible;
-  width: auto; height: auto;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
 }
 .ju-btn-inner:hover {
-  transform: scale(1.06);
-  border-color: var(--blue-300, #7ab3f0);
-  box-shadow: 0 2px 8px rgba(28,112,247,0.15);
+  background: var(--gray-50);
+  border-color: var(--gray-300);
 }
-.ju-btn-inner:active { transform: scale(0.94); }
 .ju-btn-inner.active {
   border-color: var(--blue-500, #2b7de9);
-  box-shadow: 0 2px 8px rgba(28,112,247,0.2);
+  background: var(--blue-50);
 }
 
-.ju-cloud-face {
-  width: auto;
-  height: 24px;
-  display: block;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.18));
-  transition: filter .15s;
+.ju-bell-icon {
+  width: 17px; height: 17px;
+  stroke: var(--gray-600);
+  transition: stroke .12s;
 }
-.ju-btn-inner:hover .ju-cloud-face {
-  filter: drop-shadow(0 3px 10px rgba(28, 112, 247, 0.5)) brightness(1.06);
+.ju-btn-inner:hover .ju-bell-icon,
+.ju-btn-inner.active .ju-bell-icon {
+  stroke: var(--blue-700);
 }
 
 .ju-btn-badge {
   position: absolute;
-  top: 3px; right: 8px;
-  width: 10px; height: 10px;
+  top: 4px; right: 4px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--red-400, #f04040);
   border: 2px solid #fff;
   z-index: 2;
 }
 
-.ju-pulse-ring {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 35px; height: 24px;
-  border-radius: 10px;
-  border: 2px solid var(--blue-400, #5b9fef);
-  animation: pulse-ring 2s ease-out infinite;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-.ju-pulse-ring--delay {
-  animation-delay: 1s;
-}
-@keyframes pulse-ring {
-  0%   { transform: translate(-50%,-50%) scale(1);    opacity: .7; border-radius: 10px; }
-  100% { transform: translate(-50%,-50%) scale(3.2);  opacity: 0;  border-radius: 999px; }
-}
 
-/* JU tooltip — always visible, right-aligned below icon */
-.ju-tooltip {
+/* Cloudee proactive tip bubble — anchored below the cloudee button */
+.cloudee-tip {
   position: absolute;
   bottom: -64px;
   right: -8px;
@@ -230,10 +208,10 @@
   cursor: default;
   transition: padding-right .15s;
 }
-.ju-tooltip:hover {
+.cloudee-tip:hover {
   padding-right: 32px;
 }
-.ju-tooltip::before {
+.cloudee-tip::before {
   content: '';
   position: absolute;
   top: -5px;
@@ -242,11 +220,11 @@
   background: rgba(70, 81, 97, 1);
   transform: rotate(45deg);
 }
-.ju-tooltip-icon {
+.cloudee-tip-icon {
   font-size: 16px;
   flex-shrink: 0;
 }
-.ju-tooltip-close {
+.cloudee-tip-close {
   position: absolute;
   top: 50%;
   right: 6px;
@@ -268,11 +246,11 @@
   font-weight: 600;
   line-height: 1;
 }
-.ju-tooltip:hover .ju-tooltip-close {
+.cloudee-tip:hover .cloudee-tip-close {
   opacity: 1;
   pointer-events: auto;
 }
-.ju-tooltip-close:hover {
+.cloudee-tip-close:hover {
   background: rgba(255,255,255,0.3);
 }
 
@@ -594,10 +572,10 @@
   font-weight: 700;
   color: var(--gray-800);
 }
-.settings-cloudee-icon {
-  width: 32px;
-  height: auto;
-  filter: drop-shadow(0 2px 4px rgba(28,112,247,0.25));
+.settings-bell-icon {
+  width: 20px; height: 20px;
+  stroke: var(--blue-600);
+  flex-shrink: 0;
 }
 .settings-close {
   width: 28px; height: 28px;

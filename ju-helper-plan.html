@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JU Helper — Notification System Plan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1C70F7;
+      --primary-click: #004ECC;
+      --primary-light: #E9F1FF;
+      --error: #F03737;
+      --error-bg: #FFF5F5;
+      --success: #05A861;
+      --success-bg: #F2FFF9;
+      --attention: #EE9F00;
+      --attention-bg: #FFF8EB;
+      --text-primary: #181819;
+      --text-secondary: #585A5C;
+      --text-tertiary: #6E7073;
+      --stroke: #CED0D6;
+      --dividers: #E4E7ED;
+      --icons: #787A7D;
+      --bg: #F5F7FB;
+      --white: #FFFFFF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg);
+      line-height: 1.65;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Layout ─── */
+    .container { max-width: 980px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    /* ─── Doc Header ─── */
+    .doc-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--dividers);
+    }
+    .doc-header .inner { max-width: 980px; margin: 0 auto; padding: 28px 24px 24px; }
+    .doc-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .doc-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+    .doc-header p { color: var(--text-secondary); font-size: 14px; max-width: 540px; }
+    .doc-meta { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 11px; border-radius: 100px;
+      font-size: 12px; font-weight: 500;
+    }
+    .chip-blue { background: var(--primary-light); color: var(--primary); }
+    .chip-gray { background: #EAECF0; color: var(--text-secondary); }
+    .chip-green { background: var(--success-bg); color: var(--success); }
+
+    /* ─── TOC ─── */
+    .toc {
+      background: var(--white);
+      border: 1px solid var(--dividers);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px;
+    }
+    .toc-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 32px; }
+    @media (max-width: 560px) { .toc-list { grid-template-columns: 1fr; } }
+    .toc-list li { list-style: none; }
+    .toc-list a { font-size: 14px; color: var(--primary); }
+
+    /* ─── Section wrapper ─── */
+    .section { margin-bottom: 56px; }
+    .section-heading {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary);
+    }
+    .section-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+    .section-title { font-size: 19px; font-weight: 700; }
+    .section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+
+    /* ─── Notification cards ─── */
+    .notif-group {
+      background: var(--white);
+      border: 1px solid var(--dividers);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .notif-group-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 18px;
+      background: #FAFBFC;
+      border-bottom: 1px solid var(--dividers);
+    }
+    .notif-group-icon { font-size: 16px; }
+    .notif-group-title { font-weight: 600; font-size: 14px; }
+    .notif-item {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--dividers);
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item-top {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
+      margin-bottom: 10px;
+    }
+    .notif-item-name { font-weight: 600; font-size: 15px; }
+    .notif-item-id { font-size: 11px; color: var(--text-tertiary); font-family: monospace; }
+    .badges { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 9px; border-radius: 100px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .badge-instant { background: #FFF0F0; color: #D62828; border: 1px solid #FFD0D0; }
+    .badge-timely  { background: #FFF8EB; color: #9C6500; border: 1px solid #FFE5A0; }
+    .badge-tbd     { background: #F3F4F6; color: var(--text-secondary); border: 1px solid #DDD; }
+
+    .notif-field { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 6px; }
+    .notif-field:last-child { margin-bottom: 0; }
+    .nf-label {
+      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+      min-width: 68px; padding-top: 2px; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .nf-value { font-size: 13px; color: var(--text-primary); flex: 1; }
+    .nf-wording {
+      font-size: 13px; color: var(--primary);
+      background: var(--primary-light);
+      border-radius: 6px; padding: 7px 12px;
+      font-style: italic; flex: 1;
+    }
+    .nf-wording-tbd {
+      font-size: 13px; color: var(--text-tertiary);
+      background: #F5F5F5; border-radius: 6px; padding: 7px 12px;
+      font-style: italic; flex: 1;
+    }
+
+    /* ─── Component cards ─── */
+    .component-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 620px) { .component-grid { grid-template-columns: 1fr; } }
+    .component-card {
+      background: var(--white);
+      border: 1px solid var(--dividers);
+      border-radius: 12px; overflow: hidden;
+    }
+    .component-card.span-2 { grid-column: 1 / -1; }
+    .cc-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--dividers);
+      background: #FAFBFC;
+    }
+    .cc-icon { font-size: 18px; }
+    .cc-name { font-weight: 600; font-size: 14px; }
+    .cc-type { font-size: 11px; color: var(--text-tertiary); }
+    .cc-body { padding: 16px 18px; }
+    .cc-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+
+    .el-list { list-style: none; }
+    .el-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 7px 0; border-bottom: 1px solid var(--dividers);
+      font-size: 13px;
+    }
+    .el-item:last-child { border-bottom: none; }
+    .el-dot {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--primary-light); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .el-dot.green { background: var(--success-bg); color: var(--success); }
+    .el-dot.orange { background: var(--attention-bg); color: var(--attention); }
+    .el-name { font-weight: 500; min-width: 160px; }
+    .el-note { font-size: 12px; color: var(--text-secondary); }
+    .el-status {
+      font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 100px; margin-left: auto; flex-shrink: 0;
+    }
+    .el-status-req { background: var(--primary-light); color: var(--primary); }
+    .el-status-opt { background: #F3F4F6; color: var(--text-secondary); }
+
+    /* Sub variants */
+    .variant-header {
+      font-size: 12px; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin: 14px 0 8px;
+    }
+    .variant-header:first-of-type { margin-top: 0; }
+    .variant-block {
+      border: 1px solid var(--dividers); border-radius: 8px; overflow: hidden; margin-bottom: 12px;
+    }
+    .variant-block-header {
+      padding: 8px 14px; background: #F5F7FA;
+      font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--dividers);
+    }
+    .variant-block-body { padding: 10px 14px; }
+
+    /* ─── UX section ─── */
+    .ux-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 620px) { .ux-grid { grid-template-columns: 1fr; } }
+    .ux-card {
+      background: var(--white); border: 1px solid var(--dividers);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .ux-card.span-2 { grid-column: 1 / -1; }
+    .ux-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+    .ux-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .ux-card p:last-child { margin-bottom: 0; }
+
+    .timing-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .timing-table th {
+      text-align: left; padding: 8px 12px;
+      background: #F5F7FA; color: var(--text-secondary);
+      font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--dividers);
+    }
+    .timing-table td { padding: 10px 12px; border-bottom: 1px solid var(--dividers); vertical-align: top; }
+    .timing-table tr:last-child td { border-bottom: none; }
+    .timing-table tr:hover td { background: #FAFBFC; }
+
+    /* ─── Logic section ─── */
+    .logic-card {
+      background: var(--white); border: 1px solid var(--dividers);
+      border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+    }
+    .logic-card-header {
+      padding: 13px 18px; background: #FAFBFC;
+      border-bottom: 1px solid var(--dividers);
+      font-weight: 600; font-size: 14px;
+    }
+    .logic-card-body { padding: 16px 18px; }
+    .step-list { list-style: none; }
+    .step-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+    .step-item:last-child { margin-bottom: 0; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .step-body { flex: 1; }
+    .step-title { font-weight: 500; font-size: 14px; }
+    .step-detail { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+
+    .callout {
+      border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px;
+    }
+    .callout-note { background: var(--attention-bg); border: 1px solid #FFE5A0; color: #7A5500; }
+    .callout-note::before { content: "⚠ "; }
+    .callout-info { background: var(--primary-light); border: 1px solid #C3D9FF; color: #0040AA; }
+    .callout-info::before { content: "ℹ "; }
+
+    /* ─── Open questions ─── */
+    .questions-list { list-style: none; }
+    .questions-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid var(--dividers);
+      font-size: 13px;
+    }
+    .questions-list li:last-child { border-bottom: none; }
+    .q-tag {
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 4px; background: #FFF8EB; color: #9C6500; flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* ─── Footer ─── */
+    .doc-footer {
+      border-top: 1px solid var(--dividers); padding-top: 20px;
+      color: var(--text-tertiary); font-size: 12px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
+<div class="doc-header">
+  <div class="inner">
+    <div class="doc-header-top">
+      <div>
+        <h1>JU Helper — Notification System</h1>
+        <p>แผนออกแบบระบบแจ้งเตือนใหม่สำหรับ LivingOS PMS ครอบคลุม notification types, UI components, UX logic และ stacking behavior</p>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <span class="chip chip-blue">Draft v0.1</span>
+      <span class="chip chip-gray">11 มิ.ย. 2569</span>
+      <span class="chip chip-gray">PMSPlayground</span>
+      <span class="chip chip-green">In Planning</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">เนื้อหา</div>
+    <ol class="toc-list">
+      <li><a href="#notifications">1. Notification Types</a></li>
+      <li><a href="#ui-components">2. UI Components</a></li>
+      <li><a href="#ux">3. UX Decisions</a></li>
+      <li><a href="#stack-logic">4. Stack Notification Logic</a></li>
+      <li><a href="#toast-logic">5. Toast Logic</a></li>
+      <li><a href="#open-questions">6. Open Questions</a></li>
+    </ol>
+  </div>
+
+
+  <!-- ═══════════════════════════════ 1. NOTIFICATIONS ═══════════════════════════════ -->
+  <div class="section" id="notifications">
+    <div class="section-heading">
+      <div class="section-num">1</div>
+      <div>
+        <div class="section-title">Notification Types</div>
+      </div>
+    </div>
+    <p class="section-desc">
+      แต่ละ notification มี <strong>trigger condition</strong>, <strong>suggested wording</strong>, และ <strong>timing type</strong> (instant = ทันที, timely = ช่วงเวลาที่เหมาะสม)
+    </p>
+
+    <!-- Group A: มิเตอร์ & ใบแจ้งหนี้ -->
+    <div class="notif-group">
+      <div class="notif-group-header">
+        <span class="notif-group-icon">🧾</span>
+        <span class="notif-group-title">มิเตอร์ & ใบแจ้งหนี้</span>
+      </div>
+
+      <!-- N-01 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">ลืมจดมิเตอร์</div>
+            <div class="notif-item-id">N-01</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-timely">Timely</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">ใกล้วันครบกำหนดจดมิเตอร์ของรอบบิล ยังไม่มีการบันทึกมิเตอร์</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">เวลา</span>
+          <span class="nf-value">แจ้งล่วงหน้า 2 วันก่อนวันครบกำหนด (weekday เท่านั้น)</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "ได้เวลาจดมิเตอร์แล้ว! อีก 2 วันถึงกำหนดบันทึกค่าน้ำ-ไฟรอบ [เดือน] อย่าลืมนะคะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "จดมิเตอร์เลย" → deep-link ไปหน้าบันทึกมิเตอร์</span>
+        </div>
+      </div>
+
+      <!-- N-02 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">ลืมแจ้งหนี้ — ยังไม่ได้คำนวณ</div>
+            <div class="notif-item-id">N-02</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-timely">Timely</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">เริ่มรอบบิลใหม่ แต่ยังไม่ได้กด "คำนวณใบแจ้งหนี้" ภายในเวลาที่กำหนด</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">เวลา</span>
+          <span class="nf-value">Weekday, ช่วงเช้า (รายละเอียดตาม project setting)</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "ยังไม่ได้คำนวณใบแจ้งหนี้เดือน [เดือน] มี [X] ห้องรอดำเนินการอยู่ค่ะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "คำนวณเลย" → deep-link ไปหน้าคำนวณใบแจ้งหนี้</span>
+        </div>
+      </div>
+
+      <!-- N-03 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">คำนวณใบแจ้งหนี้เสร็จแล้ว</div>
+            <div class="notif-item-id">N-03</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-instant">Instant</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">ระบบประมวลผลคำนวณใบแจ้งหนี้สำเร็จ 100%</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "คำนวณใบแจ้งหนี้เดือน [เดือน] เสร็จแล้ว! [X] ห้อง พร้อมส่งให้ลูกบ้านได้เลยค่ะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "ดูใบแจ้งหนี้" → รายการใบแจ้งหนี้เดือนนั้น</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Group B: การชำระเงิน -->
+    <div class="notif-group">
+      <div class="notif-group-header">
+        <span class="notif-group-icon">💳</span>
+        <span class="notif-group-title">การชำระเงิน & ยอดค้างชำระ</span>
+      </div>
+
+      <!-- N-04 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">ใบแจ้งหนี้ครบกำหนดชำระ</div>
+            <div class="notif-item-id">N-04</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-timely">Timely</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">ถึงวัน due date ของใบแจ้งหนี้ล่าสุด และยังมีห้องที่ค้างชำระ</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">เวลา</span>
+          <span class="nf-value">Weekday, ช่วงเช้า ถึงวัน due date</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "ใบแจ้งหนี้เดือน [เดือน] ครบกำหนดชำระวันนี้แล้ว ยังมี [X] ห้องที่ยังไม่ได้ชำระค่ะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "ดูรายการค้างชำระ" → รายการห้องที่ค้าง</span>
+        </div>
+      </div>
+
+      <!-- N-05 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">ตรวจสอบเงินโอน</div>
+            <div class="notif-item-id">N-05</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-instant">Instant</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">ระบบตรวจพบรายการโอนเงินเข้าบัญชีที่ยังรอการ match กับใบแจ้งหนี้</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "มีรายการโอนเงินเข้าใหม่ [X] รายการ รอตรวจสอบและแจ้งชำระหนี้ค่ะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "ตรวจสอบ" → หน้า match รายการโอน</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Group C: บัญชี -->
+    <div class="notif-group">
+      <div class="notif-group-header">
+        <span class="notif-group-icon">📒</span>
+        <span class="notif-group-title">การลงบัญชี</span>
+      </div>
+
+      <!-- N-06 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">ลูกบ้านชำระออนไลน์ — รอลงบัญชี</div>
+            <div class="notif-item-id">N-06</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-instant">Instant</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">ลูกบ้านชำระเงินออนไลน์สำเร็จ และระบบออกใบเสร็จให้แล้ว แต่ยังไม่ได้บันทึกบัญชี</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "ห้อง [เลขห้อง] ชำระเงินออนไลน์แล้ว ระบบออกใบเสร็จให้เรียบร้อย รอลงบัญชีค่ะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Stack</span>
+          <span class="nf-value">ถ้ามีหลายห้องในวันเดียวกัน → stack เป็น "X ห้องชำระออนไลน์แล้ว รอลงบัญชี"</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "ลงบัญชี" → หน้าลงบัญชีรายการรับเงิน</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Group D: อนุมัติ & รายงาน -->
+    <div class="notif-group">
+      <div class="notif-group-header">
+        <span class="notif-group-icon">✅</span>
+        <span class="notif-group-title">อนุมัติ & รายงาน & อื่นๆ</span>
+      </div>
+
+      <!-- N-07 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">เงินสดย่อยรออนุมัติ</div>
+            <div class="notif-item-id">N-07</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-tbd">TBD</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">มีรายการเงินสดย่อยที่ส่งขออนุมัติแล้วรอการตอบกลับ</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording-tbd">ยังไม่ได้กำหนด — ต้องการข้อมูล flow การอนุมัติเพิ่มเติม</span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">หมายเหตุ</span>
+          <span class="nf-value">ต้องชัดเจนก่อนว่า "รออนุมัติ" คือใคร approves และ trigger จุดไหน</span>
+        </div>
+      </div>
+
+      <!-- N-08 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">รายงานพร้อมดาวน์โหลดแล้ว</div>
+            <div class="notif-item-id">N-08</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-instant">Instant</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">ระบบ generate รายงานสำเร็จ (เช่น รายงานประจำเดือน, รายงาน export)</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording">
+            "รายงาน [ชื่อรายงาน] พร้อมดาวน์โหลดแล้วค่ะ"
+          </span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">Action</span>
+          <span class="nf-value">ปุ่ม "ดาวน์โหลด" → download ไฟล์ทันที</span>
+        </div>
+      </div>
+
+      <!-- N-09 -->
+      <div class="notif-item">
+        <div class="notif-item-top">
+          <div>
+            <div class="notif-item-name">ฟีเจอร์ใหม่ / ประกาศ</div>
+            <div class="notif-item-id">N-09</div>
+          </div>
+          <div class="badges">
+            <span class="badge badge-timely">Timely</span>
+          </div>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Trigger</span>
+          <span class="nf-value">Deploy ฟีเจอร์ใหม่หรือมีประกาศสำคัญจากทีม</span>
+        </div>
+        <div class="notif-field">
+          <span class="nf-label">Wording</span>
+          <span class="nf-wording-tbd">กำหนดตาม content ของฟีเจอร์นั้น</span>
+        </div>
+        <div class="notif-field" style="margin-top:6px">
+          <span class="nf-label">หมายเหตุ</span>
+          <span class="nf-value">ควร dismissible ได้ง่าย ไม่กวนงานประจำ</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ 2. UI COMPONENTS ═══════════════════════════════ -->
+  <div class="section" id="ui-components">
+    <div class="section-heading">
+      <div class="section-num">2</div>
+      <div>
+        <div class="section-title">UI Components</div>
+      </div>
+    </div>
+    <p class="section-desc">Components ที่ต้องออกแบบและ implement ทั้งหมดในระบบนี้</p>
+
+    <div class="component-grid">
+
+      <!-- Settings Page -->
+      <div class="component-card span-2">
+        <div class="cc-header">
+          <span class="cc-icon">⚙️</span>
+          <div>
+            <div class="cc-name">Settings Page</div>
+            <div class="cc-type">Page · 2 sub-sections</div>
+          </div>
+        </div>
+        <div class="cc-body">
+          <p class="cc-desc">หน้าตั้งค่าการแจ้งเตือน แบ่งเป็น 2 ระดับ: Project-level และ User-level</p>
+
+          <div class="variant-header">Project Notification Setting</div>
+          <div class="variant-block">
+            <div class="variant-block-header">ตั้งค่าในระดับโปรเจกต์ (admin เท่านั้น)</div>
+            <div class="variant-block-body">
+              <ul class="el-list">
+                <li class="el-item">
+                  <span class="el-dot">1</span>
+                  <div>
+                    <div class="el-name">Notification Type Toggle List</div>
+                    <div class="el-note">เปิด/ปิดแต่ละ notification type ในระดับ project (N-01 ถึง N-09)</div>
+                  </div>
+                  <span class="el-status el-status-req">required</span>
+                </li>
+                <li class="el-item">
+                  <span class="el-dot">2</span>
+                  <div>
+                    <div class="el-name">Timely Notification Schedule</div>
+                    <div class="el-note">กำหนดช่วงเวลา (วัน/เวลา) ที่ระบบจะส่ง timely notifications เช่น weekday 08:00–09:00</div>
+                  </div>
+                  <span class="el-status el-status-req">required</span>
+                </li>
+                <li class="el-item">
+                  <span class="el-dot">3</span>
+                  <div>
+                    <div class="el-name">Advance Notice Setting (มิเตอร์)</div>
+                    <div class="el-note">จำนวนวันที่แจ้งล่วงหน้าก่อนกำหนดจดมิเตอร์ (default: 2 วัน)</div>
+                  </div>
+                  <span class="el-status el-status-req">required</span>
+                </li>
+                <li class="el-item">
+                  <span class="el-dot el-dot.orange">4</span>
+                  <div>
+                    <div class="el-name">Notification Channel</div>
+                    <div class="el-note">เลือกช่องทาง: In-app only / In-app + Email / In-app + LINE OA (future)</div>
+                  </div>
+                  <span class="el-status el-status-opt">optional</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="variant-header">User Preference Setting</div>
+          <div class="variant-block">
+            <div class="variant-block-header">ตั้งค่าส่วนตัวของแต่ละ user</div>
+            <div class="variant-block-body">
+              <ul class="el-list">
+                <li class="el-item">
+                  <span class="el-dot">1</span>
+                  <div>
+                    <div class="el-name">Personal Subscribe/Unsubscribe per Type</div>
+                    <div class="el-note">user เลือกได้ว่าจะรับ notification ประเภทไหนบ้าง (ภายใต้ขอบเขตที่ project เปิดไว้)</div>
+                  </div>
+                  <span class="el-status el-status-req">required</span>
+                </li>
+                <li class="el-item">
+                  <span class="el-dot">2</span>
+                  <div>
+                    <div class="el-name">Do Not Disturb (DND) Hours</div>
+                    <div class="el-note">กำหนดช่วงเวลาที่ไม่รับแจ้งเตือน timely (เช่น หลัง 18:00 และก่อน 07:00)</div>
+                  </div>
+                  <span class="el-status el-status-req">required</span>
+                </li>
+                <li class="el-item">
+                  <span class="el-dot el-dot.orange">3</span>
+                  <div>
+                    <div class="el-name">Toast Preference</div>
+                    <div class="el-note">user เลือกได้ว่าต้องการเห็น toast popup หรือแค่ notification badge เฉยๆ</div>
+                  </div>
+                  <span class="el-status el-status-opt">optional</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Notification Sheet -->
+      <div class="component-card span-2">
+        <div class="cc-header">
+          <span class="cc-icon">🗂️</span>
+          <div>
+            <div class="cc-name">Notification Sheet</div>
+            <div class="cc-type">Drawer / Bottom Sheet · Full notification center</div>
+          </div>
+        </div>
+        <div class="cc-body">
+          <p class="cc-desc">Panel ที่เปิดขึ้นมาเมื่อ user กดไอคอน bell แสดงรายการ notification ทั้งหมด</p>
+          <ul class="el-list">
+            <li class="el-item">
+              <span class="el-dot">1</span>
+              <div>
+                <div class="el-name">Sheet Header</div>
+                <div class="el-note">ชื่อ "การแจ้งเตือน" + จำนวน unread badge + ปุ่ม "อ่านทั้งหมด" + ปุ่ม settings (ไป Settings Page)</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">2</span>
+              <div>
+                <div class="el-name">Notification Item Row</div>
+                <div class="el-note">icon ตาม type · title · body text · timestamp · unread dot · action button (optional)</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">3</span>
+              <div>
+                <div class="el-name">Stacked Notification Item</div>
+                <div class="el-note">Item ที่รวม N รายการประเภทเดียวกันในวันเดียวกัน แสดง summary + expand/collapse รายละเอียด</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">4</span>
+              <div>
+                <div class="el-name">Date Group Separator</div>
+                <div class="el-note">แบ่งกลุ่มด้วย label "วันนี้" / "เมื่อวาน" / วันที่</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot el-dot.orange">5</span>
+              <div>
+                <div class="el-name">Empty State</div>
+                <div class="el-note">แสดงเมื่อไม่มี notification ใดๆ</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot el-dot.green">6</span>
+              <div>
+                <div class="el-name">Swipe-to-Dismiss (mobile)</div>
+                <div class="el-note">swipe left บน item เพื่อ dismiss</div>
+              </div>
+              <span class="el-status el-status-opt">optional</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Toast — Single -->
+      <div class="component-card">
+        <div class="cc-header">
+          <span class="cc-icon">🔔</span>
+          <div>
+            <div class="cc-name">Notification Toast — Single</div>
+            <div class="cc-type">Component · Overlay · Auto-dismiss</div>
+          </div>
+        </div>
+        <div class="cc-body">
+          <p class="cc-desc">Toast เดี่ยวสำหรับ 1 notification สำคัญ ขึ้นมาทางขวาบนหรือล่าง</p>
+          <ul class="el-list">
+            <li class="el-item">
+              <span class="el-dot">1</span>
+              <div>
+                <div class="el-name">Icon ตาม notification type</div>
+                <div class="el-note">color-coded ตาม severity / category</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">2</span>
+              <div>
+                <div class="el-name">Title + Body</div>
+                <div class="el-note">title 1 บรรทัด, body max 2 บรรทัด (truncate)</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">3</span>
+              <div>
+                <div class="el-name">Action Button (optional)</div>
+                <div class="el-note">CTA primary เช่น "จดมิเตอร์เลย", "ตรวจสอบ"</div>
+              </div>
+              <span class="el-status el-status-opt">optional</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">4</span>
+              <div>
+                <div class="el-name">Dismiss Button (×)</div>
+                <div class="el-note">ปิด toast ทันที</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">5</span>
+              <div>
+                <div class="el-name">Auto-dismiss Timer</div>
+                <div class="el-note">หายไปอัตโนมัติใน 5–8 วินาที (pause เมื่อ hover)</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Toast — Stacking -->
+      <div class="component-card">
+        <div class="cc-header">
+          <span class="cc-icon">🗃️</span>
+          <div>
+            <div class="cc-name">Notification Toast — Stacking</div>
+            <div class="cc-type">Component · Overlay · Multiple toasts</div>
+          </div>
+        </div>
+        <div class="cc-body">
+          <p class="cc-desc">เมื่อมี toast หลายอันพร้อมกัน จะ stack ซ้อนกันแบบ deck of cards</p>
+          <ul class="el-list">
+            <li class="el-item">
+              <span class="el-dot">1</span>
+              <div>
+                <div class="el-name">Toast Stack Container</div>
+                <div class="el-note">รวม toast หลายอันในจุดเดียว ซ้อนกันด้วย offset + scale</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">2</span>
+              <div>
+                <div class="el-name">Collapsed Count Label</div>
+                <div class="el-note">แสดง "+2 more" เมื่อมี toast ซ่อนอยู่ด้านหลัง</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">3</span>
+              <div>
+                <div class="el-name">Expand on Hover/Tap</div>
+                <div class="el-note">펼 stack ออกให้เห็นแต่ละ toast แยกกัน</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot">4</span>
+              <div>
+                <div class="el-name">Dismiss All</div>
+                <div class="el-note">ปุ่ม "ปิดทั้งหมด" เมื่อ expand stack</div>
+              </div>
+              <span class="el-status el-status-opt">optional</span>
+            </li>
+            <li class="el-item">
+              <span class="el-dot el-dot.orange">5</span>
+              <div>
+                <div class="el-name">Max Visible Cap</div>
+                <div class="el-note">แสดงสูงสุด 3 toast พร้อมกัน ที่เหลือ queue</div>
+              </div>
+              <span class="el-status el-status-req">required</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div><!-- /component-grid -->
+  </div>
+
+
+  <!-- ═══════════════════════════════ 3. UX DECISIONS ═══════════════════════════════ -->
+  <div class="section" id="ux">
+    <div class="section-heading">
+      <div class="section-num">3</div>
+      <div>
+        <div class="section-title">UX Decisions</div>
+      </div>
+    </div>
+
+    <div class="ux-grid">
+
+      <div class="ux-card span-2">
+        <h4>Anti-overwhelm Strategy — ไม่ให้ user จมกับแจ้งเตือน</h4>
+        <table class="timing-table">
+          <thead>
+            <tr>
+              <th>กลยุทธ์</th>
+              <th>รายละเอียด</th>
+              <th>ใช้กับ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Stacking</strong></td>
+              <td>notification ประเภทเดียวกัน วันเดียวกัน → รวมเป็น 1 รายการ</td>
+              <td>N-06 (ชำระออนไลน์), N-05 (โอนเงิน)</td>
+            </tr>
+            <tr>
+              <td><strong>Timely Batching</strong></td>
+              <td>ส่งแจ้งเตือนเฉพาะช่วงเวลาที่กำหนด ไม่ส่งกลางดึก</td>
+              <td>N-01, N-02, N-04, N-09</td>
+            </tr>
+            <tr>
+              <td><strong>Weekday Only</strong></td>
+              <td>timely notifications ส่งวันทำการเท่านั้น (จ–ศ)</td>
+              <td>ทุก timely type</td>
+            </tr>
+            <tr>
+              <td><strong>User Opt-out</strong></td>
+              <td>user เลือก unsubscribe แต่ละประเภทได้ใน User Preference</td>
+              <td>ทุก type</td>
+            </tr>
+            <tr>
+              <td><strong>DND Hours</strong></td>
+              <td>user ตั้ง "ห้ามรบกวน" ช่วงเวลาที่ต้องการ</td>
+              <td>ทุก type (ยกเว้น critical)</td>
+            </tr>
+            <tr>
+              <td><strong>Toast Limit</strong></td>
+              <td>แสดง toast พร้อมกันได้สูงสุด 3 อัน ที่เหลือ queue</td>
+              <td>Toast component</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ux-card span-2">
+        <h4>Timing Matrix — Instant vs Timely</h4>
+        <table class="timing-table">
+          <thead>
+            <tr>
+              <th>Notification</th>
+              <th>Type</th>
+              <th>เวลาที่ trigger</th>
+              <th>เหตุผล</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ลืมจดมิเตอร์ (N-01)</td>
+              <td><span class="badge badge-timely">Timely</span></td>
+              <td>ล่วงหน้า 2 วัน, เช้า weekday</td>
+              <td>ให้เวลาเตรียมตัวไปจดจริง</td>
+            </tr>
+            <tr>
+              <td>ลืมแจ้งหนี้ (N-02)</td>
+              <td><span class="badge badge-timely">Timely</span></td>
+              <td>ต้น cycle, เช้า weekday</td>
+              <td>เป็นงาน scheduled ต้องทำในจังหวะที่ถูก</td>
+            </tr>
+            <tr>
+              <td>คำนวณเสร็จ (N-03)</td>
+              <td><span class="badge badge-instant">Instant</span></td>
+              <td>ทันทีที่ระบบประมวลผลเสร็จ</td>
+              <td>user รอผลอยู่ ต้องแจ้งเร็ว</td>
+            </tr>
+            <tr>
+              <td>ครบกำหนดชำระ (N-04)</td>
+              <td><span class="badge badge-timely">Timely</span></td>
+              <td>วัน due date, เช้า weekday</td>
+              <td>ต้องตามทันวันนั้น ไม่ต้องรีบก่อนหน้า</td>
+            </tr>
+            <tr>
+              <td>ตรวจสอบโอนเงิน (N-05)</td>
+              <td><span class="badge badge-instant">Instant</span></td>
+              <td>ทันทีที่ระบบตรวจพบ</td>
+              <td>เงินเข้า ต้อง match ไว ลดความเสี่ยงผิดพลาด</td>
+            </tr>
+            <tr>
+              <td>ชำระออนไลน์ (N-06)</td>
+              <td><span class="badge badge-instant">Instant</span></td>
+              <td>ทันทีที่ระบบออกใบเสร็จ</td>
+              <td>ลงบัญชีทันที ข้อมูลไม่ค้าง</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ 4. STACK LOGIC ═══════════════════════════════ -->
+  <div class="section" id="stack-logic">
+    <div class="section-heading">
+      <div class="section-num">4</div>
+      <div>
+        <div class="section-title">Stack Notification Logic</div>
+      </div>
+    </div>
+    <p class="section-desc">กฎการรวม, การเรียงลำดับ, และ lifecycle ของ notification ที่ถูก stack</p>
+
+    <div class="logic-card">
+      <div class="logic-card-header">การรวม (Grouping Rule)</div>
+      <div class="logic-card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <div class="step-title">Group Key = Type + Date</div>
+              <div class="step-detail">notification จะถูกรวมก็ต่อเมื่อ เป็นประเภทเดียวกัน (เช่น N-06) AND เกิดขึ้นในวันปฏิทินเดียวกัน</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <div class="step-title">Summary Wording เปลี่ยนตาม count</div>
+              <div class="step-detail">1 item → "ห้อง 101 ชำระออนไลน์แล้ว" / 2+ items → "[X] ห้องชำระออนไลน์แล้ว รอลงบัญชี"</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <div class="step-body">
+              <div class="step-title">Expandable Detail</div>
+              <div class="step-detail">กด expand เพื่อดูรายการย่อยทีละห้อง พร้อม action button แยกแต่ละรายการ</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="logic-card">
+      <div class="logic-card-header">การเรียงลำดับ (Ordering & Bubble-up)</div>
+      <div class="logic-card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <div class="step-title">ใหม่อยู่บนสุด</div>
+              <div class="step-detail">notification ที่มี update ล่าสุดจะถูก bubble ขึ้นด้านบน (sort by last_updated DESC)</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <div class="step-title">Update เข้า → กลุ่มเดิม bubble ขึ้น</div>
+              <div class="step-detail">ถ้ามี item ใหม่เข้ากลุ่มที่มีอยู่แล้ว กลุ่มนั้นจะขยับขึ้นด้านบน count ใน badge เพิ่มขึ้น</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <div class="step-body">
+              <div class="step-title">Counter Reset หลัง Read</div>
+              <div class="step-detail">เมื่อ user กด mark-as-read บนกลุ่ม → counter ใน badge รีเซ็ตเป็น 0 สำหรับกลุ่มนั้น update ใหม่หลังจากนี้จะนับใหม่จาก 1</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">4</span>
+            <div class="step-body">
+              <div class="step-title">Unread → นับสะสม</div>
+              <div class="step-detail">ถ้าไม่ได้กดอ่าน ระบบนับต่อเรื่อยๆ ตาม update ที่เข้ามา ไม่มีวันหมดอายุ (จนกว่าจะ read หรือ dismiss)</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="logic-card">
+      <div class="logic-card-header">Lifecycle & Expiry</div>
+      <div class="logic-card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <div class="step-title">กลุ่มวันนี้ → ถูก archive เมื่อผ่านวัน</div>
+              <div class="step-detail">เมื่อ midnight ผ่านไป กลุ่ม notification ของวันก่อนหน้าจะถูกย้ายไปใน "ก่อนหน้า" section (ไม่ลบ แต่ collapse)</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <div class="step-title">ไม่สร้าง group ข้ามวัน</div>
+              <div class="step-detail">N-06 วันจันทร์ และ N-06 วันอังคาร = คนละ group ไม่รวมกัน</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <div class="step-body">
+              <div class="step-title">Retention Policy (TBD)</div>
+              <div class="step-detail">ยังไม่กำหนด — อาจเก็บ 30 วัน หรือ จนกว่า user dismiss — ต้องหารือเพิ่มเติม</div>
+            </div>
+          </li>
+        </ul>
+        <div class="callout callout-note">กลุ่ม notification ถูก archive เมื่อผ่านวัน แต่ไม่ถูกลบ user ยังเลื่อนขึ้นไปดูประวัติย้อนหลังได้</div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════ 5. TOAST LOGIC ═══════════════════════════════ -->
+  <div class="section" id="toast-logic">
+    <div class="section-heading">
+      <div class="section-num">5</div>
+      <div>
+        <div class="section-title">Toast Logic</div>
+      </div>
+    </div>
+    <p class="section-desc">กฎว่าเมื่อไหร่ toast ถึงจะขึ้น ระยะเวลา และพฤติกรรมเมื่อมีหลายอัน</p>
+
+    <div class="logic-card">
+      <div class="logic-card-header">เงื่อนไขที่ toast จะขึ้น</div>
+      <div class="logic-card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <div class="step-title">Instant notifications → ขึ้น toast เสมอ (ถ้า user ไม่ได้ opt-out)</div>
+              <div class="step-detail">N-03, N-05, N-06 — เพราะต้องการ action ทันที</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <div class="step-title">Timely notifications → ขึ้น toast เฉพาะเมื่อ user อยู่ใน app</div>
+              <div class="step-detail">N-01, N-02, N-04 — ถ้า user ไม่ได้เปิด app อยู่ → ส่งเป็น push notification แทน (mobile)</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <div class="step-body">
+              <div class="step-title">ไม่ขึ้น toast ระหว่าง DND Hours</div>
+              <div class="step-detail">toast queue และจะขึ้นครั้งถัดไปที่ user กลับมา active หรือผ่าน DND window</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="logic-card">
+      <div class="logic-card-header">Toast Queue & Auto-dismiss</div>
+      <div class="logic-card-body">
+        <ul class="step-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <div class="step-title">Queue — แสดงทีละ 1 (single) หรือสูงสุด 3 (stacking)</div>
+              <div class="step-detail">toast ที่เกินจะ queue ไว้ ขึ้นมาหลังจาก toast ก่อนหน้า dismiss</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <div class="step-title">Auto-dismiss: 5 วินาที (default) / 8 วินาที (มี action button)</div>
+              <div class="step-detail">pause timer เมื่อ user hover หรือ focus บน toast</div>
+            </div>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <div class="step-body">
+              <div class="step-title">Toast ไม่ = Notification อ่านแล้ว</div>
+              <div class="step-detail">auto-dismiss toast ≠ mark-as-read ใน notification sheet — user ต้องกดใน sheet หรือกด action button เพื่อ clear</div>
+            </div>
+          </li>
+        </ul>
+        <div class="callout callout-info">การปิด toast อัตโนมัติ ไม่ได้ทำให้ notification หายไปจาก sheet — มันยังอยู่ใน notification center รอ user กลับมาดู</div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════ 6. OPEN QUESTIONS ═══════════════════════════════ -->
+  <div class="section" id="open-questions">
+    <div class="section-heading">
+      <div class="section-num">6</div>
+      <div>
+        <div class="section-title">Open Questions</div>
+      </div>
+    </div>
+
+    <div class="logic-card">
+      <div class="logic-card-header">ประเด็นที่ยังต้องหารือ</div>
+      <div class="logic-card-body">
+        <ul class="questions-list">
+          <li>
+            <span class="q-tag">N-07</span>
+            <span>เงินสดย่อยรออนุมัติ: flow การ approve เป็นอย่างไร? ใครเป็น approver? trigger จาก event ไหนของระบบ?</span>
+          </li>
+          <li>
+            <span class="q-tag">Wording</span>
+            <span>ภาษาที่ใช้ควรเป็น ราชการ / สุภาพ / เป็นกันเอง? ใช้ "ค่ะ" "ครับ" หรือ neutral?</span>
+          </li>
+          <li>
+            <span class="q-tag">Retention</span>
+            <span>notification history เก็บนานแค่ไหน? 30 วัน / ตลอดไป / ลบเมื่อ read?</span>
+          </li>
+          <li>
+            <span class="q-tag">Priority</span>
+            <span>ถ้ามี toast หลายอันพร้อมกัน instant vs timely → instant ขึ้นก่อนเสมอ? หรือ FIFO?</span>
+          </li>
+          <li>
+            <span class="q-tag">Channel</span>
+            <span>Phase 1 = in-app only ก่อน? หรือรวม push notification (mobile) พร้อมกัน?</span>
+          </li>
+          <li>
+            <span class="q-tag">Permission</span>
+            <span>user role ไหน (admin / staff / view-only) เห็น notification ประเภทไหนได้บ้าง?</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <span>JU Helper Notification Plan · v0.1 · 11 มิ.ย. 2569</span>
+    <span>PMSPlayground · LivingOS PMS</span>
+  </div>
+
+</div><!-- /container -->
+</body>
+</html>

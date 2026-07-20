@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(vercel --prod)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "WebFetch(domain:www.thelivingos.com)",
+      "WebFetch(domain:cofounder.co)"
+    ]
+  }
+}

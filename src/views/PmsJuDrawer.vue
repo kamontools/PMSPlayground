@@ -18,42 +18,24 @@
           <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
           โครงการนิติบุคคล หมู่บ้านสิริ คอนโดมิเนียม เขตบางนา
         </div>
-        <button type="button" class="demo-btn" :class="{ open: demoOpen }" @click.stop="demoOpen = !demoOpen">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            Demo
-          </button>
         <div class="topbar-actions-divider" role="presentation" />
         <div ref="juBtnRef" class="ju-button">
-          <div v-show="hasImportant" class="ju-pulse-ring" />
-          <div v-show="hasImportant" class="ju-pulse-ring ju-pulse-ring--delay" />
-          <span v-show="unreadCount > 0 || hasImportant" class="ju-btn-badge" />
+<span v-show="unreadCount > 0 || hasImportant" class="ju-btn-badge" />
           <button
             type="button"
             class="ju-btn-inner"
             :class="{ active: drawerOpen }"
             @click.stop="toggleDrawer"
           >
-            <svg class="ju-cloud-face" viewBox="0 0 251 171" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <clipPath id="ju-cloud-clip">
-                  <path d="M115.789 0C138.463 0 158.152 12.7789 168.048 31.5273C170.209 31.1816 172.426 31 174.685 31C197.158 31.0002 215.473 48.7844 216.333 71.0469C236.283 76.281 251 94.4343 251 116.026C251 141.708 230.181 162.526 204.5 162.526C203.563 162.526 202.633 162.497 201.71 162.442C200.031 162.806 198.288 163 196.5 163H61.5C59.4281 163 57.4167 162.741 55.4951 162.257C24.3656 159.35 0.000239031 133.153 0 101.264C0 67.8936 26.6804 40.7547 59.873 40.0156C67.7942 16.7425 89.8362 0.000165719 115.789 0Z"/>
-                </clipPath>
-                <radialGradient id="paint0_radial_32004_8" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(183.5 31) rotate(135.83) scale(146.386 225.417)">
-                  <stop stop-color="#6CB0FF"/>
-                  <stop offset="0.221154" stop-color="#298DFF"/>
-                  <stop offset="0.711538" stop-color="#1C70F7"/>
-                  <stop offset="1" stop-color="#005BEF"/>
-                </radialGradient>
-              </defs>
-              <path d="M115.789 0C138.463 0 158.152 12.7789 168.048 31.5273C170.209 31.1816 172.426 31 174.685 31C197.158 31.0002 215.473 48.7844 216.333 71.0469C236.283 76.281 251 94.4343 251 116.026C251 141.708 230.181 162.526 204.5 162.526C203.563 162.526 202.633 162.497 201.71 162.442C200.031 162.806 198.288 163 196.5 163H61.5C59.4281 163 57.4167 162.741 55.4951 162.257C24.3656 159.35 0.000239031 133.153 0 101.264C0 67.8936 26.6804 40.7547 59.873 40.0156C67.7942 16.7425 89.8362 0.000165719 115.789 0Z" fill="url(#paint0_radial_32004_8)" stroke="white" stroke-width="12"/>
-              <rect :transform="leftEyeTransform" x="68" y="67" width="17" height="38" rx="8.5" fill="white"/>
-              <rect :transform="rightEyeTransform" x="117" y="67" width="17" height="38" rx="8.5" fill="white"/>
+            <svg class="ju-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </button>
-          <div v-show="tooltipVisible" class="ju-tooltip">
-            <span class="ju-tooltip-icon">{{ activeTooltip?.icon ?? '👉' }}</span>
+          <div v-show="tooltipVisible" class="cloudee-tip">
+            <span class="cloudee-tip-icon">{{ activeTooltip?.icon ?? '👉' }}</span>
             <span>{{ activeTooltip?.message }}</span>
-            <button type="button" class="ju-tooltip-close" @click.stop="tooltipHidden = true">✕</button>
+            <button type="button" class="cloudee-tip-close" @click.stop="tooltipHidden = true">✕</button>
           </div>
         </div>
       </div>
@@ -231,22 +213,16 @@
       <div class="settings-panel" :class="{ open: settingsOpen }">
         <div class="settings-head">
           <div class="settings-title">
-            <svg class="settings-cloudee-icon" viewBox="0 0 251 171" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <radialGradient id="sg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(183.5 31) rotate(135.83) scale(146.386 225.417)">
-                  <stop stop-color="#6CB0FF"/><stop offset="0.22" stop-color="#298DFF"/><stop offset="0.71" stop-color="#1C70F7"/><stop offset="1" stop-color="#005BEF"/>
-                </radialGradient>
-              </defs>
-              <path d="M115.789 0C138.463 0 158.152 12.7789 168.048 31.5273C170.209 31.1816 172.426 31 174.685 31C197.158 31.0002 215.473 48.7844 216.333 71.0469C236.283 76.281 251 94.4343 251 116.026C251 141.708 230.181 162.526 204.5 162.526C203.563 162.526 202.633 162.497 201.71 162.442C200.031 162.806 198.288 163 196.5 163H61.5C59.4281 163 57.4167 162.741 55.4951 162.257C24.3656 159.35 0.000239031 133.153 0 101.264C0 67.8936 26.6804 40.7547 59.873 40.0156C67.7942 16.7425 89.8362 0.000165719 115.789 0Z" fill="url(#sg)" stroke="white" stroke-width="12"/>
-              <rect x="68" y="67" width="17" height="38" rx="8.5" fill="white"/>
-              <rect x="117" y="67" width="17" height="38" rx="8.5" fill="white"/>
+            <svg class="settings-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
             ตั้งค่าการแจ้งเตือน
           </div>
           <button type="button" class="settings-close" @click="settingsOpen = false">✕</button>
         </div>
         <div class="settings-body">
-          <p class="settings-intro">เลือกหัวข้อที่ต้องการรับแจ้งเตือน Cloudee จะแสดงเฉพาะรายการที่เปิดไว้เท่านั้น</p>
+          <p class="settings-intro">เลือกประเภทการแจ้งเตือนที่ต้องการรับ ระบบจะแสดงเฉพาะรายการที่เปิดไว้เท่านั้น</p>
           <div v-for="group in topicGroups" :key="group.id" class="settings-group">
             <div class="settings-group-header">
               <span class="settings-group-dot" :class="'dot-' + group.id" />
@@ -355,6 +331,13 @@
       </div>
     </aside>
 
+    <!-- Demo FAB -->
+    <teleport to="body">
+      <button type="button" class="demo-fab" :class="{ open: demoOpen }" @click.stop="demoOpen = !demoOpen" title="Demo Controller">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </button>
+    </teleport>
+
     <!-- Demo modal -->
     <teleport to="body">
       <transition name="demo-fade">
@@ -446,38 +429,6 @@ function applyTooltip(id) {
   tooltipHidden.value = false
 }
 
-const blinkScale = ref(1)
-let blinkTimer = null
-
-const L = { cx: 76.5, cy: 86 }
-const R = { cx: 125.5, cy: 86 }
-
-const leftEyeTransform = computed(() =>
-  `translate(${L.cx},${L.cy}) scale(1,${blinkScale.value}) translate(${-L.cx},${-L.cy})`
-)
-const rightEyeTransform = computed(() =>
-  `translate(${R.cx},${R.cy}) scale(1,${blinkScale.value}) translate(${-R.cx},${-R.cy})`
-)
-
-function doBlink() {
-  const min = 0.05
-  const closeMs = 90
-  const openMs = 120
-  let t0 = null
-  let phase = 'close'
-  function step(ts) {
-    if (t0 === null) t0 = ts
-    const p = Math.min((ts - t0) / (phase === 'close' ? closeMs : openMs), 1)
-    blinkScale.value = phase === 'close'
-      ? 1 - (1 - min) * (p * p)
-      : min + (1 - min) * (1 - (1 - p) ** 2)
-    if (p < 1) { requestAnimationFrame(step); return }
-    if (phase === 'close') { phase = 'open'; t0 = null; requestAnimationFrame(step) }
-    else { blinkScale.value = 1; blinkTimer = setTimeout(doBlink, 2500 + Math.random() * 2000) }
-  }
-  requestAnimationFrame(step)
-}
-
 
 const hlIndex = ref(0)
 const hlTrackRef = ref(null)
@@ -511,81 +462,144 @@ function hlNext() { goToHl(hlIndex.value + 1) }
 
 const tasks = ref([
   {
-    id: '1',
+    id: 'n01',
     topic: 'meterReminder',
     group: 'important',
     unread: true,
-    title: 'จดมิเตอร์น้ำ / ไฟ ประจำเดือนนี้',
-    description: 'ครบกำหนดจด 30 เม.ย. — เหลือ 12 ยูนิตที่ยังไม่มีข้อมูล กรุณาดำเนินการก่อนสิ้นวัน',
-    time: 'เมื่อ 09:00 น.',
-    actionLabel: 'ไปจดมิเตอร์',
-    btnClass: 'btn-red'
+    title: 'ได้เวลาจดมิเตอร์แล้ว!',
+    description: 'อีก 2 วันถึงกำหนดบันทึกค่าน้ำ-ไฟรอบ มิ.ย. 69 อย่าลืมนะคะ',
+    time: 'เมื่อ 08:00 น.',
+    actionLabel: 'จดมิเตอร์เลย',
+    btnClass: ''
   },
   {
-    id: '2',
+    id: 'n02',
     topic: 'billingReminder',
     group: 'important',
     unread: true,
-    title: 'คำนวณใบแจ้งหนี้รอบ 05/2569',
-    description: 'ข้อมูลมิเตอร์ครบ 85 ยูนิตแล้ว — ระบบพร้อมให้รันคำนวณใบแจ้งหนี้ได้ทันที',
-    time: 'เมื่อ 10:30 น.',
+    title: 'ยังไม่ได้คำนวณใบแจ้งหนี้เดือน มิ.ย.',
+    description: 'มี 6 ห้องรอดำเนินการอยู่ค่ะ',
+    time: 'เมื่อ 09:00 น.',
     actionLabel: 'คำนวณเลย',
     btnClass: ''
   },
   {
-    id: '3',
+    id: 'n03',
     topic: 'billingComplete',
     group: 'notify',
     unread: false,
-    title: 'คำนวณใบแจ้งหนี้รอบ 04/2569 เสร็จแล้ว',
-    description: 'ระบบออกใบแจ้งหนี้ครบ 97 ยูนิต — พร้อมส่งแจ้งลูกบ้านได้เลย',
-    time: 'เมื่อสักครู่',
+    title: 'คำนวณใบแจ้งหนี้เดือน พ.ค. เสร็จแล้ว!',
+    description: '97 ห้อง พร้อมส่งให้ลูกบ้านได้เลยค่ะ',
+    time: 'เมื่อ 10:30 น.',
     actionLabel: 'ดูใบแจ้งหนี้',
     btnClass: 'btn-green'
   },
   {
-    id: '4',
-    topic: 'paymentFound',
+    id: 'n04',
+    topic: 'dueDate',
+    group: 'important',
+    unread: true,
+    title: 'ใบแจ้งหนี้เดือน พ.ค. ครบกำหนดชำระวันนี้',
+    description: 'ยังมี 5 ห้องที่ยังไม่ได้ชำระค่ะ',
+    time: 'เมื่อ 08:30 น.',
+    actionLabel: 'ดูรายการค้างชำระ',
+    btnClass: 'btn-red'
+  },
+  {
+    id: 'n05',
+    topic: 'transferCheck',
     group: 'notify',
     unread: true,
-    title: 'ลูกบ้านชำระออนไลน์ · ใบเสร็จเปิดแล้ว 3 รายการ',
-    description: 'ห้อง A301, B204, C110 ชำระผ่าน QR Code — ใบเสร็จพร้อมส่งแล้ว',
+    title: 'มีรายการโอนเงินเข้าใหม่ 3 รายการ',
+    description: 'รอตรวจสอบและ match กับใบแจ้งหนี้ค่ะ',
     time: '14 นาทีที่แล้ว',
-    actionLabel: 'ดูรายการชำระ',
+    actionLabel: 'ตรวจสอบ',
     btnClass: 'btn-amber'
-  }
+  },
+  {
+    id: 'n06',
+    topic: 'onlinePayment',
+    group: 'notify',
+    unread: true,
+    title: 'ลูกบ้านชำระออนไลน์แล้ว · รอลงบัญชี',
+    description: 'ห้อง A301, B204, C110 ชำระผ่าน QR Code — ใบเสร็จออกแล้ว',
+    time: 'เมื่อสักครู่',
+    actionLabel: 'ลงบัญชี',
+    btnClass: ''
+  },
+  {
+    id: 'n07',
+    topic: 'pettyApproval',
+    group: 'notify',
+    unread: false,
+    title: 'เงินสดย่อยรออนุมัติ',
+    description: 'มีรายการเงินสดย่อยที่ส่งขออนุมัติแล้วรอการตอบกลับ',
+    time: 'เมื่อวาน',
+    actionLabel: 'ดูรายการ',
+    btnClass: ''
+  },
+  {
+    id: 'n08',
+    topic: 'reportReady',
+    group: 'notify',
+    unread: false,
+    title: 'รายงานประจำเดือน พ.ค. 2569 พร้อมดาวน์โหลดแล้ว',
+    description: 'รายงานสรุปยอดชำระและหนี้คงค้างประจำเดือนพร้อมแล้วค่ะ',
+    time: 'เมื่อวาน',
+    actionLabel: 'ดาวน์โหลด',
+    btnClass: 'btn-green'
+  },
+  {
+    id: 'n09',
+    topic: 'announcement',
+    group: 'notify',
+    unread: false,
+    title: 'ฟีเจอร์ใหม่: ส่งใบแจ้งหนี้ผ่าน LINE OA',
+    description: 'ขณะนี้สามารถส่งใบแจ้งหนี้ให้ลูกบ้านผ่าน LINE OA ได้แล้วค่ะ',
+    time: '3 วันที่แล้ว',
+    actionLabel: 'ดูรายละเอียด',
+    btnClass: ''
+  },
 ])
 
 const settingsOpen = ref(false)
 const notifSettings = ref({
-  meterReminder: true,
+  meterReminder:   true,
   billingReminder: true,
   billingComplete: true,
-  paymentCheck: true,
-  paymentFound: true,
+  dueDate:         true,
+  transferCheck:   true,
+  onlinePayment:   true,
+  pettyApproval:   true,
+  reportReady:     true,
+  announcement:    true,
 })
 const topicGroups = [
   {
     id: 'reminder',
     label: 'Reminder',
     topics: [
-      { key: 'meterReminder',   label: 'เตือนจดมิเตอร์',         desc: 'แจ้งเตือนเมื่อถึงรอบจดมิเตอร์น้ำ/ไฟ' },
-      { key: 'billingReminder', label: 'เตือนคำนวณใบแจ้งหนี้',   desc: 'แจ้งเตือนเมื่อข้อมูลมิเตอร์ครบแล้ว พร้อมรันคำนวณ' },
-      { key: 'paymentCheck',    label: 'เตือนตรวจสอบเงินโอน',    desc: 'แจ้งเมื่อพบยอดโอนที่ไม่ตรงกับบิล รอ match' },
+      { key: 'meterReminder',   label: 'เตือนจดมิเตอร์',           desc: 'แจ้งเตือนล่วงหน้า 2 วันก่อนกำหนดจดมิเตอร์น้ำ/ไฟ' },
+      { key: 'billingReminder', label: 'เตือนคำนวณใบแจ้งหนี้',     desc: 'แจ้งเตือนเมื่อยังไม่ได้คำนวณใบแจ้งหนี้ตามรอบ' },
+      { key: 'dueDate',         label: 'ครบกำหนดชำระ',              desc: 'แจ้งเมื่อถึงวัน due date และยังมีห้องค้างชำระ' },
+      { key: 'pettyApproval',   label: 'เงินสดย่อยรออนุมัติ',      desc: 'แจ้งเมื่อมีรายการเงินสดย่อยรอการอนุมัติ' },
+      { key: 'announcement',    label: 'ฟีเจอร์ใหม่ / ประกาศ',     desc: 'แจ้งเมื่อมีฟีเจอร์ใหม่หรือประกาศสำคัญจากทีม' },
     ],
   },
   {
     id: 'success',
-    label: 'Success',
+    label: 'Complete',
     topics: [
-      { key: 'billingComplete', label: 'คำนวณใบแจ้งหนี้เสร็จแล้ว', desc: 'แจ้งเมื่อระบบคำนวณเสร็จในพื้นหลัง รอตรวจสอบก่อนส่ง' },
+      { key: 'billingComplete', label: 'คำนวณใบแจ้งหนี้เสร็จแล้ว', desc: 'แจ้งเมื่อระบบคำนวณเสร็จ พร้อมส่งให้ลูกบ้าน' },
+      { key: 'reportReady',     label: 'รายงานพร้อมดาวน์โหลดแล้ว', desc: 'แจ้งเมื่อระบบ generate รายงานเสร็จแล้ว' },
     ],
   },
   {
     id: 'action',
     label: 'Action Required',
     topics: [
-      { key: 'paymentFound', label: 'พบการชำระเงิน', desc: 'แจ้งเมื่อลูกบ้านชำระออนไลน์สำเร็จ รอลงทะเบียนใบเสร็จ' },
+      { key: 'transferCheck',   label: 'ตรวจสอบเงินโอน',           desc: 'แจ้งเมื่อพบรายการโอนเงินเข้าที่รอ match กับใบแจ้งหนี้' },
+      { key: 'onlinePayment',   label: 'ลูกบ้านชำระออนไลน์ · รอลงบัญชี', desc: 'แจ้งเมื่อลูกบ้านชำระออนไลน์สำเร็จ รอบันทึกบัญชี' },
     ],
   },
 ]
@@ -593,9 +607,13 @@ const topicGroups = [
 const topicGroupMap = {
   meterReminder:   'reminder',
   billingReminder: 'reminder',
-  paymentCheck:    'reminder',
+  dueDate:         'reminder',
+  pettyApproval:   'reminder',
+  announcement:    'reminder',
   billingComplete: 'success',
-  paymentFound:    'action',
+  reportReady:     'success',
+  transferCheck:   'action',
+  onlinePayment:   'action',
 }
 
 const filteredTasks = computed(() =>
@@ -631,39 +649,44 @@ function onDocumentClick(e) {
 
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
-  blinkTimer = setTimeout(doBlink, 1500 + Math.random() * 1000)
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
-  clearTimeout(blinkTimer)
 })
 </script>
 
 <style scoped src="./pmsJuDrawerStyles.css"></style>
 
 <style scoped>
-/* ── Demo panel ── */
-.demo-btn {
+/* ── Demo FAB ── */
+.demo-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 250;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--gray-800, #1e2430);
+  border: none;
+  color: #fff;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 8px;
-  border: 1px solid var(--gray-200, #dde1e7);
-  background: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gray-600, #5a6170);
+  justify-content: center;
   cursor: pointer;
-  transition: background .12s, border-color .12s, color .12s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12);
+  transition: background .15s, transform .12s, box-shadow .15s;
   font-family: var(--font, sans-serif);
-  white-space: nowrap;
 }
-.demo-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
-.demo-btn:hover, .demo-btn.open {
-  background: var(--blue-50, #e8f1fb);
-  border-color: var(--blue-400, #3a7fd4);
-  color: var(--blue-700, #154d8c);
+.demo-fab svg { width: 18px; height: 18px; flex-shrink: 0; }
+.demo-fab:hover {
+  background: var(--blue-700, #154d8c);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(28,112,247,0.3);
+}
+.demo-fab.open {
+  background: var(--blue-600, #1a5faa);
+  transform: scale(1.04);
 }
 .demo-overlay {
   position: fixed;

@@ -14,6 +14,16 @@
             </router-link>
           </li>
           <li>
+            <router-link to="/prototype/pms-clone-tool" class="nav-link" active-class="active">
+              🏗️ สร้างโครงการ (clone tool)
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/prototype/pms-sidebar-demo" class="nav-link" active-class="active">
+              🧭 New Sidebar (collapse/expand demo)
+            </router-link>
+          </li>
+          <li>
             <router-link to="/room-price-quiz" class="nav-link" active-class="active">
               🏠 รู้มั้ย ห้องราคาเท่าไหร่?
             </router-link>

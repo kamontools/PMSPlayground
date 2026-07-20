@@ -55,6 +55,10 @@
               <h3>PMS — ตัวช่วย JU</h3>
               <p>โปรโตไทป์หน้า PMS LivingOS พร้อมปุ่ม JU และลิ้นชักแจ้งเตือน</p>
             </router-link>
+            <router-link to="/prototype/pms-sidebar-demo" class="quick-link-card">
+              <h3>🧭 New Sidebar — mega menu</h3>
+              <p>โปรโตไทป์ไซด์บาร์ใหม่ พร้อม mega menu และสวิตช์ Type 1 (Always Collapse) / Type 2 (Always Expand)</p>
+            </router-link>
             <router-link to="/room-price-quiz" class="quick-link-card">
               <h3>🏠 รู้มั้ย ห้องราคาเท่าไหร่?</h3>
               <p>แบบทดสอบ 8 ข้อ ประเมินราคาห้องเช่าของคุณ พร้อมเปรียบเทียบกับราคาตลาด</p>
