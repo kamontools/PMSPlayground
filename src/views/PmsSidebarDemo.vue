@@ -81,7 +81,7 @@
           <span v-if="favorites.length" class="fav-badge">{{ favorites.length }}</span>
         </div>
 
-        <template v-for="(section, si) in SIDEBAR_SECTIONS" :key="si">
+        <template v-for="(section, si) in SIDEBAR_SECTIONS.slice(0, 2)" :key="si">
           <div class="divider"></div>
 
           <div
@@ -105,6 +105,26 @@
         </template>
 
         <div class="rail-bottom-space"></div>
+      </div>
+
+      <!-- ---- STICKY BOTTOM (section 4) ---- -->
+      <div class="rail-sticky-bottom">
+        <div class="divider"></div>
+        <div
+          v-for="item in SIDEBAR_SECTIONS[2]"
+          :key="item.id"
+          class="menu-item"
+          :class="{ active: activeId === item.id }"
+          @click="selectLeaf(item)"
+        >
+          <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
+          <span class="lbl">{{ item.label }}</span>
+          <span class="right-actions">
+            <button class="star-btn" :class="{ starred: isFavorited(item.id) }" @click.stop="toggleFavorite({ id: item.id, label: item.label, path: item.lv1, icon: item.icon })" title="เพิ่มในรายการโปรด">
+              <svg viewBox="0 0 20 20" :fill="isFavorited(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
+            </button>
+          </span>
+        </div>
       </div>
 
       <!-- ---- MEGA MENU ---- -->
@@ -838,16 +858,16 @@ function removeRow(idx) {
   z-index: 40;
   transition: width .28s cubic-bezier(.4, 0, .2, 1);
   overflow: visible;
+  display: flex; flex-direction: column;
 }
 #sidebar.rail-expanded { width: var(--rail-expanded); }
 #sidebar { border-right: 1px solid var(--rail-border); }
 #sidebar.rail-expanded:not(.mode-expand) { box-shadow: 4px 0 16px rgba(0, 0, 0, .08); }
 
 .rail-inner {
-  height: 100%; width: 100%;
+  flex: 1; min-height: 0; width: 100%;
   overflow-y: auto; overflow-x: hidden;
   display: flex; flex-direction: column;
-  padding-bottom: 68px;
   scrollbar-width: thin; scrollbar-color: #CED0D6 transparent;
 }
 .rail-inner::-webkit-scrollbar { width: 6px; }
@@ -872,7 +892,7 @@ function removeRow(idx) {
 
 .menu-item {
   position: relative; display: flex; align-items: center; gap: 14px;
-  padding: 8px 20px; margin: 1px 6px; border-radius: var(--radius-lg, 8px);
+  padding: 9px 20px; margin: 3px 6px; border-radius: var(--radius-lg, 8px);
   cursor: pointer; color: var(--rail-text-main); user-select: none;
   transition: background .15s ease, color .15s ease;
 }
@@ -887,7 +907,7 @@ function removeRow(idx) {
 .menu-item .ic { width: 20px; height: 20px; flex-shrink: 0; color: var(--rail-text-muted); transition: color .15s ease; }
 .menu-item:hover .ic, .menu-item.active .ic, .menu-item.mega-open .ic { color: var(--rail-accent); }
 .menu-item .lbl {
-  white-space: nowrap; font-size: 13.5px; font-weight: 500; opacity: 0; transition: opacity .15s ease;
+  white-space: nowrap; font-size: 16px; font-weight: 500; opacity: 0; transition: opacity .15s ease;
   overflow: hidden; text-overflow: ellipsis;
 }
 #sidebar.rail-expanded .menu-item .lbl { opacity: 1; transition-delay: .08s; }
@@ -1086,9 +1106,15 @@ function removeRow(idx) {
 .lv4-item:hover .mega-star-btn { opacity: 1; }
 .lv4-star { margin-left: auto; }
 
+/* ---- STICKY BOTTOM SECTION ---- */
+.rail-sticky-bottom {
+  flex-shrink: 0;
+  background: var(--rail-bg);
+}
+
 /* ---- USER SECTION ---- */
 .rail-user {
-  position: absolute; bottom: 0; left: 0; right: 0;
+  flex-shrink: 0;
   display: flex; align-items: center; gap: 10px;
   padding: 10px 18px;
   background: var(--rail-bg);
