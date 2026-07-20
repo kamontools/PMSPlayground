@@ -73,8 +73,7 @@
         <div
           class="menu-item fav-menu-item"
           :class="{ 'mega-open': favPanelVisible }"
-          @mouseenter="openFavPanel($event.currentTarget)"
-          @mouseleave="scheduleFavClose"
+          @click="toggleFavPanel($event.currentTarget)"
         >
           <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" :style="favorites.length ? 'fill:#EE9F00;stroke:#EE9F00' : ''"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
           <span class="lbl">รายการโปรด</span>
@@ -89,16 +88,11 @@
             :key="item.id"
             class="menu-item"
             :class="{ active: activeId === item.id, 'mega-open': openRowId === item.id }"
-            @mouseenter="item.lv3 && item.lv3.length ? openMega($event.currentTarget, item.lv1, item) : closeMegaSoon()"
-            @mouseleave="item.lv3 && item.lv3.length ? scheduleClose() : null"
-            @click="selectLeaf(item)"
+            @click="onItemClick($event, item)"
           >
             <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
             <span class="lbl">{{ item.label }}</span>
             <span class="right-actions">
-              <button class="star-btn" :class="{ starred: isFavorited(item.id) }" @click.stop="toggleFavorite({ id: item.id, label: item.label, path: item.lv1, icon: item.icon })" title="เพิ่มในรายการโปรด">
-                <svg viewBox="0 0 20 20" :fill="isFavorited(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
-              </button>
               <svg v-if="item.lv3 && item.lv3.length" class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
             </span>
           </div>
@@ -119,11 +113,6 @@
         >
           <svg class="ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" v-html="ICONS[item.icon] || ICONS.doc"></svg>
           <span class="lbl">{{ item.label }}</span>
-          <span class="right-actions">
-            <button class="star-btn" :class="{ starred: isFavorited(item.id) }" @click.stop="toggleFavorite({ id: item.id, label: item.label, path: item.lv1, icon: item.icon })" title="เพิ่มในรายการโปรด">
-              <svg viewBox="0 0 20 20" :fill="isFavorited(item.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
-            </button>
-          </span>
         </div>
       </div>
 
@@ -133,14 +122,31 @@
         class="mega-menu"
         :class="{ visible: megaVisible }"
         :style="{ top: megaTop + 'px' }"
-        @mouseenter="megaHovering = true; clearTimeout(closeTimer)"
-        @mouseleave="megaHovering = false; scheduleClose()"
       >
-        <div class="mega-head"><span class="dot"></span><span>{{ megaLv1 }}</span>&nbsp;/&nbsp;<b>{{ megaLv2 }}</b></div>
+        <div v-if="megaHighlight" class="mega-highlight-row">
+          <div
+            class="lv3-title lv3-title--btn"
+            @click="selectLeaf({ id: 'lv3-' + megaLv2 + '-' + megaHighlight.label, label: megaHighlight.label })"
+          >
+            {{ megaHighlight.label }}
+            <button class="mega-star-btn" :class="{ starred: isFavorited('lv3-' + megaLv2 + '-' + megaHighlight.label) }" @click.stop="toggleFavorite({ id: 'lv3-' + megaLv2 + '-' + megaHighlight.label, label: megaHighlight.label, path: megaLv1 + ' › ' + megaLv2, icon: megaParentIcon })">
+              <svg viewBox="0 0 20 20" :fill="isFavorited('lv3-' + megaLv2 + '-' + megaHighlight.label) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
+            </button>
+          </div>
+        </div>
         <div class="mega-body">
-          <div v-for="(lv3, i) in megaLv3" :key="i" class="mega-col" :class="{ leaf: !(lv3.lv4 && lv3.lv4.length) }">
-            <div class="lv3-title" @click="selectLeaf({ id: 'lv3-' + megaLv2 + '-' + lv3.label, label: lv3.label })">
-              <span class="dot"></span>{{ lv3.label }}
+          <div
+            v-for="(lv3, i) in megaGridItems"
+            :key="i"
+            class="mega-col"
+            :class="{ leaf: !(lv3.lv4 && lv3.lv4.length) }"
+          >
+            <div
+              class="lv3-title"
+              :class="{ 'lv3-title--btn': !(lv3.lv4 && lv3.lv4.length), 'lv3-title--label': lv3.lv4 && lv3.lv4.length }"
+              @click="!(lv3.lv4 && lv3.lv4.length) && selectLeaf({ id: 'lv3-' + megaLv2 + '-' + lv3.label, label: lv3.label })"
+            >
+              {{ lv3.label }}
               <button class="mega-star-btn" :class="{ starred: isFavorited('lv3-' + megaLv2 + '-' + lv3.label) }" @click.stop="toggleFavorite({ id: 'lv3-' + megaLv2 + '-' + lv3.label, label: lv3.label, path: megaLv1 + ' › ' + megaLv2, icon: megaParentIcon })">
                 <svg viewBox="0 0 20 20" :fill="isFavorited('lv3-' + megaLv2 + '-' + lv3.label) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
               </button>
@@ -151,7 +157,7 @@
               class="lv4-item"
               @click="selectLeaf({ id: 'lv4-' + lv3.label + '-' + l4, label: l4 })"
             >
-              <span class="dot"></span>{{ l4 }}
+              {{ l4 }}
               <button class="mega-star-btn lv4-star" :class="{ starred: isFavorited('lv4-' + lv3.label + '-' + l4) }" @click.stop="toggleFavorite({ id: 'lv4-' + lv3.label + '-' + l4, label: l4, path: megaLv2 + ' › ' + lv3.label, icon: megaParentIcon })">
                 <svg viewBox="0 0 20 20" :fill="isFavorited('lv4-' + lv3.label + '-' + l4) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
               </button>
@@ -166,8 +172,6 @@
         class="fav-panel"
         :class="{ visible: favPanelVisible }"
         :style="{ top: favPanelTop + 'px' }"
-        @mouseenter="favHovering = true; clearTimeout(favCloseTimer)"
-        @mouseleave="favHovering = false; scheduleFavClose()"
       >
         <div class="fav-panel-head">
           <svg viewBox="0 0 20 20" fill="#EE9F00" style="width:13px;height:13px;flex-shrink:0"><path d="M10 1.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L10 14.9l-5.2 2.8 1-5.9L1.5 7.7l5.9-.8L10 1.5z"/></svg>
@@ -402,7 +406,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 
 const ICONS = {
   doc: '<path d="M5 2h7l3 3v13a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M12 2v3h3"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="7" y1="13" x2="13" y2="13"/><line x1="7" y1="16" x2="11" y2="16"/>',
@@ -437,10 +441,10 @@ const DATA = [
   ] },
   { lv1: 'บัญชีการเงิน', items: [
     { id: 'ar', label: 'ลูกหนี้ AR', icon: 'text-ar', lv3: [
-      { label: 'ทะเบียนมิเตอร์', lv4: ['บันทึกมิเตอร์ประปา', 'บันทึกมิเตอร์ไฟ', 'บันทึกมิเตอร์ความเย็น'] },
-      { label: 'แจ้งหนี้', lv4: ['ใบแจ้งหนี้', 'คำนวณใบแจ้งหนี้', 'หนังสือยืนยันยอดค้าง'] },
       { label: 'ทวงถาม', lv4: ['หนังสือทวงถาม', 'คำนวณหนังสือทวงถาม', 'หนังสือทวงถามกำหนดเอง'] },
       { label: 'รับชำระ', lv4: ['ใบเสร็จ', 'ตรวจสอบเงินโอน', 'ใบรับฝากเงิน', 'ใบลดหนี้', 'ใบนำฝาก (Bank AR)', 'ตัดรับล่วงหน้าและเงินฝาก'] },
+      { label: 'ทะเบียนมิเตอร์', lv4: ['บันทึกมิเตอร์ประปา', 'บันทึกมิเตอร์ไฟ', 'บันทึกมิเตอร์ความเย็น'] },
+      { label: 'แจ้งหนี้', lv4: ['ใบแจ้งหนี้', 'คำนวณใบแจ้งหนี้', 'หนังสือยืนยันยอดค้าง'] },
       { label: 'คืนเงิน', lv4: ['คืนเงินรับล่วงหน้า', 'คืนเงินค้ำประกัน'] },
       { label: 'คีย์การ์ด', lv4: ['ทะเบียนคีย์การ์ด', 'รายงานคีย์การ์ด'] },
       { label: 'รายงานลูกหนี้' }
@@ -450,11 +454,11 @@ const DATA = [
       { label: 'ใบสั่งซื้อ PO' },
       { label: 'ใบรับสินค้า/ใบรับวางบิล' },
       { label: 'ใบเสร็จด้านจ่าย' },
-      { label: 'ใบตั้งเบิก', lv4: ['จัดการใบตั้งเบิก', 'รายงานใบตั้งเบิก', 'ตั้งค่าใบตั้งเบิก'] },
       { label: 'จ่ายชำระ' },
       { label: 'ภาษีหัก ณ ที่จ่าย' },
       { label: 'รายงานเจ้าหนี้' },
-      { label: 'รายงาน ภ.ง.ด.' }
+      { label: 'รายงาน ภ.ง.ด.' },
+      { label: 'ใบตั้งเบิก', lv4: ['จัดการใบตั้งเบิก', 'รายงานใบตั้งเบิก', 'ตั้งค่าใบตั้งเบิก'] }
     ] },
     { id: 'gl', label: 'บัญชี GL', icon: 'text-gl', lv3: [
       { label: 'เงินสดย่อย' },
@@ -466,6 +470,12 @@ const DATA = [
       { label: 'รายงานบัญชี' },
       { label: 'ทรัพย์สิน', lv4: ['ทะเบียนทรัพย์สิน', 'รายงานทรัพย์สิน'] },
       { label: 'งบประมาณ', lv4: ['ภาพรวมงบประมาณ', 'จัดการงบประมาณ', 'งบประมาณยกมา', 'รายงานงบประมาณ'] }
+    ] },
+    { id: 'invoice-create', label: 'สร้างใบแจ้งหนี้', icon: 'doc', lv3: [
+      { label: 'สร้างใบแจ้งหนี้' },
+      { label: 'รายรับ' },
+      { label: 'ชุดเรียกเก็บ' },
+      { label: 'คำนวณใบแจ้งหนี้' }
     ] }
   ] },
   { lv1: 'ตั้งค่าโครงการ', items: [
@@ -500,7 +510,7 @@ const flatItems = DATA.flatMap(group => group.items.map(item => ({ ...item, lv1:
 
 const SIDEBAR_SECTIONS = [
   flatItems.filter(i => ['overview', 'residents', 'ar', 'ap', 'gl'].includes(i.id)),
-  flatItems.filter(i => ['setting-finance', 'setting-project'].includes(i.id)),
+  flatItems.filter(i => ['invoice-create', 'setting-finance', 'setting-project'].includes(i.id)),
   flatItems.filter(i => ['help-contact', 'manual', 'requests'].includes(i.id)),
 ]
 
@@ -510,37 +520,40 @@ const breadcrumb = ['บัญชีการเงิน', 'ลูกหนี�
 const mode = ref('collapse') // 'collapse' | 'expand'
 const demoOpen = ref(false)
 const hovering = ref(false)
-const isRailExpanded = computed(() => mode.value === 'expand' || hovering.value || megaVisible.value || megaHovering.value || favPanelVisible.value || favHovering.value)
+const isRailExpanded = computed(() => mode.value === 'expand' || hovering.value || megaVisible.value || favPanelVisible.value)
 
 function onRailEnter() {
   if (mode.value === 'collapse') hovering.value = true
 }
 function onRailLeave() {
   if (mode.value === 'collapse') hovering.value = false
-  scheduleClose()
-  scheduleFavClose()
 }
 
 // ---- mega menu ----
+// Opening/closing is click-driven (not hover) so it reads clearly for senior users.
 const sidebarRef = ref(null)
 const megaRef = ref(null)
 const megaVisible = ref(false)
-const megaHovering = ref(false)
 const megaLv1 = ref('')
 const megaLv2 = ref('')
 const megaLv3 = ref([])
 const megaTop = ref(0)
 const openRowId = ref(null)
 const activeId = ref('overview')
-let closeTimer = null
+
+const megaHighlight = computed(() => {
+  const first = megaLv3.value[0]
+  if (first && !(first.lv4 && first.lv4.length) && first.label.includes('รายงาน')) return first
+  return null
+})
+const megaGridItems = computed(() => megaHighlight.value ? megaLv3.value.slice(1) : megaLv3.value)
 
 function openMega(rowEl, lv1Name, item) {
-  scheduleFavClose()
-  clearTimeout(closeTimer)
+  favPanelVisible.value = false
   openRowId.value = item.id
   megaLv1.value = lv1Name
   megaLv2.value = item.label
-  megaLv3.value = item.lv3
+  megaLv3.value = [...item.lv3].sort((a, b) => (b.label.includes('รายงาน') ? 1 : 0) - (a.label.includes('รายงาน') ? 1 : 0))
   megaVisible.value = true
   nextTick(() => {
     if (!sidebarRef.value || !rowEl) return
@@ -555,22 +568,25 @@ function openMega(rowEl, lv1Name, item) {
     })
   })
 }
-function scheduleClose() {
-  clearTimeout(closeTimer)
-  closeTimer = setTimeout(() => {
-    if (!megaHovering.value) {
-      megaVisible.value = false
-      openRowId.value = null
-    }
-  }, 160)
+function closeMega() {
+  megaVisible.value = false
+  openRowId.value = null
 }
-function closeMegaSoon() {
-  scheduleClose()
-  scheduleFavClose()
+function onItemClick(event, item) {
+  if (item.lv3 && item.lv3.length) {
+    if (openRowId.value === item.id && megaVisible.value) {
+      closeMega()
+    } else {
+      openMega(event.currentTarget, item.lv1, item)
+    }
+  } else {
+    selectLeaf(item)
+  }
 }
 function selectLeaf(item) {
   activeId.value = item.id
-  scheduleClose()
+  closeMega()
+  favPanelVisible.value = false
 }
 
 // ---- favorites ----
@@ -579,8 +595,6 @@ const favorites = ref([])
 const favPanelRef = ref(null)
 const favPanelVisible = ref(false)
 const favPanelTop = ref(0)
-const favHovering = ref(false)
-let favCloseTimer = null
 
 const favItems = computed(() => favorites.value)
 
@@ -605,9 +619,12 @@ const megaParentIcon = computed(() => {
   return 'doc'
 })
 
-function openFavPanel(rowEl) {
-  clearTimeout(favCloseTimer)
-  scheduleClose()
+function toggleFavPanel(rowEl) {
+  if (favPanelVisible.value) {
+    favPanelVisible.value = false
+    return
+  }
+  closeMega()
   favPanelVisible.value = true
   nextTick(() => {
     if (!sidebarRef.value || !rowEl) return
@@ -617,14 +634,14 @@ function openFavPanel(rowEl) {
   })
 }
 
-function scheduleFavClose() {
-  clearTimeout(favCloseTimer)
-  favCloseTimer = setTimeout(() => {
-    if (!favHovering.value) {
-      favPanelVisible.value = false
-    }
-  }, 160)
+function onDocumentClick(event) {
+  if (sidebarRef.value && !sidebarRef.value.contains(event.target)) {
+    closeMega()
+    favPanelVisible.value = false
+  }
 }
+onMounted(() => document.addEventListener('click', onDocumentClick))
+onUnmounted(() => document.removeEventListener('click', onDocumentClick))
 
 // ---- search ----
 const searchQuery = ref('')
@@ -1061,36 +1078,47 @@ function removeRow(idx) {
   transition: opacity .14s ease;
 }
 .mega-menu.visible { opacity: 1; pointer-events: auto; width: auto; }
-.mega-head {
-  display: flex; align-items: center; gap: 8px;
-  padding: 12px 20px; border-bottom: 1px solid var(--color-dividers, #E4E7ED);
-  font-size: 11px; color: var(--color-text-secondary, #585A5C); white-space: nowrap;
-  letter-spacing: 0.5px;
-}
-.mega-head b { color: var(--color-text-primary, #181819); font-size: 13px; font-weight: 700; margin-left: 2px; }
-.mega-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rail-accent); }
+.mega-highlight-row { padding: 14px 14px 0; }
 .mega-body {
-  display: grid; grid-template-columns: auto auto;
-  gap: 4px; padding: 14px;
+  display: grid; grid-template-columns: repeat(3, 200px);
+  gap: 8px; padding: 14px;
 }
-.mega-col { padding: 6px 10px 10px; }
-.mega-col .lv3-title {
+.mega-col { padding: 0; }
+.mega-col:not(.leaf) {
+  border: 1px solid var(--color-dividers, #E4E7ED);
+  border-radius: 16px;
+  background: #F5F9FF;
+  padding: 6px;
+}
+.lv3-title {
   display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700;
   color: var(--color-text-primary, #181819); padding: 6px 10px; white-space: nowrap;
-  cursor: pointer; border-radius: var(--radius-md, 6px);
-  transition: background .12s ease, color .12s ease;
+  border-radius: var(--radius-md, 6px);
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
 }
-.mega-col .lv3-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rail-lv3); flex-shrink: 0; }
-.mega-col .lv3-title:hover { color: var(--rail-accent); background: var(--rail-accent-soft); }
-.mega-col .lv4-item {
-  display: flex; align-items: center; gap: 7px; font-size: 14px;
+.lv3-title--btn {
+  cursor: pointer;
+  border: 1px solid var(--color-dividers, #E4E7ED);
+  border-radius: 12px;
+  background: #fff;
+  display: inline-flex;
+}
+.lv3-title--btn:hover { color: var(--rail-accent); background: var(--rail-accent-soft); border-color: var(--rail-accent); }
+.mega-col .lv3-title--btn { display: flex; width: 100%; }
+.mega-col .lv3-title--label {
+  font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
   color: var(--color-text-secondary, #585A5C);
-  padding: 6px 10px 6px 22px; border-radius: var(--radius-md, 6px); cursor: pointer; white-space: nowrap;
-  transition: background .12s ease, color .12s ease;
+  padding: 4px 10px 8px; margin-bottom: 4px;
 }
-.mega-col .lv4-item:hover { color: var(--rail-accent); background: var(--rail-accent-soft); }
-.mega-col .lv4-item .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--color-text-secondary, #585A5C); flex-shrink: 0; }
-.mega-col.leaf .lv3-title { cursor: pointer; }
+.mega-col .lv4-item {
+  display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700;
+  color: var(--color-text-primary, #181819);
+  background: #fff;
+  padding: 6px 10px; border: 1px solid var(--color-dividers, #E4E7ED); border-radius: 12px;
+  cursor: pointer; white-space: nowrap; margin-bottom: 4px;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.mega-col .lv4-item:hover { color: var(--rail-accent); background: var(--rail-accent-soft); border-color: var(--rail-accent); }
 
 .mega-star-btn {
   width: 20px; height: 20px; border: none; background: none;
