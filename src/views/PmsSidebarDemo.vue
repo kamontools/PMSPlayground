@@ -1155,7 +1155,7 @@ function removeRow(idx) {
 }
 .app-grid-btn svg { width: 16px; height: 16px; color: var(--color-primary-500, #1C70F7); }
 
-.page-content { padding: 24px 28px 60px; max-width: 1240px; }
+.page-content { padding: 24px 28px 60px; }
 
 .page-header-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
 .page-header-left { display: flex; align-items: center; gap: 12px; }
