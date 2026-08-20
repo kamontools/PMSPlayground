@@ -28,6 +28,21 @@
               🏠 รู้มั้ย ห้องราคาเท่าไหร่?
             </router-link>
           </li>
+          <li>
+            <router-link to="/prototype/check-template-switcher" class="nav-link" active-class="active">
+              🧾 ฟอร์มเช็ค: Template Switcher
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/prototype/auto-gl-receipt-posting" class="nav-link" active-class="active">
+              📒 บันทึกบัญชีอัตโนมัติ: ใบเสร็จ
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/prototype/self-service-onboarding" class="nav-link" active-class="active">
+              🚀 Self-service onboarding
+            </router-link>
+          </li>
         </ul>
       </div>
 

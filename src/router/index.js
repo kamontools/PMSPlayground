@@ -7,6 +7,9 @@ import PmsJuDrawer from '../views/PmsJuDrawer.vue'
 import RoomPriceQuiz from '../views/RoomPriceQuiz.vue'
 import PmsCloneTool from '../views/PmsCloneTool.vue'
 import PmsSidebarDemo from '../views/PmsSidebarDemo.vue'
+import CheckTemplateSwitcher from '../views/CheckTemplateSwitcher.vue'
+import AutoGlReceiptPosting from '../views/AutoGlReceiptPosting.vue'
+import PmsSelfServiceOnboarding from '../views/PmsSelfServiceOnboarding.vue'
 const routes = [
   {
     path: '/',
@@ -17,6 +20,21 @@ const routes = [
     path: '/prototype/pms-ju-drawer',
     name: 'PmsJuDrawer',
     component: PmsJuDrawer
+  },
+  {
+    path: '/prototype/check-template-switcher',
+    name: 'CheckTemplateSwitcher',
+    component: CheckTemplateSwitcher
+  },
+  {
+    path: '/prototype/auto-gl-receipt-posting',
+    name: 'AutoGlReceiptPosting',
+    component: AutoGlReceiptPosting
+  },
+  {
+    path: '/prototype/self-service-onboarding',
+    name: 'PmsSelfServiceOnboarding',
+    component: PmsSelfServiceOnboarding
   },
   {
     path: '/room-price-quiz',
