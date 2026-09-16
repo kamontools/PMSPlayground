@@ -197,6 +197,31 @@
       </div>
     </main>
 
+    <transition name="tax-toast-fade">
+      <div v-if="taxToastVisible" class="tax-toast" ref="taxToastRef">
+        <div class="tax-toast-orb" aria-hidden="true" />
+        <div class="tax-toast-card" ref="taxToastCardRef">
+          <div class="tax-toast-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="13" y2="17"/>
+            </svg>
+            <span class="tax-toast-icon-label">tax</span>
+          </div>
+          <div class="tax-toast-body">
+            <div class="tax-toast-title">ใกล้กำหนดยื่นภาษีแล้ว</div>
+            <div class="tax-toast-desc">วันที่ 7 ครบกำหนดยื่นภาษีหัก ณ ที่จ่าย ล่าช้ามีค่าปรับ<br />เตรียมเอกสารยื่นเลย</div>
+            <div class="tax-toast-actions">
+              <button type="button" class="tax-toast-btn tax-toast-btn-ghost" @click="taxToastVisible = false">ปิด</button>
+              <button type="button" class="tax-toast-btn tax-toast-btn-primary" @click="taxToastVisible = false">ไปเมนูรายงาน ภ.ง.ค.</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <aside ref="juDrawerRef" class="ju-drawer" :class="{ open: drawerOpen }">
       <div class="drawer-head">
         <span class="head-title">การแจ้งเตือน</span>
@@ -383,12 +408,23 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 
 const drawerOpen = ref(false)
 const juBtnRef = ref(null)
 const juDrawerRef = ref(null)
 const demoOpen = ref(false)
+const taxToastVisible = ref(true)
+const taxToastRef = ref(null)
+const taxToastCardRef = ref(null)
+
+function measureTaxToast() {
+  if (!taxToastRef.value || !taxToastCardRef.value) return
+  const w = taxToastCardRef.value.offsetWidth
+  const h = taxToastCardRef.value.offsetHeight
+  taxToastRef.value.style.setProperty('--toast-w', w + 'px')
+  taxToastRef.value.style.setProperty('--toast-h', h + 'px')
+}
 
 const demoStates = [
   { id: 'none',      label: 'ไม่มีแจ้งเตือน' },
@@ -649,9 +685,12 @@ function onDocumentClick(e) {
 
 onMounted(() => {
   document.addEventListener('click', onDocumentClick)
+  nextTick(measureTaxToast)
+  window.addEventListener('resize', measureTaxToast)
 })
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
+  window.removeEventListener('resize', measureTaxToast)
 })
 </script>
 
@@ -812,6 +851,122 @@ onUnmounted(() => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+/* ── Tax deadline toast ── */
+.tax-toast {
+  position: fixed;
+  top: 62px;
+  right: 20px;
+  z-index: 260;
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  --toast-w: 340px;
+  --toast-h: 140px;
+}
+.tax-toast-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff 0%, #fdf1de 60%, #fbe6c8 100%);
+  border: 1px solid rgba(240, 165, 0, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  font-family: var(--font, sans-serif);
+}
+.tax-toast-orb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 224, 160, 1) 0%, rgba(240, 165, 0, 0.95) 45%, rgba(240, 55, 55, 0.55) 72%, rgba(240, 55, 55, 0) 100%);
+  filter: blur(7px);
+  z-index: 0;
+  pointer-events: none;
+  offset-path: rect(0px var(--toast-w) var(--toast-h) 0px round 16px);
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  animation: tax-toast-orb-move 4s linear infinite;
+}
+@keyframes tax-toast-orb-move {
+  to { offset-distance: 100%; }
+}
+.tax-toast-icon {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--gray-200, #dde1e7);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tax-toast-icon svg {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  color: var(--gray-200, #dde1e7);
+}
+.tax-toast-icon-label {
+  position: relative;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 19px;
+  letter-spacing: -0.5px;
+  color: var(--gray-800, #1e2430);
+}
+.tax-toast-body { flex: 1; min-width: 0; }
+.tax-toast-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-800, #1e2430);
+  margin-bottom: 4px;
+}
+.tax-toast-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--gray-600, #5a6170);
+  margin-bottom: 12px;
+}
+.tax-toast-actions { display: flex; gap: 8px; }
+.tax-toast-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font, sans-serif);
+  transition: background .12s, border-color .12s;
+  white-space: nowrap;
+}
+.tax-toast-btn-ghost {
+  background: #fff;
+  border: 1px solid var(--gray-200, #dde1e7);
+  color: var(--gray-600, #5a6170);
+}
+.tax-toast-btn-ghost:hover { background: var(--gray-50, #f7f8fa); }
+.tax-toast-btn-primary {
+  background: var(--blue-600, #1a5faa);
+  color: #fff;
+}
+.tax-toast-btn-primary:hover { background: var(--blue-700, #154d8c); }
+
+.tax-toast-fade-enter-active, .tax-toast-fade-leave-active {
+  transition: opacity .2s ease, transform .2s ease;
+}
+.tax-toast-fade-enter-from, .tax-toast-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 .pms-ju-exit {
