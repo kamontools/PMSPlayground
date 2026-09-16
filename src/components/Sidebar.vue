@@ -43,6 +43,11 @@
               🚀 Self-service onboarding
             </router-link>
           </li>
+          <li>
+            <router-link to="/prototype/advance-payment" class="nav-link" active-class="active">
+              💸 เงินทดรองจ่าย (request → clearing)
+            </router-link>
+          </li>
         </ul>
       </div>
 

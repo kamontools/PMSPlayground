@@ -10,6 +10,7 @@ import PmsSidebarDemo from '../views/PmsSidebarDemo.vue'
 import CheckTemplateSwitcher from '../views/CheckTemplateSwitcher.vue'
 import AutoGlReceiptPosting from '../views/AutoGlReceiptPosting.vue'
 import PmsSelfServiceOnboarding from '../views/PmsSelfServiceOnboarding.vue'
+import AdvancePaymentDemo from '../views/AdvancePaymentDemo.vue'
 const routes = [
   {
     path: '/',
@@ -50,6 +51,11 @@ const routes = [
     path: '/prototype/pms-sidebar-demo',
     name: 'PmsSidebarDemo',
     component: PmsSidebarDemo
+  },
+  {
+    path: '/prototype/advance-payment',
+    name: 'AdvancePaymentDemo',
+    component: AdvancePaymentDemo
   },
   {
     path: '/migrate-permissions',
