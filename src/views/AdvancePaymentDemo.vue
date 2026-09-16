@@ -201,19 +201,21 @@
               </div>
             </div>
 
-            <div class="pca-form-grid pca-form-grid-1">
+            <div class="pca-form-grid pca-form-grid-3">
               <div class="pca-field">
                 <label>ผู้เบิก</label>
                 <input type="text" v-model="requestForm.payee" placeholder="ระบุชื่อผู้เบิก" />
               </div>
             </div>
 
-            <div class="pca-field">
-              <label>เอกสารประกอบ</label>
-              <button type="button" class="pca-btn pca-btn-primary pca-btn-sm" @click="showUploadToast">
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V4M6.5 7.5L10 4l3.5 3.5"/><path d="M4 13v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
-                อัปโหลดไฟล์
-              </button>
+            <div class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>เอกสารประกอบ</label>
+                <button type="button" class="pca-btn pca-btn-primary pca-btn-sm" @click="showUploadToast">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V4M6.5 7.5L10 4l3.5 3.5"/><path d="M4 13v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+                  อัปโหลดไฟล์
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1268,6 +1270,7 @@ function saveClearing() {
 .pca-form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
 
 .pca-field { display: flex; flex-direction: column; gap: 6px; }
+.pca-field > button { align-self: flex-start; width: auto; }
 .pca-field label { font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-secondary); }
 .pca-req { color: var(--color-error); margin-left: 2px; }
 .pca-field-label-row { display: flex; align-items: center; justify-content: space-between; }
