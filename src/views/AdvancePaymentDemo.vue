@@ -113,6 +113,7 @@
                 <tr>
                   <th>เลขที่เอกสาร</th>
                   <th>วันที่บันทึก</th>
+                  <th>วันที่ครบกำหนดเคลียร์</th>
                   <th>ผู้เบิก</th>
                   <th>คำอธิบาย</th>
                   <th>ชำระโดย</th>
@@ -124,11 +125,12 @@
               </thead>
               <tbody>
                 <tr v-if="requests.length === 0">
-                  <td colspan="9" class="pca-empty">ยังไม่มีรายการเงินทดรองจ่าย</td>
+                  <td colspan="10" class="pca-empty">ยังไม่มีรายการเงินทดรองจ่าย</td>
                 </tr>
-                <tr v-for="req in requests" :key="req.id">
+                <tr v-for="req in requests" :key="req.id" class="pca-row-clickable" @dblclick="openRequestDetail(req)" title="ดับเบิลคลิกเพื่อดูรายละเอียด">
                   <td class="pca-cell-strong">{{ req.docNo }}</td>
                   <td>{{ req.bookDate }}</td>
+                  <td>{{ req.dueDate }}</td>
                   <td>{{ req.payee }}</td>
                   <td>{{ req.description }}</td>
                   <td>{{ req.payMethod }}</td>
@@ -348,11 +350,7 @@
                     <textarea v-model="requestForm.pairedCheck.detail" rows="2" placeholder="ระบุรายละเอียดเช็ค"></textarea>
                   </div>
                 </div>
-                <div class="pca-form-grid pca-form-grid-3">
-                  <div class="pca-field">
-                    <label>เลขที่เอกสารชำระ/เลขที่เช็ค</label>
-                    <input type="text" v-model="requestForm.pairedCheck.paymentDocNo" placeholder="ระบุเลขที่เอกสาร" />
-                  </div>
+                <div class="pca-form-grid pca-form-grid-2">
                   <div class="pca-field">
                     <label>วันที่ชำระ</label>
                     <input type="text" v-model="requestForm.pairedCheck.paymentDate" placeholder="วว/ดด/ปปปป" />
@@ -419,6 +417,77 @@
           </div>
         </template>
 
+        <!-- ================= REQUEST DETAIL ================= -->
+        <template v-else-if="page === 'request-detail' && selectedRequestDetail">
+          <div class="pca-header-row">
+            <div class="pca-header-left">
+              <button type="button" class="pca-back-btn" @click="page = 'request-list'">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l-6 6 6 6"/></svg>
+              </button>
+              <h1 class="pca-title">รายละเอียดเงินทดรองจ่าย {{ selectedRequestDetail.docNo }}</h1>
+            </div>
+            <button type="button" class="pca-btn pca-btn-outline" @click="printVoucher">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="10" height="6"/><path d="M6 7V4h8v3M6 13v3h8v-3"/></svg>
+              พิมพ์ใบสำคัญจ่าย
+            </button>
+          </div>
+
+          <div class="pca-card">
+            <h2 class="pca-card-title">รายละเอียด</h2>
+            <div class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>เลขที่เอกสาร</label>
+                <input type="text" :value="selectedRequestDetail.docNo" disabled />
+              </div>
+              <div class="pca-field">
+                <label>วันที่บันทึก</label>
+                <input type="text" :value="selectedRequestDetail.bookDate" disabled />
+              </div>
+              <div class="pca-field">
+                <label>วันที่ครบกำหนดเคลียร์</label>
+                <input type="text" :value="selectedRequestDetail.dueDate" disabled />
+              </div>
+            </div>
+
+            <div class="pca-form-grid pca-form-grid-1">
+              <div class="pca-field">
+                <label>คำอธิบาย</label>
+                <textarea :value="selectedRequestDetail.description" rows="2" disabled></textarea>
+              </div>
+            </div>
+
+            <div class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>ผู้เบิก</label>
+                <input type="text" :value="selectedRequestDetail.payee" disabled />
+              </div>
+              <div class="pca-field">
+                <label>ชำระโดย</label>
+                <input type="text" :value="selectedRequestDetail.payMethod" disabled />
+              </div>
+              <div class="pca-field">
+                <label>สถานะ</label>
+                <div><span class="pca-status" :class="'pca-status--' + selectedRequestDetail.status">{{ statusLabel(selectedRequestDetail.status) }}</span></div>
+              </div>
+            </div>
+
+            <div class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>จำนวนเงิน</label>
+                <input type="text" :value="formatAmount(selectedRequestDetail.amount) + ' บาท'" disabled />
+              </div>
+              <div class="pca-field">
+                <label>เคลียร์แล้ว</label>
+                <input type="text" :value="formatAmount(selectedRequestDetail.clearedAmount) + ' บาท'" disabled />
+              </div>
+              <div class="pca-field">
+                <label>คงเหลือ</label>
+                <input type="text" :value="formatAmount(selectedRequestDetail.amount - selectedRequestDetail.clearedAmount) + ' บาท'" disabled />
+              </div>
+            </div>
+          </div>
+        </template>
+
         <!-- ================= CLEARING LIST ================= -->
         <template v-else-if="page === 'clearing-list'">
           <div class="pca-tabs">
@@ -446,13 +515,14 @@
                   <th class="pca-col-num">ยอดเคลียร์</th>
                   <th class="pca-col-num">คงเหลือ</th>
                   <th>สถานะ</th>
+                  <th class="pca-col-actions"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="clearings.length === 0">
-                  <td colspan="8" class="pca-empty">ยังไม่มีรายการเคลียร์เงินทดรองจ่าย</td>
+                  <td colspan="9" class="pca-empty">ยังไม่มีรายการเคลียร์เงินทดรองจ่าย</td>
                 </tr>
-                <tr v-for="clr in clearings" :key="clr.id">
+                <tr v-for="clr in clearings" :key="clr.id" class="pca-row-clickable" @dblclick="openClearingDetail(clr)" title="ดับเบิลคลิกเพื่อดูรายละเอียด">
                   <td class="pca-cell-strong">{{ clr.docNo }}</td>
                   <td>{{ clr.refDocNo }}</td>
                   <td>{{ clr.bookDate }}</td>
@@ -461,9 +531,120 @@
                   <td class="pca-col-num">{{ formatAmount(clr.clearedAmount) }}</td>
                   <td class="pca-col-num">{{ formatAmount(clr.remaining) }}</td>
                   <td><span class="pca-status" :class="'pca-status--' + clr.status">{{ statusLabel(clr.status) }}</span></td>
+                  <td class="pca-col-actions">
+                    <button type="button" class="pca-link-btn" @click="openClearingDetail(clr)">ดูรายละเอียด</button>
+                    <button v-if="clr.status !== 'cancelled'" type="button" class="pca-link-btn pca-link-btn-danger" @click="cancelClearing(clr)">ยกเลิก</button>
+                  </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </template>
+
+        <!-- ================= CLEARING DETAIL ================= -->
+        <template v-else-if="page === 'clearing-detail' && selectedClearingDetail">
+          <div class="pca-header-row">
+            <div class="pca-header-left">
+              <button type="button" class="pca-back-btn" @click="page = 'clearing-list'">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l-6 6 6 6"/></svg>
+              </button>
+              <h1 class="pca-title">รายละเอียดใบเคลียร์เงินทดรองจ่าย {{ selectedClearingDetail.docNo }}</h1>
+            </div>
+            <button
+              v-if="selectedClearingDetail.status !== 'cancelled'"
+              type="button"
+              class="pca-btn pca-btn-outline pca-btn-danger"
+              @click="cancelClearing(selectedClearingDetail)"
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M7.2 7.2l5.6 5.6"/></svg>
+              ยกเลิกใบเคลียร์เงินทดรองจ่าย
+            </button>
+          </div>
+
+          <div class="pca-card">
+            <h2 class="pca-card-title">รายละเอียด</h2>
+            <div class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>เลขที่เอกสาร</label>
+                <input type="text" :value="selectedClearingDetail.docNo" disabled />
+              </div>
+              <div class="pca-field">
+                <label>อ้างอิงจาก</label>
+                <input type="text" :value="selectedClearingDetail.refDocNo" disabled />
+              </div>
+              <div class="pca-field">
+                <label>สถานะ</label>
+                <div><span class="pca-status" :class="'pca-status--' + selectedClearingDetail.status">{{ statusLabel(selectedClearingDetail.status) }}</span></div>
+              </div>
+            </div>
+
+            <div class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>วันที่บันทึก</label>
+                <input type="text" :value="selectedClearingDetail.bookDate" disabled />
+              </div>
+              <div class="pca-field">
+                <label>วันที่ครบกำหนดเคลียร์</label>
+                <input type="text" :value="selectedClearingDetail.dueDate" disabled />
+              </div>
+            </div>
+
+            <div class="pca-form-grid pca-form-grid-1" v-if="selectedClearingDetail.note">
+              <div class="pca-field">
+                <label>หมายเหตุ</label>
+                <textarea :value="selectedClearingDetail.note" rows="2" disabled></textarea>
+              </div>
+            </div>
+
+            <template v-if="selectedClearingDetail.rows && selectedClearingDetail.rows.length">
+              <h2 class="pca-card-title" style="margin-top:8px">รายการค่าใช้จ่าย</h2>
+              <div class="pca-table-wrap">
+                <table class="pca-table">
+                  <thead>
+                    <tr>
+                      <th class="pca-col-num">ลำดับ</th>
+                      <th>รหัสรายจ่าย</th>
+                      <th>ชื่อรายจ่าย</th>
+                      <th>รายละเอียด</th>
+                      <th class="pca-col-num">จำนวนเงิน</th>
+                      <th>เอกสารอ้างอิง</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, idx) in selectedClearingDetail.rows" :key="row.id">
+                      <td class="pca-col-num">{{ idx + 1 }}</td>
+                      <td>{{ row.code }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.detail }}</td>
+                      <td class="pca-col-num">{{ formatAmount(row.amount) }}</td>
+                      <td>{{ row.docRef }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+
+            <div class="pca-form-grid pca-form-grid-3" style="margin-top:16px">
+              <div class="pca-field">
+                <label>ยอดเบิก</label>
+                <input type="text" :value="formatAmount(selectedClearingDetail.advanceAmount) + ' บาท'" disabled />
+              </div>
+              <div class="pca-field">
+                <label>ยอดเคลียร์</label>
+                <input type="text" :value="formatAmount(selectedClearingDetail.clearedAmount) + ' บาท'" disabled />
+              </div>
+              <div class="pca-field">
+                <label>คงเหลือ</label>
+                <input type="text" :value="formatAmount(selectedClearingDetail.remaining) + ' บาท'" disabled />
+              </div>
+            </div>
+
+            <div class="pca-form-grid pca-form-grid-3" v-if="selectedClearingDetail.payMethodLabel">
+              <div class="pca-field">
+                <label>ชำระโดย</label>
+                <input type="text" :value="selectedClearingDetail.payMethodLabel" disabled />
+              </div>
+            </div>
           </div>
         </template>
 
@@ -525,7 +706,7 @@
             </div>
 
             <div class="pca-charges-header">
-              <h2 class="pca-card-title" style="margin:0">รายการตั้งเบิก</h2>
+              <h2 class="pca-card-title" style="margin:0">รายการค่าใช้จ่าย</h2>
               <button type="button" class="pca-btn pca-btn-outline pca-btn-sm" @click="addClearingRow">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg>
                 เพิ่มรายการ
@@ -539,6 +720,7 @@
                     <th class="pca-col-num">ลำดับ</th>
                     <th>รหัสรายจ่าย</th>
                     <th>ชื่อรายจ่าย</th>
+                    <th>รายละเอียด</th>
                     <th class="pca-col-num">จำนวนเงิน</th>
                     <th>เอกสารอ้างอิง</th>
                     <th class="pca-col-actions"></th>
@@ -546,12 +728,13 @@
                 </thead>
                 <tbody>
                   <tr v-if="clearingRows.length === 0">
-                    <td colspan="6" class="pca-empty">ไม่มีรายการตั้งเบิก</td>
+                    <td colspan="7" class="pca-empty">ไม่มีรายการค่าใช้จ่าย</td>
                   </tr>
                   <tr v-for="(row, idx) in clearingRows" :key="row.id">
                     <td class="pca-col-num">{{ idx + 1 }}</td>
                     <td><input type="text" v-model="row.code" class="pca-table-input" placeholder="รหัส" /></td>
                     <td><input type="text" v-model="row.name" class="pca-table-input" placeholder="ชื่อรายจ่าย" /></td>
+                    <td><input type="text" v-model="row.detail" class="pca-table-input" maxlength="100" placeholder="รายละเอียด" /></td>
                     <td class="pca-col-num"><input type="number" v-model.number="row.amount" class="pca-table-input pca-table-input-num" placeholder="0.00" /></td>
                     <td><input type="text" v-model="row.docRef" class="pca-table-input" placeholder="เอกสารอ้างอิง" /></td>
                     <td class="pca-col-actions">
@@ -705,11 +888,7 @@
                     <textarea v-model="clearingForm.pairedCheck.detail" rows="2" placeholder="ระบุรายละเอียดเช็ค"></textarea>
                   </div>
                 </div>
-                <div class="pca-form-grid pca-form-grid-3">
-                  <div class="pca-field">
-                    <label>เลขที่เอกสารชำระ/เลขที่เช็ค</label>
-                    <input type="text" v-model="clearingForm.pairedCheck.paymentDocNo" placeholder="ระบุเลขที่เอกสาร" />
-                  </div>
+                <div class="pca-form-grid pca-form-grid-2">
                   <div class="pca-field">
                     <label>วันที่ชำระ</label>
                     <input type="text" v-model="clearingForm.pairedCheck.paymentDate" placeholder="วว/ดด/ปปปป" />
@@ -781,6 +960,143 @@
     <transition name="pca-toast-fade">
       <div v-if="toast" class="pca-toast">{{ toast }}</div>
     </transition>
+
+    <!-- ============ PAYMENT VOUCHER MODAL ============ -->
+    <transition name="pca-modal-fade">
+      <div v-if="voucherModalOpen && voucherData" class="pca-modal-overlay" @click.self="closeVoucherModal">
+        <div class="pca-modal-toolbar">
+          <span class="pca-modal-zoom-label">{{ Math.round(voucherZoom * 100) }}%</span>
+          <button type="button" class="pca-modal-tool-btn" title="ซูมออก" @click="zoomVoucher(-0.1)">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M6 8.5h5"/><path d="M16 16l-3.4-3.4"/></svg>
+          </button>
+          <button type="button" class="pca-modal-tool-btn" title="ซูมเข้า" @click="zoomVoucher(0.1)">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M8.5 6v5M6 8.5h5"/><path d="M16 16l-3.4-3.4"/></svg>
+          </button>
+          <button type="button" class="pca-modal-tool-btn pca-modal-close-btn" title="ปิด" @click="closeVoucherModal">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+          </button>
+        </div>
+
+        <div class="pca-modal-scroll">
+          <div class="pca-voucher-paper" :style="{ transform: 'scale(' + voucherZoom + ')' }">
+            <div class="pcv-head">
+              <div class="pcv-head-title">
+                <h2>ใบสำคัญจ่าย</h2>
+                <span>Payment Voucher</span>
+              </div>
+            </div>
+            <div class="pcv-original">(ต้นฉบับ/Original)</div>
+
+            <div class="pcv-meta-row">
+              <div class="pcv-meta-left">
+                <span class="pcv-meta-label">ผู้เบิก/Withdrawer:</span>
+                <span class="pcv-meta-value">{{ voucherData.payee }}</span>
+              </div>
+              <div class="pcv-meta-right">
+                <div><span class="pcv-meta-label">เลขที่/No:</span><span class="pcv-meta-value">{{ voucherData.docNo }}</span></div>
+                <div><span class="pcv-meta-label">วันที่บันทึก/Date:</span><span class="pcv-meta-value">{{ voucherData.bookDate }}</span></div>
+                <div><span class="pcv-meta-label">ครบกำหนด/Due date:</span><span class="pcv-meta-value">{{ voucherData.dueDate }}</span></div>
+              </div>
+            </div>
+
+            <table class="pcv-table">
+              <thead>
+                <tr>
+                  <th class="pcv-col-no">ลำดับ<br />No.</th>
+                  <th>เลขใบสำคัญจ่าย<br />Ref. No.</th>
+                  <th>วันที่บันทึก<br />Date</th>
+                  <th>รายละเอียด<br />Description</th>
+                  <th class="pcv-col-num">จำนวนหน่วย<br />Unit</th>
+                  <th class="pcv-col-num">จำนวนเงิน<br />Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="pcv-col-no pcv-row-tall">1</td>
+                  <td class="pcv-row-tall">{{ voucherData.docNo }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.bookDate }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.description }}</td>
+                  <td class="pcv-col-num pcv-row-tall">1</td>
+                  <td class="pcv-col-num pcv-row-tall">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4" class="pcv-total-text">{{ voucherData.amountText }}</td>
+                  <td class="pcv-total-label">จำนวนเงิน/Amount</td>
+                  <td class="pcv-col-num pcv-total-amount">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <table class="pcv-table pcv-account-table">
+              <thead>
+                <tr>
+                  <th class="pcv-col-code">รหัสบัญชี</th>
+                  <th>ชื่อบัญชี</th>
+                  <th class="pcv-col-num">เดบิต</th>
+                  <th class="pcv-col-num">เครดิต</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="pcv-col-code pcv-row-tall">{{ voucherData.debitAccount.code }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.debitAccount.name }} - {{ voucherData.description }} - #{{ voucherData.docNo }}</td>
+                  <td class="pcv-col-num pcv-row-tall">{{ formatAmount(voucherData.amount) }}</td>
+                  <td class="pcv-col-num pcv-row-tall">-</td>
+                </tr>
+                <tr>
+                  <td class="pcv-col-code pcv-row-tall">{{ voucherData.creditAccount.code }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.creditAccount.name }} - {{ voucherData.description }} - #{{ voucherData.docNo }}</td>
+                  <td class="pcv-col-num pcv-row-tall">-</td>
+                  <td class="pcv-col-num pcv-row-tall">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td class="pcv-total-label">รวม/Total</td>
+                  <td class="pcv-total-text">{{ voucherData.amountText }}</td>
+                  <td class="pcv-col-num pcv-total-amount">{{ formatAmount(voucherData.amount) }}</td>
+                  <td class="pcv-col-num pcv-total-amount">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="pcv-remarks">
+              <div class="pcv-remarks-title">หมายเหตุ/Remarks:</div>
+              <div>-</div>
+            </div>
+
+            <div class="pcv-conditions">
+              <div class="pcv-remarks-title">การชำระเงิน(Conditions of Payments)</div>
+              <div class="pcv-conditions-line">{{ voucherData.payMethod }}</div>
+              <div class="pcv-conditions-line">- จำนวน {{ formatAmount(voucherData.amount) }} บาท วันที่ {{ voucherData.bookDate }}</div>
+            </div>
+
+            <div class="pcv-signatures">
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้จัดทำ / Organizer</span>
+              </div>
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้ตรวจสอบ / Approver</span>
+              </div>
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้มีอำนาจลงนาม / Authorized</span>
+              </div>
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้รับเงิน / Receiver</span>
+              </div>
+            </div>
+
+            <div class="pcv-page-no">1/1</div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -805,17 +1121,58 @@ const PAYMENT_TYPES = ['เช็คสั่งจ่ายตรง', 'เช�
 const PAY_FROM_ACCOUNTS = ['ธนาคารกสิกรไทย ออมทรัพย์ 718-2-68929-1', 'ธนาคารไทยพาณิชย์ ออมทรัพย์ 111-2-22222-3']
 const CHECK_STATUSES = ['รอสั่งจ่าย', 'สั่งจ่ายแล้ว', 'ยกเลิก']
 
+// ---- Thai baht text ----
+const THAI_DIGIT_TEXT = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า']
+const THAI_PLACE_TEXT = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน']
+function thaiIntegerText(digits) {
+  let out = ''
+  const len = digits.length
+  if (len > 7) {
+    const cut = len - 6
+    out += thaiIntegerText(digits.slice(0, cut)) + 'ล้าน'
+    digits = digits.slice(cut)
+  }
+  const n = digits.length
+  for (let i = 0; i < n; i++) {
+    const d = Number(digits[i])
+    if (d === 0) continue
+    if (i === n - 1 && d === 1 && n > 1) out += 'เอ็ด'
+    else if (i === n - 2 && d === 2) out += 'ยี่'
+    else if (i === n - 2 && d === 1) out += ''
+    else out += THAI_DIGIT_TEXT[d]
+    out += THAI_PLACE_TEXT[n - i - 1]
+  }
+  return out || 'ศูนย์'
+}
+function numberToThaiBahtText(amount) {
+  const fixed = Number(amount || 0).toFixed(2)
+  const [intPart, decPart] = fixed.split('.')
+  let text = thaiIntegerText(intPart.replace(/^0+(?=\d)/, '')) + 'บาท'
+  text += decPart === '00' ? 'ถ้วน' : thaiIntegerText(decPart) + 'สตางค์'
+  return text
+}
+
+function creditAccountForMethod(payMethodLabel) {
+  if (/เช็ค/.test(payMethodLabel)) return { code: '2111-03', name: 'เช็คจ่ายลงวันที่ล่วงหน้า' }
+  if (/เงินสดย่อย/.test(payMethodLabel)) return { code: '1112-00', name: 'เงินสดย่อย' }
+  if (/รับเงินล่วงหน้า/.test(payMethodLabel)) return { code: '2113-00', name: 'เงินรับล่วงหน้า' }
+  if (/ธนาคาร|โอนเงิน/.test(payMethodLabel)) return { code: '1121-01', name: payMethodLabel }
+  return { code: '1111-00', name: 'เงินสด' }
+}
+
 const page = ref('request-list') // 'request-list' | 'request-create' | 'clearing-list' | 'clearing-create'
 
 const breadcrumbMap = {
   'request-list': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย'],
   'request-create': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย', 'สร้างเงินทดรองจ่าย'],
+  'request-detail': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย', 'รายละเอียดเงินทดรองจ่าย'],
   'clearing-list': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย', 'เคลียร์เงินทดรองจ่าย'],
-  'clearing-create': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย', 'เคลียร์เงินทดรองจ่าย', 'สร้างรายการเคลียร์']
+  'clearing-create': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย', 'เคลียร์เงินทดรองจ่าย', 'สร้างรายการเคลียร์'],
+  'clearing-detail': ['เจ้าหนี้ AP', 'ใบตั้งเบิก', 'เงินทดรองจ่าย', 'เคลียร์เงินทดรองจ่าย', 'รายละเอียดใบเคลียร์']
 }
 const breadcrumb = computed(() => breadcrumbMap[page.value])
 
-const STATUS_LABELS = { pending: 'รอเคลียร์', partial: 'เคลียร์บางส่วน', cleared: 'เคลียร์แล้ว' }
+const STATUS_LABELS = { pending: 'รอเคลียร์', partial: 'เคลียร์บางส่วน', cleared: 'เคลียร์แล้ว', cancelled: 'ยกเลิกแล้ว' }
 function statusLabel(status) {
   return STATUS_LABELS[status] || status
 }
@@ -829,8 +1186,18 @@ const requests = ref([
 
 let clearingSeq = 3
 const clearings = ref([
-  { id: 1, docNo: 'CLR-0001', refDocNo: 'ADV-0001', bookDate: '16/09/2569', dueDate: '15/09/2569', advanceAmount: 5000, clearedAmount: 5000, remaining: 0, status: 'cleared' },
-  { id: 2, docNo: 'CLR-0002', refDocNo: 'ADV-0003', bookDate: '18/09/2569', dueDate: '25/09/2569', advanceAmount: 8500, clearedAmount: 3000, remaining: 5500, status: 'partial' }
+  {
+    id: 1, docNo: 'CLR-0001', refDocNo: 'ADV-0001', bookDate: '16/09/2569', dueDate: '15/09/2569',
+    advanceAmount: 5000, clearedAmount: 5000, ownAmount: 5000, remaining: 0, status: 'cleared',
+    note: 'ค่าเดินทางไปดูงานโครงการ', payMethodLabel: 'เงินสด',
+    rows: [{ id: 1, code: 'ADV', name: 'ค่าเดินทางไปดูงานโครงการ', detail: '', amount: 5000, docRef: 'ADV-0001' }]
+  },
+  {
+    id: 2, docNo: 'CLR-0002', refDocNo: 'ADV-0003', bookDate: '18/09/2569', dueDate: '25/09/2569',
+    advanceAmount: 8500, clearedAmount: 3000, ownAmount: 3000, remaining: 5500, status: 'partial',
+    note: 'ค่าใช้จ่ายจัดกิจกรรมนิติบุคคล', payMethodLabel: 'เงินสด',
+    rows: [{ id: 2, code: 'ADV', name: 'ค่าใช้จ่ายจัดกิจกรรมนิติบุคคล', detail: '', amount: 3000, docRef: 'ADV-0003' }]
+  }
 ])
 
 const openRequests = computed(() => requests.value.filter(r => r.status !== 'cleared'))
@@ -854,6 +1221,44 @@ function showUploadToast() {
 function printCheck() {
   showToast('พิมพ์เช็ค (ตัวอย่างสาธิต)')
 }
+// ---- request detail ----
+const selectedRequestDetail = ref(null)
+function openRequestDetail(req) {
+  selectedRequestDetail.value = req
+  page.value = 'request-detail'
+}
+
+// ---- payment voucher modal ----
+const voucherModalOpen = ref(false)
+const voucherZoom = ref(0.9)
+
+const voucherData = computed(() => {
+  const req = selectedRequestDetail.value
+  if (!req) return null
+  return {
+    docNo: req.docNo,
+    payee: req.payee,
+    bookDate: req.bookDate,
+    dueDate: req.dueDate,
+    description: req.description,
+    amount: req.amount,
+    amountText: numberToThaiBahtText(req.amount),
+    payMethod: req.payMethod,
+    debitAccount: { code: '1153-01', name: 'เงินทดรองจ่าย' },
+    creditAccount: creditAccountForMethod(req.payMethod)
+  }
+})
+
+function printVoucher() {
+  voucherZoom.value = 0.9
+  voucherModalOpen.value = true
+}
+function closeVoucherModal() {
+  voucherModalOpen.value = false
+}
+function zoomVoucher(delta) {
+  voucherZoom.value = Math.min(1.6, Math.max(0.5, Math.round((voucherZoom.value + delta) * 100) / 100))
+}
 
 // ---- create request ----
 function blankRequestForm() {
@@ -872,7 +1277,6 @@ function blankRequestForm() {
     checkNewNo: '',
     pairedCheck: {
       detail: '',
-      paymentDocNo: '',
       paymentDate: '',
       dueDate: '',
       vendor: '',
@@ -933,7 +1337,7 @@ function saveRequest() {
 }
 
 // ---- create clearing ----
-let clearingRowSeq = 1
+let clearingRowSeq = 3
 function blankClearingForm() {
   return {
     refId: '',
@@ -950,7 +1354,6 @@ function blankClearingForm() {
     checkNewNo: '',
     pairedCheck: {
       detail: '',
-      paymentDocNo: '',
       paymentDate: '',
       dueDate: '',
       vendor: '',
@@ -1012,12 +1415,12 @@ function onRefChange() {
   clearingForm.value.dueDate = req.dueDate
   clearingForm.value.note = req.description
   clearingRows.value = [
-    { id: clearingRowSeq++, code: 'ADV', name: req.description, amount: req.amount - req.clearedAmount, docRef: req.docNo }
+    { id: clearingRowSeq++, code: 'ADV', name: req.description, detail: '', amount: req.amount - req.clearedAmount, docRef: req.docNo }
   ]
 }
 
 function addClearingRow() {
-  clearingRows.value.push({ id: clearingRowSeq++, code: '', name: '', amount: 0, docRef: '' })
+  clearingRows.value.push({ id: clearingRowSeq++, code: '', name: '', detail: '', amount: 0, docRef: '' })
 }
 function removeClearingRow(idx) {
   clearingRows.value.splice(idx, 1)
@@ -1027,6 +1430,7 @@ function saveClearing() {
   const req = selectedRequest.value
   if (!req) return
   const total = clearingTotal.value
+  const payMethodLabel = PAY_METHODS.find(m => m.value === clearingForm.value.payMethod)?.label || clearingForm.value.payMethod
   clearings.value.push({
     id: clearingSeq,
     docNo: 'CLR-' + String(clearingSeq).padStart(4, '0'),
@@ -1035,8 +1439,12 @@ function saveClearing() {
     dueDate: clearingForm.value.dueDate,
     advanceAmount: req.amount,
     clearedAmount: req.clearedAmount + total,
+    ownAmount: total,
     remaining: req.amount - (req.clearedAmount + total),
-    status: (req.clearedAmount + total) >= req.amount ? 'cleared' : 'partial'
+    status: (req.clearedAmount + total) >= req.amount ? 'cleared' : 'partial',
+    note: clearingForm.value.note,
+    payMethodLabel,
+    rows: clearingRows.value.map(r => ({ ...r }))
   })
   clearingSeq++
 
@@ -1045,6 +1453,24 @@ function saveClearing() {
 
   showToast('บันทึกการเคลียร์เงินทดรองจ่ายเรียบร้อยแล้ว')
   page.value = 'clearing-list'
+}
+
+// ---- clearing detail ----
+const selectedClearingDetail = ref(null)
+function openClearingDetail(clr) {
+  selectedClearingDetail.value = clr
+  page.value = 'clearing-detail'
+}
+
+function cancelClearing(clr) {
+  if (clr.status === 'cancelled') return
+  const req = requests.value.find(r => r.docNo === clr.refDocNo)
+  if (req) {
+    req.clearedAmount = Math.max(0, req.clearedAmount - (clr.ownAmount ?? clr.clearedAmount))
+    req.status = req.clearedAmount >= req.amount ? 'cleared' : (req.clearedAmount > 0 ? 'partial' : 'pending')
+  }
+  clr.status = 'cancelled'
+  showToast('ยกเลิกใบเคลียร์เงินทดรองจ่ายเรียบร้อยแล้ว')
 }
 </script>
 
@@ -1381,7 +1807,14 @@ function saveClearing() {
   padding: 4px 6px;
 }
 .pca-link-btn:hover { text-decoration: underline; }
+.pca-link-btn-danger { color: var(--color-error); }
 .pca-muted-text { font-size: var(--font-size-xs); color: var(--color-text-placeholder); }
+
+.pca-row-clickable { cursor: pointer; }
+.pca-row-clickable:hover { background: var(--color-disabled-bg); }
+
+.pca-btn-danger { border-color: var(--color-error); color: var(--color-error); }
+.pca-btn-danger:hover:not(:disabled) { background: var(--color-error-bg); }
 
 .pca-status {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1392,6 +1825,7 @@ function saveClearing() {
 .pca-status--pending { background: var(--color-attention-bg); color: var(--color-attention); }
 .pca-status--partial { background: var(--color-primary-200); color: var(--color-primary-click); }
 .pca-status--cleared { background: var(--color-success-bg); color: var(--color-success); }
+.pca-status--cancelled { background: var(--color-disabled-bg); color: var(--color-text-tertiary); }
 
 .pca-toast {
   position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
@@ -1401,6 +1835,94 @@ function saveClearing() {
 }
 .pca-toast-fade-enter-active, .pca-toast-fade-leave-active { transition: opacity .2s ease; }
 .pca-toast-fade-enter-from, .pca-toast-fade-leave-to { opacity: 0; }
+
+/* ---------- PAYMENT VOUCHER MODAL ---------- */
+.pca-modal-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(20, 24, 32, .6);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 0 40px;
+  overflow: hidden;
+}
+.pca-modal-fade-enter-active, .pca-modal-fade-leave-active { transition: opacity .18s ease; }
+.pca-modal-fade-enter-from, .pca-modal-fade-leave-to { opacity: 0; }
+
+.pca-modal-toolbar {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 6px 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+.pca-modal-zoom-label {
+  font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-tertiary);
+  padding: 0 8px; min-width: 46px; text-align: center;
+}
+.pca-modal-tool-btn {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-dividers); background: var(--color-white);
+  color: var(--color-text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pca-modal-tool-btn svg { width: 17px; height: 17px; }
+.pca-modal-tool-btn:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); }
+.pca-modal-close-btn:hover { border-color: var(--color-error); color: var(--color-error); background: var(--color-error-bg); }
+
+.pca-modal-scroll {
+  flex: 1; width: 100%;
+  overflow: auto;
+  display: flex; justify-content: center;
+}
+
+.pca-voucher-paper {
+  flex-shrink: 0;
+  width: 820px; min-height: 1160px;
+  background: var(--color-white);
+  color: #1a1a1a;
+  padding: 56px 64px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  transform-origin: top center;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 auto 40px;
+}
+
+.pcv-head { text-align: right; }
+.pcv-head-title h2 { font-size: 26px; margin: 0; }
+.pcv-head-title span { font-size: 18px; color: #333; }
+.pcv-original { text-align: right; margin-top: 10px; color: #333; }
+
+.pcv-meta-row { display: flex; justify-content: space-between; gap: 24px; margin-top: 28px; }
+.pcv-meta-left, .pcv-meta-right { display: flex; flex-direction: column; gap: 6px; }
+.pcv-meta-right > div { display: flex; gap: 8px; }
+.pcv-meta-label { font-weight: 700; }
+
+.pcv-table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 12.5px; }
+.pcv-table th, .pcv-table td {
+  border: 1px solid #333; padding: 8px 10px; text-align: left; vertical-align: top;
+}
+.pcv-table th { font-weight: 700; background: #fafafa; }
+.pcv-col-no { width: 56px; text-align: center; }
+.pcv-col-num { text-align: right; }
+.pcv-col-code { width: 90px; }
+.pcv-row-tall { height: 90px; }
+.pcv-total-text { font-weight: 700; text-align: center; }
+.pcv-total-label { font-weight: 700; }
+.pcv-total-amount { font-weight: 700; }
+
+.pcv-account-table { margin-top: 20px; }
+
+.pcv-remarks, .pcv-conditions { margin-top: 20px; }
+.pcv-remarks-title { font-weight: 700; }
+.pcv-conditions-line { margin-top: 4px; padding-left: 12px; }
+
+.pcv-signatures { display: flex; justify-content: space-between; gap: 16px; margin-top: 72px; }
+.pcv-sig-col { flex: 1; text-align: center; font-size: 12.5px; }
+.pcv-sig-line { border-bottom: 1px dotted #555; height: 36px; }
+
+.pcv-page-no { text-align: right; margin-top: 32px; color: #666; font-size: 12px; }
 
 @media (max-width: 900px) {
   .pca-sidebar { display: none; }
