@@ -44,6 +44,11 @@
             </router-link>
           </li>
           <li>
+            <router-link to="/prototype/self-onboard-wizard" class="nav-link" active-class="active">
+              🧭 Self-onboard: ตั้งค่าโครงการ
+            </router-link>
+          </li>
+          <li>
             <router-link to="/prototype/advance-payment" class="nav-link" active-class="active">
               💸 เงินทดรองจ่าย (request → clearing)
             </router-link>

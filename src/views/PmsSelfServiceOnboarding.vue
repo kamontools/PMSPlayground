@@ -9,6 +9,8 @@
         <a class="navpill" href="#persona">Persona</a>
         <a class="navpill" href="#journey">As-is vs to-be</a>
         <a class="navpill" href="#indepth">To-be in-depth</a>
+        <span class="sso-navdivider"></span>
+        <router-link class="navpill" to="/prototype/self-onboard-wizard">🧭 ลองใช้ prototype</router-link>
       </div>
     </nav>
 
@@ -239,6 +241,14 @@
         </div>
 
         <div class="note">รายละเอียด user story ทั้งหมด (~26 stories, ~139 pts), platform capability ที่คร่อมทุก wave, และ story map ฉบับเต็มอยู่ในเอกสาร epic backlog / story map ที่ทำไว้ก่อนหน้านี้ในโปรเจกต์</div>
+
+        <div class="try-cta">
+          <div>
+            <h3>ลองใช้ prototype</h3>
+            <p>หน้าแนะนำ platform → ตั้งค่าโครงการ 4 ขั้น (ทั่วไป · AR · GL · AP) พร้อมติดตาม progress</p>
+          </div>
+          <router-link class="try-btn" to="/prototype/self-onboard-wizard">🧭 เปิด prototype →</router-link>
+        </div>
       </div>
     </section>
 
@@ -268,6 +278,11 @@
 .sso-page .navpill-wrap{ max-width:1180px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; gap:6px; overflow-x:auto; background:var(--overlay); border-radius:14px; margin-top:14px; margin-bottom:14px; }
 .sso-page .navpill{ font-size:13px; font-weight:500; color:var(--t3); padding:8px 16px; border-radius:10px; text-decoration:none; white-space:nowrap; }
 .sso-page .navpill:hover{ background:rgba(255,255,255,.5); color:var(--t2); }
+.sso-page .try-cta{ display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-top:28px; padding:22px 26px; background:#fff; border:1.5px solid var(--blue100); border-radius:20px; box-shadow:var(--shadow-sm); }
+.sso-page .try-cta h3{ font-size:17px; font-weight:600; }
+.sso-page .try-cta p{ margin:4px 0 0; font-size:13.5px; color:var(--t3); }
+.sso-page .try-btn{ font:inherit; font-size:15px; font-weight:600; padding:12px 22px; border-radius:12px; border:none; background:var(--blue); color:#fff; cursor:pointer; text-decoration:none; }
+.sso-page .try-btn:hover{ background:var(--blue600); }
 .sso-page .sso-exit{ font-size:13px; font-weight:500; color:var(--t3); padding:8px 16px; text-decoration:none; white-space:nowrap; }
 .sso-page .sso-exit:hover{ color:var(--blue); }
 .sso-page .sso-navdivider{ width:1px; height:18px; background:var(--bl); flex-shrink:0; margin:0 4px; }
