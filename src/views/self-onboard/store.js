@@ -106,6 +106,86 @@ export const ACCOUNT_TYPES = {
   asset: 'สินทรัพย์', liability: 'หนี้สิน', equity: 'ทุน', income: 'รายได้', expense: 'ค่าใช้จ่าย',
 }
 
+// Finance setup (AR/GL/AP) is shown as one combined topic on the overview page
+export const FINANCE_SECTIONS = SECTIONS.filter(s => s.key !== 'general')
+export const FINANCE_KEYS = new Set(FINANCE_SECTIONS.flatMap(s => s.items.map(i => i.key)))
+
+export const INCOME_PRESETS = [
+  { name: 'เงินกองทุน', rateType: 'area', rate: 0 },
+  { name: 'ค่าเก็บขยะ', rateType: 'fixed', rate: 0 },
+  { name: 'ค่าบัตรผ่านเข้า-ออก', rateType: 'fixed', rate: 0 },
+  { name: 'ค่าเช่าพื้นที่ส่วนกลาง', rateType: 'fixed', rate: 0 },
+]
+export const EXPENSE_PRESETS = ['ค่าน้ำประปาส่วนกลาง', 'ค่าบริหารจัดการ', 'ค่าเบี้ยประกันภัยอาคาร', 'ค่าสอบบัญชี']
+export const DEFAULT_FAVORITE_PICKS = ['1111-00', '1112-00', '1130-00', '2110-00', '4101-00']
+
+// Quick-setup templates: pick one to prefill AR/GL/AP, still editable at every step afterward
+export const TEMPLATES = {
+  basic: {
+    label: 'Basic', mins: 10,
+    desc: 'เรียกเก็บค่าส่วนกลางอย่างเดียว เหมาะกับโครงการเล็กที่ยังไม่มีค่าใช้จ่ายซับซ้อน',
+    incomes: [
+      { code: 'R01', name: 'ค่าส่วนกลาง', rateType: 'area', rate: 35 },
+    ],
+    billSets: [
+      { name: 'ชุดแจ้งหนี้รายเดือน', freq: 'monthly', incomes: ['R01'] },
+    ],
+    penalty: { none: true, type: 'percent', value: 12, graceDays: 0, stepAfter: 6, stepValue: 20 },
+    expenses: [
+      { code: 'E01', name: 'ค่ารักษาความปลอดภัย' },
+      { code: 'E02', name: 'ค่าทำความสะอาด' },
+      { code: 'E03', name: 'ค่าไฟฟ้าส่วนกลาง' },
+    ],
+    policy: { basis: 'accrual', revenue: 'invoice', advance: 'liability', wht: true },
+  },
+  standard: {
+    label: 'Standard', mins: 20, recommended: true,
+    desc: 'ค่าส่วนกลาง + ค่าน้ำตามมิเตอร์ + ที่จอดรถคันที่สอง พร้อมค่าปรับชำระล่าช้า เหมาะกับโครงการทั่วไป',
+    incomes: [
+      { code: 'R01', name: 'ค่าส่วนกลาง', rateType: 'area', rate: 35 },
+      { code: 'R02', name: 'ค่าน้ำประปา', rateType: 'meter', rate: 18 },
+      { code: 'R03', name: 'ค่าที่จอดรถ (คันที่ 2)', rateType: 'fixed', rate: 500 },
+    ],
+    billSets: [
+      { name: 'ชุดแจ้งหนี้รายเดือน', freq: 'monthly', incomes: ['R01', 'R02', 'R03'] },
+    ],
+    penalty: { none: false, type: 'percent', value: 12, graceDays: 0, stepAfter: 6, stepValue: 20 },
+    expenses: [
+      { code: 'E01', name: 'ค่ารักษาความปลอดภัย' },
+      { code: 'E02', name: 'ค่าทำความสะอาด' },
+      { code: 'E03', name: 'ค่าไฟฟ้าส่วนกลาง' },
+      { code: 'E04', name: 'ค่าซ่อมแซมบำรุงรักษา' },
+    ],
+    policy: { basis: 'accrual', revenue: 'invoice', advance: 'liability', wht: true },
+  },
+  advanced: {
+    label: 'Advanced', mins: 40,
+    desc: 'ครบทุกรายรับ-รายจ่าย พร้อมเงินกองทุน ค่าปรับขั้นบันได และรอบเรียกเก็บรายปีแยกต่างหาก เหมาะกับโครงการขนาดใหญ่',
+    incomes: [
+      { code: 'R01', name: 'ค่าส่วนกลาง', rateType: 'area', rate: 35 },
+      { code: 'R02', name: 'ค่าน้ำประปา', rateType: 'meter', rate: 18 },
+      { code: 'R03', name: 'ค่าที่จอดรถ (คันที่ 2)', rateType: 'fixed', rate: 500 },
+      { code: 'R04', name: 'เงินกองทุน', rateType: 'area', rate: 5 },
+      { code: 'R05', name: 'ค่าเก็บขยะ', rateType: 'fixed', rate: 50 },
+    ],
+    billSets: [
+      { name: 'ชุดแจ้งหนี้รายเดือน', freq: 'monthly', incomes: ['R01', 'R02', 'R03', 'R05'] },
+      { name: 'ชุดแจ้งหนี้รายปี', freq: 'yearly', incomes: ['R04'] },
+    ],
+    penalty: { none: false, type: 'step', value: 12, graceDays: 0, stepAfter: 6, stepValue: 20 },
+    expenses: [
+      { code: 'E01', name: 'ค่ารักษาความปลอดภัย' },
+      { code: 'E02', name: 'ค่าทำความสะอาด' },
+      { code: 'E03', name: 'ค่าไฟฟ้าส่วนกลาง' },
+      { code: 'E04', name: 'ค่าน้ำประปาส่วนกลาง' },
+      { code: 'E05', name: 'ค่าซ่อมแซมบำรุงรักษา' },
+      { code: 'E06', name: 'ค่าบริหารจัดการ' },
+      { code: 'E07', name: 'ค่าเบี้ยประกันภัยอาคาร' },
+    ],
+    policy: { basis: 'accrual', revenue: 'invoice', advance: 'liability', wht: true },
+  },
+}
+
 function defaults() {
   return {
     started: false,
@@ -151,6 +231,7 @@ function defaults() {
     incomeMap: {},
     expenseMap: { apAccount: '2110-00', map: {} },
     favorites: [],
+    finance: { template: null },
   }
 }
 
@@ -182,6 +263,36 @@ export function resetState() {
 let keySeq = state.coa.accounts.reduce((m, a) => Math.max(m, a._k || 0), 0)
 state.coa.accounts.forEach(a => { if (!a._k) a._k = ++keySeq })
 export function withKey(a) { return { ...a, _k: ++keySeq } }
+
+// Prefill AR/GL/AP from a quick-setup template — every step is still editable afterward.
+// Doesn't touch `visited`, so steps only count as done once the customer actually walks through them.
+export function applyTemplate(level) {
+  const t = TEMPLATES[level]
+  if (!t) return
+  state.incomes = t.incomes.map(i => ({ ...i }))
+  state.unitRules = {
+    mode: 'rules',
+    rules: [{ id: 1, from: 1, to: Number(state.general.units) || 1, incomes: t.incomes.filter(i => i.rateType !== 'fixed').map(i => i.code) }],
+    importResult: null,
+  }
+  state.billSets = t.billSets.map((b, i) => ({ id: i + 1, name: b.name, freq: b.freq, incomes: [...b.incomes] }))
+  state.penalty = { ...t.penalty }
+  state.expenses = t.expenses.map(e => ({ ...e }))
+  state.policy = { ...t.policy, confirmed: false }
+  state.coa = { source: 'preset', accounts: PRESET_COA.map(withKey), importResult: null }
+
+  state.incomeMap = {}
+  t.incomes.forEach(i => {
+    state.incomeMap[i.code] = { rev: suggestAccount(i.name, '4', '4190-00'), ar: suggestAccount(i.name, '113', '1132-00') }
+  })
+  state.expenseMap = { apAccount: '2110-00', map: {} }
+  t.expenses.forEach(e => {
+    state.expenseMap.map[e.code] = suggestAccount(e.name, '5', '5190-00')
+  })
+  state.favorites = DEFAULT_FAVORITE_PICKS.filter(c => state.coa.accounts.some(a => a.code === c))
+
+  state.finance.template = level
+}
 
 // Demo mode: a fully configured sample project to explore — fictional data only
 export function loadDemo() {
@@ -217,6 +328,7 @@ export function loadDemo() {
     },
     expenseMap: { apAccount: '2110-00', map: { E01: '5101-00', E02: '5102-00', E03: '5103-00', E04: '5105-00' } },
     favorites: ['1111-00', '1112-00', '1130-00', '2110-00', '4101-00'],
+    finance: { template: 'standard' },
   })
   Object.assign(state, d)
 }
@@ -287,6 +399,9 @@ export const progressPercent = computed(() => Math.round((doneCount.value / ALL_
 export function sectionDone(sec) {
   return sec.items.filter(i => isDone(i.key)).length
 }
+
+export const unmappedIncomes = computed(() => state.incomes.filter(i => !(state.incomeMap[i.code]?.rev && state.incomeMap[i.code]?.ar)))
+export const unmappedExpenses = computed(() => state.expenses.filter(e => !state.expenseMap.map[e.code]))
 
 // ── Account helpers ──────────────────────────────────────────────
 export function accountName(code) {

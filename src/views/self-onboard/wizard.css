@@ -66,6 +66,7 @@
 
 .wz-progress{ height:8px; background:var(--overlay); border-radius:9999px; overflow:hidden; }
 .wz-progress > div{ height:100%; background:var(--blue); border-radius:9999px; transition:width .35s ease; }
+.wz-progress.sm{ height:5px; }
 
 .wz-toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:var(--t1); color:#fff; padding:11px 20px; border-radius:12px; font-size:14px; box-shadow:var(--shadow-md); z-index:50; max-width:calc(100vw - 32px); }
 .wz-toast-fade-enter-active, .wz-toast-fade-leave-active{ transition:opacity .2s, transform .2s; }

@@ -1,71 +1,75 @@
 <template>
   <div class="wz-wrap st">
-    <!-- Demo banner -->
-    <div v-if="state.demo" class="wz-callout info demo-bar">
-      <span>🎭</span>
-      <span><b>โหมด demo</b> — โครงการตัวอย่างที่ตั้งค่าครบแล้ว ลองกดดูได้ทุกขั้น ไม่มีผลกับข้อมูลจริง</span>
-      <button class="wz-btn sm primary" @click="exitDemo">ออกจาก demo เริ่มตั้งค่าจริง</button>
-    </div>
-
-    <!-- Welcome + overall progress -->
-    <div class="acc-welcome wz-card">
-      <div class="acc-welcome-row">
-        <h2>ยินดีต้อนรับ{{ state.general.name ? ` ${state.general.name}` : '' }} มาเริ่มตั้งค่ากันเลย!</h2>
-        <div class="acc-welcome-actions">
-          <button class="wz-btn sm" @click="emit('intro')">ดูคู่มือการตั้งค่า</button>
-          <button class="wz-btn sm ghost danger" @click="onReset">เริ่มใหม่</button>
-        </div>
+    <template v-if="view === 'overview'">
+      <!-- Demo banner -->
+      <div v-if="state.demo" class="wz-callout info demo-bar">
+        <span>🎭</span>
+        <span><b>โหมด demo</b> — โครงการตัวอย่างที่ตั้งค่าครบแล้ว ลองกดดูได้ทุกขั้น ไม่มีผลกับข้อมูลจริง</span>
+        <button class="wz-btn sm primary" @click="exitDemo">ออกจาก demo เริ่มตั้งค่าจริง</button>
       </div>
-      <div class="acc-progress">
-        <div class="wz-progress"><div :style="{ width: progressPercent + '%' }"></div></div>
-        <div class="acc-progress-label">
-          <span>{{ doneCount }}/{{ ALL_ITEMS.length }} เสร็จแล้ว · {{ progressPercent }}%</span>
-          <span v-if="savedAt" class="st-saved">✓ บันทึกอัตโนมัติ {{ fmtTimeICT(savedAt) }} น.</span>
-          <span v-if="state.live" class="wz-tag ok">ใช้งานจริงแล้ว</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Checklist accordion -->
-    <div v-for="s in SECTIONS" :key="s.key" class="acc-card wz-card">
-      <button type="button" class="acc-head" @click="toggleSection(s.key)">
-        <svg class="acc-chev" :class="{ open: isOpen(s.key) }" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
-        <div class="acc-head-text">
-          <b>{{ s.no }}. {{ s.title }}</b>
-          <span>{{ s.sub }} · {{ sectionDone(s) }}/{{ s.items.length }} เสร็จแล้ว · ~{{ s.mins }} นาที</span>
-        </div>
-        <span v-if="sectionDone(s) === s.items.length" class="wz-tag ok">เสร็จแล้ว</span>
-      </button>
-      <div v-show="isOpen(s.key)" class="acc-body">
-        <div v-for="it in s.items" :key="it.key" class="acc-row" :class="{ active: state.current === it.key }">
-          <span class="acc-dot" :class="itemStatus(it.key)">
-            <svg v-if="isDone(it.key)" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10l3.5 3.5L15 7"/></svg>
-          </span>
-          <div class="acc-row-text">
-            <b>{{ it.title }}</b>
-            <span>{{ DESC[it.key] }}</span>
+      <!-- Welcome + overall progress -->
+      <div class="acc-welcome wz-card">
+        <div class="acc-welcome-row">
+          <h2>ยินดีต้อนรับ{{ state.general.name ? ` ${state.general.name}` : '' }} มาเริ่มตั้งค่ากันเลย!</h2>
+          <div class="acc-welcome-actions">
+            <button class="wz-btn sm" @click="emit('intro')">ดูคู่มือการตั้งค่า</button>
+            <button class="wz-btn sm ghost danger" @click="onReset">เริ่มใหม่</button>
           </div>
-          <button type="button" class="wz-btn sm" :class="{ primary: !isDone(it.key) && state.current !== it.key }" @click="go(it.key)">
-            {{ state.current === it.key ? 'กำลังแก้ไข' : isDone(it.key) ? 'แก้ไข' : 'เริ่มกรอก' }}
-          </button>
+        </div>
+        <div class="acc-progress">
+          <div class="wz-progress"><div :style="{ width: progressPercent + '%' }"></div></div>
+          <div class="acc-progress-label">
+            <span>{{ doneCount }}/{{ ALL_ITEMS.length }} เสร็จแล้ว · {{ progressPercent }}%</span>
+            <span v-if="savedAt" class="st-saved">✓ บันทึกอัตโนมัติ {{ fmtTimeICT(savedAt) }} น.</span>
+            <span v-if="state.live" class="wz-tag ok">ใช้งานจริงแล้ว</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Final review row -->
-    <button type="button" class="acc-card acc-review wz-card" :class="{ active: state.current === 'review' }" @click="go('review')">
-      <span class="acc-dot" :class="{ done: state.live }">
-        <svg v-if="state.live" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10l3.5 3.5L15 7"/></svg>
-      </span>
-      <div class="acc-row-text">
-        <b>ตรวจสอบ &amp; เริ่มใช้งานจริง</b>
-        <span>{{ DESC.review }}</span>
+      <!-- 1. ข้อมูลทั่วไป -->
+      <div class="acc-card wz-card">
+        <button type="button" class="acc-head" @click="toggleSection('general')">
+          <svg class="acc-chev" :class="{ open: isOpen('general') }" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+          <div class="acc-head-text">
+            <b>{{ SECTIONS[0].no }}. {{ SECTIONS[0].title }}</b>
+            <span>{{ SECTIONS[0].sub }} · {{ sectionDone(SECTIONS[0]) }}/{{ SECTIONS[0].items.length }} เสร็จแล้ว · ~{{ SECTIONS[0].mins }} นาที</span>
+          </div>
+          <span v-if="sectionDone(SECTIONS[0]) === SECTIONS[0].items.length" class="wz-tag ok">เสร็จแล้ว</span>
+        </button>
+        <div v-show="isOpen('general')" class="acc-body">
+          <div v-for="it in SECTIONS[0].items" :key="it.key" class="acc-row" :class="{ active: state.current === it.key }">
+            <span class="acc-dot" :class="itemStatus(it.key)">
+              <svg v-if="isDone(it.key)" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10l3.5 3.5L15 7"/></svg>
+            </span>
+            <div class="acc-row-text">
+              <b>{{ it.title }}</b>
+              <span>{{ DESC[it.key] }}</span>
+            </div>
+            <button type="button" class="wz-btn sm" :class="{ primary: !isDone(it.key) && state.current !== it.key }" @click="go(it.key)">
+              {{ state.current === it.key ? 'กำลังแก้ไข' : isDone(it.key) ? 'แก้ไข' : 'เริ่มกรอก' }}
+            </button>
+          </div>
+        </div>
       </div>
-      <span v-if="state.live" class="wz-tag ok">ใช้งานจริงแล้ว</span>
-    </button>
 
-    <!-- Editor -->
-    <main class="st-main" ref="editorEl">
+      <!-- 2. ตั้งค่าบัญชีการเงิน (AR/GL/AP) -->
+      <SsoFinanceCards @open="go" />
+
+      <!-- Final review row -->
+      <button type="button" class="acc-card acc-review wz-card" :class="{ active: state.current === 'review' }" @click="go('review')">
+        <span class="acc-dot" :class="{ done: state.live }">
+          <svg v-if="state.live" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10l3.5 3.5L15 7"/></svg>
+        </span>
+        <div class="acc-row-text">
+          <b>ตรวจสอบ &amp; เริ่มใช้งานจริง</b>
+          <span>{{ DESC.review }}</span>
+        </div>
+        <span v-if="state.live" class="wz-tag ok">ใช้งานจริงแล้ว</span>
+      </button>
+
+      <!-- Editor: general info + review -->
+      <main class="st-main" ref="editorEl">
         <div class="st-head">
           <span class="overline">
             {{ curSection ? `ขั้นที่ ${curSection.no} · ${curSection.title}` : 'ขั้นสุดท้าย' }}
@@ -139,508 +143,8 @@
           <div class="wz-callout info"><span>ℹ️</span><span>ยอดหนี้ค้างชำระเดิมและเงินรับล่วงหน้าจะนำเข้าในขั้น "หนี้เก่า" (release ถัดไป) ซึ่งต้องกระทบยอดกับระบบเดิมก่อน</span></div>
         </div>
 
-        <!-- ═════════ 2. AR ═════════ -->
-        <template v-else-if="state.current === 'arOverview'">
-          <div class="wz-card">
-            <h3>ข้อมูลพื้นฐาน 11 ชุด</h3>
-            <p class="wz-muted">ติ๊กชุดที่คุณมีข้อมูลพร้อมแล้ว (ไม่บังคับ แค่ช่วยให้เห็นว่าต้องเตรียมอะไรเพิ่ม)</p>
-            <div class="ov-grid">
-              <label v-for="(d, i) in BASE_DATASETS" :key="d" class="wz-check ov-item" :class="{ on: state.arOverview.ready[i] }">
-                <input v-model="state.arOverview.ready[i]" type="checkbox" />
-                <span class="ov-no">{{ i + 1 }}</span>{{ d }}
-              </label>
-            </div>
-            <div class="wz-hint">พร้อมแล้ว {{ state.arOverview.ready.filter(Boolean).length }}/11</div>
-          </div>
-          <div class="wz-card">
-            <h3>ลำดับการกรอกข้อมูล AR</h3>
-            <ol class="ov-order">
-              <li v-for="it in SECTIONS[1].items.slice(1)" :key="it.key">
-                <button class="linklike" @click="go(it.key)">{{ it.title }}</button>
-                <span class="wz-muted"> — {{ DESC[it.key] }}</span>
-              </li>
-            </ol>
-            <button class="wz-btn primary" :disabled="state.arOverview.ack" @click="state.arOverview.ack = true; next()">
-              {{ state.arOverview.ack ? '✓ รับทราบแล้ว' : 'เข้าใจแล้ว เริ่มกรอก AR →' }}
-            </button>
-          </div>
-        </template>
-
-        <div v-else-if="state.current === 'incomes'" class="wz-card">
-          <div class="wz-table-wrap">
-            <table class="wz-table">
-              <thead><tr><th>รหัส</th><th>ชื่อรายรับ</th><th>วิธีคิด</th><th class="r">อัตรา</th><th>หน่วย</th><th></th></tr></thead>
-              <tbody>
-                <tr v-for="inc in state.incomes" :key="inc.code">
-                  <td class="mono">{{ inc.code }}</td>
-                  <td><input v-model="inc.name" class="wz-input" :class="{ invalid: !inc.name }" /></td>
-                  <td>
-                    <select v-model="inc.rateType" class="wz-input">
-                      <option v-for="(t, k) in RATE_TYPES" :key="k" :value="k">{{ t.label }}</option>
-                    </select>
-                  </td>
-                  <td><input v-model.number="inc.rate" type="number" min="0" step="0.01" class="wz-input num" style="width:110px" :class="{ invalid: !(inc.rate > 0) }" /></td>
-                  <td class="wz-muted" style="white-space:nowrap">{{ RATE_TYPES[inc.rateType].unit }}</td>
-                  <td><button class="wz-btn sm ghost danger" title="ลบ" @click="removeIncome(inc.code)">✕</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="row-actions">
-            <button class="wz-btn sm" @click="addIncome()">+ เพิ่มรายรับ</button>
-            <span class="wz-muted">หรือเพิ่มจากรายการมาตรฐาน:</span>
-            <button v-for="p in incomePresetsLeft" :key="p.name" class="chip" @click="addIncome(p)">+ {{ p.name }}</button>
-          </div>
-          <div class="wz-callout info"><span>🔗</span><span>รหัสรายรับจะถูกผูกกับผังบัญชีในขั้น <b>4 · เซ็ตรายรับ</b> ตอนนี้กรอกแค่ชื่อและอัตราก่อน</span></div>
-        </div>
-
-        <template v-else-if="state.current === 'unitRules'">
-          <div class="wz-card">
-            <span class="wz-label">วิธีกำหนด</span>
-            <div class="wz-choice-row" style="margin-top:8px">
-              <label class="wz-choice" :class="{ on: state.unitRules.mode === 'rules' }">
-                <input v-model="state.unitRules.mode" type="radio" value="rules" />
-                <span>กำหนดเป็นช่วงบ้านเลขที่<small>เหมาะกับห้องที่แจ้งหนี้เหมือนกันเป็นกลุ่ม</small></span>
-              </label>
-              <label class="wz-choice" :class="{ on: state.unitRules.mode === 'import' }">
-                <input v-model="state.unitRules.mode" type="radio" value="import" />
-                <span>Upload Excel รายหลัง<small>เหมาะกับห้องที่เงื่อนไขต่างกันเยอะ</small></span>
-              </label>
-            </div>
-          </div>
-
-          <div v-if="state.unitRules.mode === 'rules'" class="wz-card">
-            <div class="cov">
-              <div class="cov-row">
-                <b>ครอบคลุม {{ unitCoverage.covered }}/{{ unitCoverage.total }} หลัง</b>
-                <span v-if="unitCoverage.missing" class="wz-tag warn">ขาด {{ unitCoverage.missing }} หลัง</span>
-                <span v-if="unitCoverage.overlap" class="wz-tag bad">ซ้อนกัน {{ unitCoverage.overlap }} หลัง</span>
-                <span v-if="unitCoverage.outOfRange" class="wz-tag bad">เกินจำนวนห้องทั้งหมด</span>
-                <span v-if="isDone('unitRules')" class="wz-tag ok">✓ ครบทุกหลัง</span>
-              </div>
-              <div class="wz-progress"><div :style="{ width: (unitCoverage.total ? unitCoverage.covered / unitCoverage.total * 100 : 0) + '%' }"></div></div>
-            </div>
-
-            <div v-for="(r, idx) in state.unitRules.rules" :key="r.id" class="rule">
-              <div class="rule-head">
-                <b>กลุ่มที่ {{ idx + 1 }}</b>
-                <span class="wz-muted">{{ ruleSize(r) }} หลัง</span>
-                <button v-if="state.unitRules.rules.length > 1" class="wz-btn sm ghost danger" @click="removeRule(r.id)">ลบกลุ่ม</button>
-              </div>
-              <div class="rule-range">
-                <span>บ้านเลขที่</span>
-                <span class="pre">{{ state.general.prefix }}/</span>
-                <input v-model.number="r.from" type="number" min="1" class="wz-input num" />
-                <span>–</span>
-                <span class="pre">{{ state.general.prefix }}/</span>
-                <input v-model.number="r.to" type="number" min="1" class="wz-input num" />
-              </div>
-              <div class="wz-label" style="margin-top:12px">รายรับที่แจ้งหนี้ / มองเห็นในห้องกลุ่มนี้</div>
-              <div class="rule-incs">
-                <label v-for="inc in state.incomes" :key="inc.code" class="wz-check">
-                  <input v-model="r.incomes" type="checkbox" :value="inc.code" />{{ inc.name }}
-                </label>
-              </div>
-              <div class="wz-hint">
-                → {{ state.general.prefix }}/{{ r.from }} – {{ state.general.prefix }}/{{ r.to }} แจ้งหนี้เฉพาะ
-                {{ r.incomes.length ? r.incomes.map(incomeName).join(' / ') : '(ยังไม่เลือก)' }}
-              </div>
-            </div>
-            <button class="wz-btn sm" @click="addRule">+ เพิ่มกลุ่มห้อง</button>
-          </div>
-
-          <div v-else class="wz-card">
-            <label class="drop">
-              <input type="file" accept=".xlsx,.xls,.csv" hidden @change="onUnitFile" />
-              <span class="drop-ic">⬆</span>
-              <b>เลือกไฟล์ Excel / CSV</b>
-              <span class="wz-muted">คอลัมน์: บ้านเลขที่ · พื้นที่ (ตร.ม.) · รหัสรายรับที่แจ้งหนี้</span>
-            </label>
-            <div class="row-actions">
-              <button class="wz-btn sm" @click="simulateUnitImport('ไฟล์ตัวอย่าง.xlsx')">ลองด้วยไฟล์ตัวอย่าง</button>
-              <span class="wz-muted">ยังไม่มีไฟล์? ดาวน์โหลด template ได้จากหน้าภาพรวม</span>
-            </div>
-
-            <template v-if="state.unitRules.importResult">
-              <div class="imp-sum">
-                <div><span class="imp-n">{{ state.unitRules.importResult.total }}</span>แถวทั้งหมด</div>
-                <div class="ok"><span class="imp-n">{{ state.unitRules.importResult.ok }}</span>ถูกต้อง</div>
-                <div :class="state.unitRules.importResult.errors.length ? 'bad' : 'ok'"><span class="imp-n">{{ state.unitRules.importResult.errors.length }}</span>ต้องแก้</div>
-              </div>
-              <div class="wz-hint">{{ state.unitRules.importResult.fileName }} · ตรวจเมื่อ {{ state.unitRules.importResult.at }}</div>
-              <div v-if="state.unitRules.importResult.errors.length" class="wz-callout bad">
-                <span>⚠️</span>
-                <div>
-                  <b>พบข้อผิดพลาด — ยังไม่นำเข้าจนกว่าจะแก้ครบ</b>
-                  <ul class="err-list"><li v-for="e in state.unitRules.importResult.errors" :key="e.row">แถว {{ e.row }}: {{ e.msg }}</li></ul>
-                  <button class="wz-btn sm" @click="simulateUnitImport(state.unitRules.importResult.fileName)">แก้ไฟล์แล้ว upload ใหม่</button>
-                </div>
-              </div>
-              <div v-else class="wz-callout ok"><span>✅</span><span>ข้อมูลถูกต้องทั้งหมด พร้อมนำเข้า {{ state.unitRules.importResult.ok }} หลัง</span></div>
-            </template>
-          </div>
-        </template>
-
-        <div v-else-if="state.current === 'billCycle'" class="wz-card">
-          <div class="wz-grid">
-            <div class="wz-field">
-              <label>ออกใบแจ้งหนี้ทุกวันที่ <span class="req">*</span></label>
-              <input v-model.number="state.billCycle.issueDay" type="number" min="1" max="28" class="wz-input num"
-                :class="{ invalid: !(state.billCycle.issueDay >= 1 && state.billCycle.issueDay <= 28) }" />
-              <span class="wz-hint">1–28 เพื่อให้ทุกเดือนมีวันนี้</span>
-            </div>
-            <div class="wz-field">
-              <label>ครบกำหนดชำระหลังออกบิล (วัน) <span class="req">*</span></label>
-              <input v-model.number="state.billCycle.dueDays" type="number" min="0" class="wz-input num" />
-            </div>
-          </div>
-          <h3 style="margin-top:20px">รอบถัดไป</h3>
-          <div class="wz-table-wrap">
-            <table class="wz-table">
-              <thead><tr><th>รอบ</th><th>วันที่ออกใบแจ้งหนี้</th><th>วันครบกำหนดชำระ</th></tr></thead>
-              <tbody>
-                <tr v-for="(c, i) in cycles" :key="i">
-                  <td>{{ i + 1 }}</td><td>{{ fmtDate(c.issue) }}</td><td>{{ fmtDate(c.due) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="wz-hint">นับจากวันที่เริ่มใช้ระบบ{{ startDateObj ? ` (${fmtDate(startDateObj)})` : ' (ยังไม่ระบุ — ใช้วันนี้แทน)' }}</div>
-        </div>
-
-        <template v-else-if="state.current === 'billSets'">
-          <div class="wz-card">
-            <p class="wz-muted" style="margin:0 0 12px">แต่ละครั้งที่นิติแจ้งหนี้ เรียกเก็บค่าอะไรบ้าง? สร้างได้หลายชุด เช่น รายเดือน (ค่าน้ำ) + รายปี (ค่าส่วนกลาง)</p>
-            <div v-for="b in state.billSets" :key="b.id" class="rule">
-              <div class="rule-head">
-                <input v-model="b.name" class="wz-input" style="max-width:280px" :class="{ invalid: !b.name }" />
-                <select v-model="b.freq" class="wz-input" style="max-width:150px">
-                  <option v-for="(f, k) in FREQS" :key="k" :value="k">{{ f.label }}</option>
-                </select>
-                <button v-if="state.billSets.length > 1" class="wz-btn sm ghost danger" @click="removeBillSet(b.id)">ลบ</button>
-              </div>
-              <div class="rule-incs">
-                <label v-for="inc in state.incomes" :key="inc.code" class="wz-check">
-                  <input v-model="b.incomes" type="checkbox" :value="inc.code" />{{ inc.name }}
-                </label>
-              </div>
-            </div>
-            <button class="wz-btn sm" @click="addBillSet">+ เพิ่มชุดเรียกเก็บ</button>
-            <div v-if="incomesNoSet.length" class="wz-callout warn">
-              <span>⚠️</span><span>รายรับที่ยังไม่อยู่ในชุดใด (จะไม่ถูกแจ้งหนี้): <b>{{ incomesNoSet.map(i => i.name).join(', ') }}</b></span>
-            </div>
-          </div>
-
-          <div class="wz-card">
-            <h3>ตัวอย่างใบแจ้งหนี้</h3>
-            <p class="wz-muted">ใช้ตรวจว่าชุดเรียกเก็บ + เงื่อนไขห้อง ออกมาถูกต้อง (สมมติพื้นที่ {{ SAMPLE.area }} ตร.ม. ใช้น้ำ {{ SAMPLE.usage }} หน่วย/เดือน)</p>
-            <div class="wz-grid" style="margin-top:12px">
-              <div class="wz-field">
-                <label>ชุดเรียกเก็บ</label>
-                <select :value="previewSet?.id" class="wz-input" @change="previewSetId = Number($event.target.value)">
-                  <option v-for="b in state.billSets" :key="b.id" :value="b.id">{{ b.name }} ({{ FREQS[b.freq].label }})</option>
-                </select>
-              </div>
-              <div class="wz-field">
-                <label>ห้อง/บ้าน</label>
-                <div class="rule-range">
-                  <span class="pre">{{ state.general.prefix }}/</span>
-                  <input v-model.number="previewUnit" type="number" min="1" :max="state.general.units" class="wz-input num" />
-                </div>
-              </div>
-            </div>
-            <div v-if="invoice" class="inv">
-              <div class="inv-head">
-                <div><b>ใบแจ้งหนี้</b> · {{ state.general.prefix }}/{{ previewUnit }}</div>
-                <div class="wz-muted">ออก {{ fmtDate(cycles[0].issue) }} · ครบกำหนด {{ fmtDate(cycles[0].due) }}</div>
-              </div>
-              <table class="wz-table">
-                <tbody>
-                  <tr v-for="l in invoice.lines" :key="l.code"><td>{{ l.name }}<div class="wz-hint" style="margin:0">{{ l.qty }}</div></td><td class="r mono">{{ fmtTHB(l.amount) }}</td></tr>
-                  <tr v-if="!invoice.lines.length"><td colspan="2" class="wz-muted">ไม่มีรายการเรียกเก็บสำหรับห้องนี้</td></tr>
-                  <tr class="inv-total"><td>รวม (บาท)</td><td class="r mono">{{ fmtTHB(invoice.total) }}</td></tr>
-                </tbody>
-              </table>
-              <div v-if="invoice.skipped.length" class="wz-hint">ไม่แจ้งหนี้ห้องนี้ (ตามเงื่อนไขห้อง/บ้าน): {{ invoice.skipped.map(i => i.name).join(', ') }}</div>
-            </div>
-          </div>
-        </template>
-
-        <div v-else-if="state.current === 'penalty'" class="wz-card">
-          <label class="wz-check" style="margin-bottom:14px"><input v-model="state.penalty.none" type="checkbox" /> <b>ไม่มีค่าปรับ</b></label>
-          <template v-if="!state.penalty.none">
-            <div class="wz-choice-row">
-              <label v-for="(t, k) in PENALTY_TYPES" :key="k" class="wz-choice" :class="{ on: state.penalty.type === k }">
-                <input v-model="state.penalty.type" type="radio" :value="k" />
-                <span>{{ t.label }}<small>{{ t.desc }}</small></span>
-              </label>
-            </div>
-            <div class="wz-grid three" style="margin-top:16px">
-              <div class="wz-field">
-                <label>{{ state.penalty.type === 'fixed' ? 'บาท / ใบแจ้งหนี้' : '% ต่อปี' }} <span class="req">*</span></label>
-                <input v-model.number="state.penalty.value" type="number" min="0" step="0.01" class="wz-input num" :class="{ invalid: !(state.penalty.value > 0) }" />
-              </div>
-              <div class="wz-field">
-                <label>ผ่อนผัน (วันหลังครบกำหนด)</label>
-                <input v-model.number="state.penalty.graceDays" type="number" min="0" class="wz-input num" />
-              </div>
-              <template v-if="state.penalty.type === 'step'">
-                <div class="wz-field">
-                  <label>ค้างเกิน (เดือน) → % ต่อปี</label>
-                  <div class="rule-range">
-                    <input v-model.number="state.penalty.stepAfter" type="number" min="1" class="wz-input num" />
-                    <span>→</span>
-                    <input v-model.number="state.penalty.stepValue" type="number" min="0" class="wz-input num" />
-                  </div>
-                </div>
-              </template>
-            </div>
-            <div class="wz-callout info"><span>🧮</span><span>ตัวอย่าง: ค้างชำระ 1,000.00 บาท นาน 30 วัน → ค่าปรับ <b>{{ fmtTHB(penaltyExample) }} บาท</b></span></div>
-          </template>
-          <div class="wz-callout warn"><span>⚖️</span><span>ตรวจสอบให้ตรงกับข้อบังคับนิติบุคคลของโครงการ — ค่าปรับที่ไม่เป็นไปตามข้อบังคับอาจเรียกเก็บไม่ได้</span></div>
-        </div>
-
-        <div v-else-if="state.current === 'billPayment'" class="wz-card">
-          <span class="wz-label">โครงการมี Bill Payment หรือไม่?</span>
-          <div class="wz-choice-row" style="margin-top:8px">
-            <label class="wz-choice" :class="{ on: state.billPayment.has === true }">
-              <input v-model="state.billPayment.has" type="radio" :value="true" />
-              <span>มี<small>ลูกบ้านจ่ายผ่าน QR / ธนาคาร แล้วระบบตัดหนี้ให้อัตโนมัติ</small></span>
-            </label>
-            <label class="wz-choice" :class="{ on: state.billPayment.has === false }">
-              <input v-model="state.billPayment.has" type="radio" :value="false" />
-              <span>ไม่มี<small>รับชำระเงินสด / โอน แล้วบันทึกเอง</small></span>
-            </label>
-          </div>
-          <div v-if="state.billPayment.has" class="wz-grid" style="margin-top:16px">
-            <div class="wz-field">
-              <label>ธนาคาร <span class="req">*</span></label>
-              <select v-model="state.billPayment.bank" class="wz-input" :class="{ invalid: !state.billPayment.bank }">
-                <option value="" disabled>— เลือกธนาคาร —</option>
-                <option v-for="b in BANKS" :key="b" :value="b">{{ b }}</option>
-              </select>
-            </div>
-            <div class="wz-field">
-              <label>Biller ID <span class="req">*</span></label>
-              <input v-model="state.billPayment.billerId" class="wz-input" inputmode="numeric" maxlength="15" placeholder="15 หลัก"
-                :class="{ invalid: state.billPayment.billerId && !/^\d{15}$/.test(state.billPayment.billerId) }" />
-              <span class="wz-hint">
-                ปกติคือเลขผู้เสียภาษี 13 หลัก + suffix 2 หลัก
-                <button v-if="/^\d{13}$/.test(state.general.taxId)" class="linklike" @click="state.billPayment.billerId = state.general.taxId + '00'">ใช้เลขผู้เสียภาษี + 00</button>
-              </span>
-            </div>
-            <div class="wz-callout info full"><span>🧾</span><span>Ref.1 = บ้านเลขที่ (เช่น {{ state.general.prefix }}/1) · Ref.2 = เลขที่ใบแจ้งหนี้ ระบบจะพิมพ์ QR ลงบนใบแจ้งหนี้ให้อัตโนมัติ</span></div>
-          </div>
-        </div>
-
-        <!-- ═════════ 3. GL ═════════ -->
-        <div v-else-if="state.current === 'glOverview'" class="wz-card">
-          <h3>ลำดับการกรอกข้อมูล GL</h3>
-          <ol class="ov-order">
-            <li v-for="it in SECTIONS[2].items.slice(1)" :key="it.key">
-              <button class="linklike" @click="go(it.key)">{{ it.title }}</button>
-              <span class="wz-muted"> — {{ DESC[it.key] }}</span>
-            </li>
-          </ol>
-          <button class="wz-btn primary" :disabled="state.glOverview.ack" @click="state.glOverview.ack = true; next()">
-            {{ state.glOverview.ack ? '✓ รับทราบแล้ว' : 'เข้าใจแล้ว เริ่มกรอก GL →' }}
-          </button>
-        </div>
-
-        <div v-else-if="state.current === 'expenses'" class="wz-card">
-          <div class="wz-table-wrap">
-            <table class="wz-table">
-              <thead><tr><th>รหัส</th><th>ชื่อรายจ่าย</th><th></th></tr></thead>
-              <tbody>
-                <tr v-for="e in state.expenses" :key="e.code">
-                  <td class="mono">{{ e.code }}</td>
-                  <td><input v-model="e.name" class="wz-input" :class="{ invalid: !e.name }" /></td>
-                  <td><button class="wz-btn sm ghost danger" title="ลบ" @click="removeExpense(e.code)">✕</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="row-actions">
-            <button class="wz-btn sm" @click="addExpense()">+ เพิ่มรายจ่าย</button>
-            <span class="wz-muted">หรือเพิ่มจากรายการมาตรฐาน:</span>
-            <button v-for="p in expensePresetsLeft" :key="p" class="chip" @click="addExpense(p)">+ {{ p }}</button>
-          </div>
-        </div>
-
-        <div v-else-if="state.current === 'policy'" class="wz-card">
-          <div class="pol">
-            <span class="wz-label">เกณฑ์การบันทึกบัญชี</span>
-            <div class="wz-choice-row">
-              <label class="wz-choice" :class="{ on: state.policy.basis === 'accrual' }">
-                <input v-model="state.policy.basis" type="radio" value="accrual" />
-                <span>เกณฑ์คงค้าง (แนะนำ)<small>รับรู้รายได้/ค่าใช้จ่ายเมื่อเกิดขึ้น</small></span>
-              </label>
-              <label class="wz-choice" :class="{ on: state.policy.basis === 'cash' }">
-                <input v-model="state.policy.basis" type="radio" value="cash" />
-                <span>เกณฑ์เงินสด<small>รับรู้เมื่อรับ/จ่ายเงินจริง</small></span>
-              </label>
-            </div>
-          </div>
-          <div class="pol">
-            <span class="wz-label">รับรู้รายได้เมื่อ</span>
-            <div class="wz-choice-row">
-              <label class="wz-choice" :class="{ on: state.policy.revenue === 'invoice' }">
-                <input v-model="state.policy.revenue" type="radio" value="invoice" :disabled="state.policy.basis === 'cash'" />
-                <span>ออกใบแจ้งหนี้<small>บันทึกลูกหนี้ ณ วันแจ้งหนี้</small></span>
-              </label>
-              <label class="wz-choice" :class="{ on: state.policy.revenue === 'receipt' }">
-                <input v-model="state.policy.revenue" type="radio" value="receipt" />
-                <span>รับชำระเงิน<small>บันทึกรายได้ ณ วันออกใบเสร็จ</small></span>
-              </label>
-            </div>
-          </div>
-          <div class="pol">
-            <span class="wz-label">เงินที่ลูกบ้านจ่ายเกิน / จ่ายล่วงหน้า</span>
-            <div class="wz-choice-row">
-              <label class="wz-choice" :class="{ on: state.policy.advance === 'liability' }">
-                <input v-model="state.policy.advance" type="radio" value="liability" />
-                <span>บันทึกเป็นเงินรับล่วงหน้า<small>ตัดชำระบิลถัดไปอัตโนมัติ</small></span>
-              </label>
-              <label class="wz-choice" :class="{ on: state.policy.advance === 'income' }">
-                <input v-model="state.policy.advance" type="radio" value="income" />
-                <span>บันทึกเป็นรายได้อื่น<small>ไม่ยกไปบิลถัดไป</small></span>
-              </label>
-            </div>
-          </div>
-          <label class="wz-check pol"><input v-model="state.policy.wht" type="checkbox" />คำนวณภาษีหัก ณ ที่จ่ายอัตโนมัติเมื่อจ่ายเจ้าหนี้</label>
-
-          <div class="je">
-            <div class="wz-label">ตัวอย่างการบันทึกบัญชี เมื่อ{{ state.policy.revenue === 'invoice' ? 'ออกใบแจ้งหนี้' : 'รับชำระ' }}ค่าส่วนกลาง</div>
-            <table class="wz-table">
-              <thead><tr><th>บัญชี</th><th class="r">เดบิต</th><th class="r">เครดิต</th></tr></thead>
-              <tbody>
-                <tr><td>{{ state.policy.revenue === 'invoice' ? 'ลูกหนี้ค่าส่วนกลาง' : 'เงินฝากธนาคาร' }}</td><td class="r">✓</td><td></td></tr>
-                <tr><td>รายได้ค่าส่วนกลาง</td><td></td><td class="r">✓</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="wz-callout warn">
-            <span>🔒</span>
-            <label class="wz-check"><input v-model="state.policy.confirmed" type="checkbox" />ฉันตรวจสอบนโยบายบันทึกบัญชีแล้ว (เปลี่ยนภายหลังจะกระทบรายงานย้อนหลัง)</label>
-          </div>
-        </div>
-
-        <!-- ═════════ 4. AP ═════════ -->
-        <div v-else-if="state.current === 'apOverview'" class="wz-card">
-          <h3>ลำดับการกรอกข้อมูล AP</h3>
-          <ol class="ov-order">
-            <li v-for="it in SECTIONS[3].items.slice(1)" :key="it.key">
-              <button class="linklike" @click="go(it.key)">{{ it.title }}</button>
-              <span class="wz-muted"> — {{ DESC[it.key] }}</span>
-            </li>
-          </ol>
-          <div class="wz-callout info"><span>🔗</span><span>ขั้นนี้จะนำรายรับจากขั้น AR ({{ state.incomes.length }} รายการ) และรายจ่ายจากขั้น GL ({{ state.expenses.length }} รายการ) มาผูกกับผังบัญชี</span></div>
-          <button class="wz-btn primary" style="margin-top:14px" :disabled="state.apOverview.ack" @click="state.apOverview.ack = true; next()">
-            {{ state.apOverview.ack ? '✓ รับทราบแล้ว' : 'เข้าใจแล้ว เริ่มกรอก AP →' }}
-          </button>
-        </div>
-
-        <template v-else-if="state.current === 'coa'">
-          <div v-if="!state.coa.accounts.length" class="wz-card">
-            <h3>เริ่มจาก…</h3>
-            <div class="wz-choice-row" style="margin-top:12px">
-              <button class="wz-choice src" @click="usePresetCoa">
-                <span>⭐ ผังบัญชีมาตรฐานนิติบุคคล<small>{{ PRESET_COA.length }} บัญชี พร้อมใช้ ปรับแก้ได้ (แนะนำ)</small></span>
-              </button>
-              <label class="wz-choice src">
-                <input type="file" accept=".xlsx,.xls,.csv" hidden @change="onCoaFile" />
-                <span>⬆ นำเข้าจากระบบเดิม<small>Excel / CSV: รหัสบัญชี · ชื่อบัญชี · ประเภท</small></span>
-              </label>
-            </div>
-          </div>
-          <div v-else class="wz-card">
-            <div class="coa-bar">
-              <div class="tabs">
-                <button v-for="(t, k) in COA_FILTERS" :key="k" class="tab" :class="{ on: coaFilter === k }" @click="coaFilter = k">{{ t }}</button>
-              </div>
-              <span class="wz-muted">{{ state.coa.accounts.length }} บัญชี · {{ state.coa.source === 'import' ? 'นำเข้าจากไฟล์' : 'ผังมาตรฐาน' }}</span>
-            </div>
-            <div v-if="state.coa.importResult" class="wz-callout warn">
-              <span>⚠️</span><span>นำเข้า {{ state.coa.importResult.fileName }}: {{ state.coa.importResult.warning }}</span>
-            </div>
-            <div class="wz-table-wrap">
-              <table class="wz-table">
-                <thead><tr><th>ใช้บ่อย</th><th>รหัสบัญชี</th><th>ชื่อบัญชี</th><th>ประเภท</th><th></th></tr></thead>
-                <tbody>
-                  <tr v-for="a in filteredCoa" :key="a._k">
-                    <td><button class="star" :class="{ on: state.favorites.includes(a.code) }" @click="toggleFav(a.code)">★</button></td>
-                    <td><input v-model="a.code" class="wz-input mono" style="width:110px" :class="{ invalid: dupCodes.has(a.code) }" /></td>
-                    <td><input v-model="a.name" class="wz-input" /></td>
-                    <td>
-                      <select v-model="a.type" class="wz-input">
-                        <option v-for="(t, k) in ACCOUNT_TYPES" :key="k" :value="k">{{ t }}</option>
-                      </select>
-                    </td>
-                    <td><button class="wz-btn sm ghost danger" @click="removeAccount(a)">✕</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div v-if="dupCodes.size" class="wz-err" style="margin-top:8px">รหัสบัญชีซ้ำ: {{ [...dupCodes].join(', ') }}</div>
-            <div class="row-actions">
-              <button class="wz-btn sm" @click="addAccount">+ เพิ่มบัญชี</button>
-              <button class="wz-btn sm ghost danger" @click="clearCoa">เปลี่ยนแหล่งผังบัญชี</button>
-            </div>
-          </div>
-        </template>
-
-        <template v-else-if="state.current === 'incomeMap' || state.current === 'expenseMap' || state.current === 'favorites'">
-          <div v-if="!state.coa.accounts.length" class="wz-card">
-            <div class="wz-callout warn" style="margin-top:0"><span>⚠️</span><span>ยังไม่มีผังบัญชี — ตั้งผังบัญชีก่อนจึงจะผูกบัญชีได้</span></div>
-            <button class="wz-btn primary" style="margin-top:14px" @click="go('coa')">ไปตั้งผังบัญชี →</button>
-          </div>
-
-          <div v-else-if="state.current === 'incomeMap'" class="wz-card">
-            <div class="map-bar">
-              <span class="wz-muted">ผูกแล้ว {{ state.incomes.length - unmappedIncomes.length }}/{{ state.incomes.length }}</span>
-              <button class="wz-btn sm" @click="autoMapIncomes">✨ แนะนำการผูกอัตโนมัติ</button>
-            </div>
-            <div class="map-head"><span>รายรับ</span><span>บัญชีรายได้</span><span>บัญชีลูกหนี้</span></div>
-            <div v-for="inc in state.incomes" :key="inc.code" class="map-row">
-              <div><span class="mono wz-muted">{{ inc.code }}</span> {{ inc.name }}</div>
-              <SsoAccountPicker :model-value="state.incomeMap[inc.code]?.rev || ''" prefix="4" @update:model-value="v => setIncomeMap(inc.code, 'rev', v)" />
-              <SsoAccountPicker :model-value="state.incomeMap[inc.code]?.ar || ''" prefix="11" @update:model-value="v => setIncomeMap(inc.code, 'ar', v)" />
-            </div>
-          </div>
-
-          <div v-else-if="state.current === 'expenseMap'" class="wz-card">
-            <div class="wz-field" style="max-width:360px">
-              <label>บัญชีเจ้าหนี้เริ่มต้น <span class="req">*</span></label>
-              <SsoAccountPicker v-model="state.expenseMap.apAccount" prefix="2" />
-            </div>
-            <div class="map-bar" style="margin-top:18px">
-              <span class="wz-muted">ผูกแล้ว {{ state.expenses.length - unmappedExpenses.length }}/{{ state.expenses.length }}</span>
-              <button class="wz-btn sm" @click="autoMapExpenses">✨ แนะนำการผูกอัตโนมัติ</button>
-            </div>
-            <div class="map-head two"><span>รายจ่าย</span><span>บัญชีค่าใช้จ่าย</span></div>
-            <div v-for="e in state.expenses" :key="e.code" class="map-row two">
-              <div><span class="mono wz-muted">{{ e.code }}</span> {{ e.name }}</div>
-              <SsoAccountPicker v-model="state.expenseMap.map[e.code]" prefix="5" />
-            </div>
-          </div>
-
-          <div v-else class="wz-card">
-            <div class="map-bar">
-              <span class="wz-muted">เลือกแล้ว {{ state.favorites.length }} บัญชี — จะแสดงเป็นอันดับแรกทุกครั้งที่เลือกบัญชี</span>
-              <button class="wz-btn sm" @click="suggestFavorites">✨ ใช้ชุดแนะนำ</button>
-            </div>
-            <div class="fav-grid">
-              <button v-for="a in state.coa.accounts" :key="a._k" class="fav" :class="{ on: state.favorites.includes(a.code) }" @click="toggleFav(a.code)">
-                <span class="star" :class="{ on: state.favorites.includes(a.code) }">★</span>
-                <span class="mono wz-muted">{{ a.code }}</span> {{ a.name }}
-              </button>
-            </div>
-          </div>
-        </template>
-
         <!-- ═════════ Review ═════════ -->
-        <template v-else-if="state.current === 'review'">
+        <template v-else>
           <div v-if="state.live" class="wz-card live">
             <div class="live-ic">🎉</div>
             <h3>{{ state.general.name }} พร้อมใช้งานแล้ว!</h3>
@@ -696,6 +200,564 @@
           </button>
         </div>
       </main>
+    </template>
+
+    <!-- ═══════════════════════ Finance wizard (AR/GL/AP) ═══════════════════════ -->
+    <template v-else>
+      <div class="wiz">
+        <div class="wiz-top">
+          <button type="button" class="linklike" @click="backToOverview">← กลับหน้าภาพรวม</button>
+          <div class="wiz-top-title">
+            <b>ตั้งค่าบัญชีการเงิน</b>
+            <span v-if="state.finance.template" class="wz-tag info">Template: {{ TEMPLATES[state.finance.template].label }}</span>
+          </div>
+        </div>
+
+        <div class="wiz-groups">
+          <button
+            v-for="g in FINANCE_SECTIONS" :key="g.key" type="button" class="wiz-group"
+            :class="{ on: curSection?.key === g.key }" @click="go(g.items[0].key)"
+          >
+            <div class="wiz-group-head"><b>{{ g.title }}</b><span class="wz-muted">{{ sectionDone(g) }}/{{ g.items.length }}</span></div>
+            <div class="wz-progress sm"><div :style="{ width: (sectionDone(g) / g.items.length * 100) + '%' }"></div></div>
+          </button>
+        </div>
+
+        <div v-if="curSection" class="wiz-pills">
+          <button
+            v-for="it in curSection.items" :key="it.key" type="button" class="wiz-pill"
+            :class="[itemStatus(it.key), { on: state.current === it.key }]" @click="go(it.key)"
+          >{{ it.title }}</button>
+        </div>
+
+        <main class="st-main wiz-body" ref="editorEl">
+          <div class="st-head">
+            <span class="overline">{{ curSection ? `ขั้นที่ ${curSection.no} · ${curSection.title}` : 'เลือก Template' }}</span>
+            <div class="st-head-row">
+              <h2>{{ curItem ? curItem.title : 'เลือกรูปแบบเริ่มต้น' }}</h2>
+              <span v-if="curItem" class="wz-tag" :class="isDone(curItem.key) ? 'ok' : 'warn'">
+                {{ isDone(curItem.key) ? '✓ ครบแล้ว' : 'ยังไม่ครบ' }}
+              </span>
+            </div>
+            <p class="wz-muted">{{ DESC[state.current] }}</p>
+          </div>
+
+          <!-- ═════════ Template picker ═════════ -->
+          <div v-if="state.current === 'template'" class="wz-card">
+            <SsoTemplatePicker :current="state.finance.template" @pick="pickTemplate" />
+          </div>
+
+          <!-- ═════════ 2. AR ═════════ -->
+          <template v-else-if="state.current === 'arOverview'">
+            <div class="wz-card">
+              <h3>ข้อมูลพื้นฐาน 11 ชุด</h3>
+              <p class="wz-muted">ติ๊กชุดที่คุณมีข้อมูลพร้อมแล้ว (ไม่บังคับ แค่ช่วยให้เห็นว่าต้องเตรียมอะไรเพิ่ม)</p>
+              <div class="ov-grid">
+                <label v-for="(d, i) in BASE_DATASETS" :key="d" class="wz-check ov-item" :class="{ on: state.arOverview.ready[i] }">
+                  <input v-model="state.arOverview.ready[i]" type="checkbox" />
+                  <span class="ov-no">{{ i + 1 }}</span>{{ d }}
+                </label>
+              </div>
+              <div class="wz-hint">พร้อมแล้ว {{ state.arOverview.ready.filter(Boolean).length }}/11</div>
+            </div>
+            <div class="wz-card">
+              <h3>ลำดับการกรอกข้อมูล AR</h3>
+              <ol class="ov-order">
+                <li v-for="it in SECTIONS[1].items.slice(1)" :key="it.key">
+                  <button class="linklike" @click="go(it.key)">{{ it.title }}</button>
+                  <span class="wz-muted"> — {{ DESC[it.key] }}</span>
+                </li>
+              </ol>
+              <button class="wz-btn primary" :disabled="state.arOverview.ack" @click="state.arOverview.ack = true; next()">
+                {{ state.arOverview.ack ? '✓ รับทราบแล้ว' : 'เข้าใจแล้ว เริ่มกรอก AR →' }}
+              </button>
+            </div>
+          </template>
+
+          <div v-else-if="state.current === 'incomes'" class="wz-card">
+            <div class="wz-table-wrap">
+              <table class="wz-table">
+                <thead><tr><th>รหัส</th><th>ชื่อรายรับ</th><th>วิธีคิด</th><th class="r">อัตรา</th><th>หน่วย</th><th></th></tr></thead>
+                <tbody>
+                  <tr v-for="inc in state.incomes" :key="inc.code">
+                    <td class="mono">{{ inc.code }}</td>
+                    <td><input v-model="inc.name" class="wz-input" :class="{ invalid: !inc.name }" /></td>
+                    <td>
+                      <select v-model="inc.rateType" class="wz-input">
+                        <option v-for="(t, k) in RATE_TYPES" :key="k" :value="k">{{ t.label }}</option>
+                      </select>
+                    </td>
+                    <td><input v-model.number="inc.rate" type="number" min="0" step="0.01" class="wz-input num" style="width:110px" :class="{ invalid: !(inc.rate > 0) }" /></td>
+                    <td class="wz-muted" style="white-space:nowrap">{{ RATE_TYPES[inc.rateType].unit }}</td>
+                    <td><button class="wz-btn sm ghost danger" title="ลบ" @click="removeIncome(inc.code)">✕</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="row-actions">
+              <button class="wz-btn sm" @click="addIncome()">+ เพิ่มรายรับ</button>
+              <span class="wz-muted">หรือเพิ่มจากรายการมาตรฐาน:</span>
+              <button v-for="p in incomePresetsLeft" :key="p.name" class="chip" @click="addIncome(p)">+ {{ p.name }}</button>
+            </div>
+            <div class="wz-callout info"><span>🔗</span><span>รหัสรายรับจะถูกผูกกับผังบัญชีในขั้น <b>4 · เซ็ตรายรับ</b> ตอนนี้กรอกแค่ชื่อและอัตราก่อน</span></div>
+          </div>
+
+          <template v-else-if="state.current === 'unitRules'">
+            <div class="wz-card">
+              <span class="wz-label">วิธีกำหนด</span>
+              <div class="wz-choice-row" style="margin-top:8px">
+                <label class="wz-choice" :class="{ on: state.unitRules.mode === 'rules' }">
+                  <input v-model="state.unitRules.mode" type="radio" value="rules" />
+                  <span>กำหนดเป็นช่วงบ้านเลขที่<small>เหมาะกับห้องที่แจ้งหนี้เหมือนกันเป็นกลุ่ม</small></span>
+                </label>
+                <label class="wz-choice" :class="{ on: state.unitRules.mode === 'import' }">
+                  <input v-model="state.unitRules.mode" type="radio" value="import" />
+                  <span>Upload Excel รายหลัง<small>เหมาะกับห้องที่เงื่อนไขต่างกันเยอะ</small></span>
+                </label>
+              </div>
+            </div>
+
+            <div v-if="state.unitRules.mode === 'rules'" class="wz-card">
+              <div class="cov">
+                <div class="cov-row">
+                  <b>ครอบคลุม {{ unitCoverage.covered }}/{{ unitCoverage.total }} หลัง</b>
+                  <span v-if="unitCoverage.missing" class="wz-tag warn">ขาด {{ unitCoverage.missing }} หลัง</span>
+                  <span v-if="unitCoverage.overlap" class="wz-tag bad">ซ้อนกัน {{ unitCoverage.overlap }} หลัง</span>
+                  <span v-if="unitCoverage.outOfRange" class="wz-tag bad">เกินจำนวนห้องทั้งหมด</span>
+                  <span v-if="isDone('unitRules')" class="wz-tag ok">✓ ครบทุกหลัง</span>
+                </div>
+                <div class="wz-progress"><div :style="{ width: (unitCoverage.total ? unitCoverage.covered / unitCoverage.total * 100 : 0) + '%' }"></div></div>
+              </div>
+
+              <div v-for="(r, idx) in state.unitRules.rules" :key="r.id" class="rule">
+                <div class="rule-head">
+                  <b>กลุ่มที่ {{ idx + 1 }}</b>
+                  <span class="wz-muted">{{ ruleSize(r) }} หลัง</span>
+                  <button v-if="state.unitRules.rules.length > 1" class="wz-btn sm ghost danger" @click="removeRule(r.id)">ลบกลุ่ม</button>
+                </div>
+                <div class="rule-range">
+                  <span>บ้านเลขที่</span>
+                  <span class="pre">{{ state.general.prefix }}/</span>
+                  <input v-model.number="r.from" type="number" min="1" class="wz-input num" />
+                  <span>–</span>
+                  <span class="pre">{{ state.general.prefix }}/</span>
+                  <input v-model.number="r.to" type="number" min="1" class="wz-input num" />
+                </div>
+                <div class="wz-label" style="margin-top:12px">รายรับที่แจ้งหนี้ / มองเห็นในห้องกลุ่มนี้</div>
+                <div class="rule-incs">
+                  <label v-for="inc in state.incomes" :key="inc.code" class="wz-check">
+                    <input v-model="r.incomes" type="checkbox" :value="inc.code" />{{ inc.name }}
+                  </label>
+                </div>
+                <div class="wz-hint">
+                  → {{ state.general.prefix }}/{{ r.from }} – {{ state.general.prefix }}/{{ r.to }} แจ้งหนี้เฉพาะ
+                  {{ r.incomes.length ? r.incomes.map(incomeName).join(' / ') : '(ยังไม่เลือก)' }}
+                </div>
+              </div>
+              <button class="wz-btn sm" @click="addRule">+ เพิ่มกลุ่มห้อง</button>
+            </div>
+
+            <div v-else class="wz-card">
+              <label class="drop">
+                <input type="file" accept=".xlsx,.xls,.csv" hidden @change="onUnitFile" />
+                <span class="drop-ic">⬆</span>
+                <b>เลือกไฟล์ Excel / CSV</b>
+                <span class="wz-muted">คอลัมน์: บ้านเลขที่ · พื้นที่ (ตร.ม.) · รหัสรายรับที่แจ้งหนี้</span>
+              </label>
+              <div class="row-actions">
+                <button class="wz-btn sm" @click="simulateUnitImport('ไฟล์ตัวอย่าง.xlsx')">ลองด้วยไฟล์ตัวอย่าง</button>
+                <span class="wz-muted">ยังไม่มีไฟล์? ดาวน์โหลด template ได้จากหน้าภาพรวม</span>
+              </div>
+
+              <template v-if="state.unitRules.importResult">
+                <div class="imp-sum">
+                  <div><span class="imp-n">{{ state.unitRules.importResult.total }}</span>แถวทั้งหมด</div>
+                  <div class="ok"><span class="imp-n">{{ state.unitRules.importResult.ok }}</span>ถูกต้อง</div>
+                  <div :class="state.unitRules.importResult.errors.length ? 'bad' : 'ok'"><span class="imp-n">{{ state.unitRules.importResult.errors.length }}</span>ต้องแก้</div>
+                </div>
+                <div class="wz-hint">{{ state.unitRules.importResult.fileName }} · ตรวจเมื่อ {{ state.unitRules.importResult.at }}</div>
+                <div v-if="state.unitRules.importResult.errors.length" class="wz-callout bad">
+                  <span>⚠️</span>
+                  <div>
+                    <b>พบข้อผิดพลาด — ยังไม่นำเข้าจนกว่าจะแก้ครบ</b>
+                    <ul class="err-list"><li v-for="e in state.unitRules.importResult.errors" :key="e.row">แถว {{ e.row }}: {{ e.msg }}</li></ul>
+                    <button class="wz-btn sm" @click="simulateUnitImport(state.unitRules.importResult.fileName)">แก้ไฟล์แล้ว upload ใหม่</button>
+                  </div>
+                </div>
+                <div v-else class="wz-callout ok"><span>✅</span><span>ข้อมูลถูกต้องทั้งหมด พร้อมนำเข้า {{ state.unitRules.importResult.ok }} หลัง</span></div>
+              </template>
+            </div>
+          </template>
+
+          <div v-else-if="state.current === 'billCycle'" class="wz-card">
+            <div class="wz-grid">
+              <div class="wz-field">
+                <label>ออกใบแจ้งหนี้ทุกวันที่ <span class="req">*</span></label>
+                <input v-model.number="state.billCycle.issueDay" type="number" min="1" max="28" class="wz-input num"
+                  :class="{ invalid: !(state.billCycle.issueDay >= 1 && state.billCycle.issueDay <= 28) }" />
+                <span class="wz-hint">1–28 เพื่อให้ทุกเดือนมีวันนี้</span>
+              </div>
+              <div class="wz-field">
+                <label>ครบกำหนดชำระหลังออกบิล (วัน) <span class="req">*</span></label>
+                <input v-model.number="state.billCycle.dueDays" type="number" min="0" class="wz-input num" />
+              </div>
+            </div>
+            <h3 style="margin-top:20px">รอบถัดไป</h3>
+            <div class="wz-table-wrap">
+              <table class="wz-table">
+                <thead><tr><th>รอบ</th><th>วันที่ออกใบแจ้งหนี้</th><th>วันครบกำหนดชำระ</th></tr></thead>
+                <tbody>
+                  <tr v-for="(c, i) in cycles" :key="i">
+                    <td>{{ i + 1 }}</td><td>{{ fmtDate(c.issue) }}</td><td>{{ fmtDate(c.due) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="wz-hint">นับจากวันที่เริ่มใช้ระบบ{{ startDateObj ? ` (${fmtDate(startDateObj)})` : ' (ยังไม่ระบุ — ใช้วันนี้แทน)' }}</div>
+          </div>
+
+          <template v-else-if="state.current === 'billSets'">
+            <div class="wz-card">
+              <p class="wz-muted" style="margin:0 0 12px">แต่ละครั้งที่นิติแจ้งหนี้ เรียกเก็บค่าอะไรบ้าง? สร้างได้หลายชุด เช่น รายเดือน (ค่าน้ำ) + รายปี (ค่าส่วนกลาง)</p>
+              <div v-for="b in state.billSets" :key="b.id" class="rule">
+                <div class="rule-head">
+                  <input v-model="b.name" class="wz-input" style="max-width:280px" :class="{ invalid: !b.name }" />
+                  <select v-model="b.freq" class="wz-input" style="max-width:150px">
+                    <option v-for="(f, k) in FREQS" :key="k" :value="k">{{ f.label }}</option>
+                  </select>
+                  <button v-if="state.billSets.length > 1" class="wz-btn sm ghost danger" @click="removeBillSet(b.id)">ลบ</button>
+                </div>
+                <div class="rule-incs">
+                  <label v-for="inc in state.incomes" :key="inc.code" class="wz-check">
+                    <input v-model="b.incomes" type="checkbox" :value="inc.code" />{{ inc.name }}
+                  </label>
+                </div>
+              </div>
+              <button class="wz-btn sm" @click="addBillSet">+ เพิ่มชุดเรียกเก็บ</button>
+              <div v-if="incomesNoSet.length" class="wz-callout warn">
+                <span>⚠️</span><span>รายรับที่ยังไม่อยู่ในชุดใด (จะไม่ถูกแจ้งหนี้): <b>{{ incomesNoSet.map(i => i.name).join(', ') }}</b></span>
+              </div>
+            </div>
+
+            <div class="wz-card">
+              <h3>ตัวอย่างใบแจ้งหนี้</h3>
+              <p class="wz-muted">ใช้ตรวจว่าชุดเรียกเก็บ + เงื่อนไขห้อง ออกมาถูกต้อง (สมมติพื้นที่ {{ SAMPLE.area }} ตร.ม. ใช้น้ำ {{ SAMPLE.usage }} หน่วย/เดือน)</p>
+              <div class="wz-grid" style="margin-top:12px">
+                <div class="wz-field">
+                  <label>ชุดเรียกเก็บ</label>
+                  <select :value="previewSet?.id" class="wz-input" @change="previewSetId = Number($event.target.value)">
+                    <option v-for="b in state.billSets" :key="b.id" :value="b.id">{{ b.name }} ({{ FREQS[b.freq].label }})</option>
+                  </select>
+                </div>
+                <div class="wz-field">
+                  <label>ห้อง/บ้าน</label>
+                  <div class="rule-range">
+                    <span class="pre">{{ state.general.prefix }}/</span>
+                    <input v-model.number="previewUnit" type="number" min="1" :max="state.general.units" class="wz-input num" />
+                  </div>
+                </div>
+              </div>
+              <div v-if="invoice" class="inv">
+                <div class="inv-head">
+                  <div><b>ใบแจ้งหนี้</b> · {{ state.general.prefix }}/{{ previewUnit }}</div>
+                  <div class="wz-muted">ออก {{ fmtDate(cycles[0].issue) }} · ครบกำหนด {{ fmtDate(cycles[0].due) }}</div>
+                </div>
+                <table class="wz-table">
+                  <tbody>
+                    <tr v-for="l in invoice.lines" :key="l.code"><td>{{ l.name }}<div class="wz-hint" style="margin:0">{{ l.qty }}</div></td><td class="r mono">{{ fmtTHB(l.amount) }}</td></tr>
+                    <tr v-if="!invoice.lines.length"><td colspan="2" class="wz-muted">ไม่มีรายการเรียกเก็บสำหรับห้องนี้</td></tr>
+                    <tr class="inv-total"><td>รวม (บาท)</td><td class="r mono">{{ fmtTHB(invoice.total) }}</td></tr>
+                  </tbody>
+                </table>
+                <div v-if="invoice.skipped.length" class="wz-hint">ไม่แจ้งหนี้ห้องนี้ (ตามเงื่อนไขห้อง/บ้าน): {{ invoice.skipped.map(i => i.name).join(', ') }}</div>
+              </div>
+            </div>
+          </template>
+
+          <div v-else-if="state.current === 'penalty'" class="wz-card">
+            <label class="wz-check" style="margin-bottom:14px"><input v-model="state.penalty.none" type="checkbox" /> <b>ไม่มีค่าปรับ</b></label>
+            <template v-if="!state.penalty.none">
+              <div class="wz-choice-row">
+                <label v-for="(t, k) in PENALTY_TYPES" :key="k" class="wz-choice" :class="{ on: state.penalty.type === k }">
+                  <input v-model="state.penalty.type" type="radio" :value="k" />
+                  <span>{{ t.label }}<small>{{ t.desc }}</small></span>
+                </label>
+              </div>
+              <div class="wz-grid three" style="margin-top:16px">
+                <div class="wz-field">
+                  <label>{{ state.penalty.type === 'fixed' ? 'บาท / ใบแจ้งหนี้' : '% ต่อปี' }} <span class="req">*</span></label>
+                  <input v-model.number="state.penalty.value" type="number" min="0" step="0.01" class="wz-input num" :class="{ invalid: !(state.penalty.value > 0) }" />
+                </div>
+                <div class="wz-field">
+                  <label>ผ่อนผัน (วันหลังครบกำหนด)</label>
+                  <input v-model.number="state.penalty.graceDays" type="number" min="0" class="wz-input num" />
+                </div>
+                <template v-if="state.penalty.type === 'step'">
+                  <div class="wz-field">
+                    <label>ค้างเกิน (เดือน) → % ต่อปี</label>
+                    <div class="rule-range">
+                      <input v-model.number="state.penalty.stepAfter" type="number" min="1" class="wz-input num" />
+                      <span>→</span>
+                      <input v-model.number="state.penalty.stepValue" type="number" min="0" class="wz-input num" />
+                    </div>
+                  </div>
+                </template>
+              </div>
+              <div class="wz-callout info"><span>🧮</span><span>ตัวอย่าง: ค้างชำระ 1,000.00 บาท นาน 30 วัน → ค่าปรับ <b>{{ fmtTHB(penaltyExample) }} บาท</b></span></div>
+            </template>
+            <div class="wz-callout warn"><span>⚖️</span><span>ตรวจสอบให้ตรงกับข้อบังคับนิติบุคคลของโครงการ — ค่าปรับที่ไม่เป็นไปตามข้อบังคับอาจเรียกเก็บไม่ได้</span></div>
+          </div>
+
+          <div v-else-if="state.current === 'billPayment'" class="wz-card">
+            <span class="wz-label">โครงการมี Bill Payment หรือไม่?</span>
+            <div class="wz-choice-row" style="margin-top:8px">
+              <label class="wz-choice" :class="{ on: state.billPayment.has === true }">
+                <input v-model="state.billPayment.has" type="radio" :value="true" />
+                <span>มี<small>ลูกบ้านจ่ายผ่าน QR / ธนาคาร แล้วระบบตัดหนี้ให้อัตโนมัติ</small></span>
+              </label>
+              <label class="wz-choice" :class="{ on: state.billPayment.has === false }">
+                <input v-model="state.billPayment.has" type="radio" :value="false" />
+                <span>ไม่มี<small>รับชำระเงินสด / โอน แล้วบันทึกเอง</small></span>
+              </label>
+            </div>
+            <div v-if="state.billPayment.has" class="wz-grid" style="margin-top:16px">
+              <div class="wz-field">
+                <label>ธนาคาร <span class="req">*</span></label>
+                <select v-model="state.billPayment.bank" class="wz-input" :class="{ invalid: !state.billPayment.bank }">
+                  <option value="" disabled>— เลือกธนาคาร —</option>
+                  <option v-for="b in BANKS" :key="b" :value="b">{{ b }}</option>
+                </select>
+              </div>
+              <div class="wz-field">
+                <label>Biller ID <span class="req">*</span></label>
+                <input v-model="state.billPayment.billerId" class="wz-input" inputmode="numeric" maxlength="15" placeholder="15 หลัก"
+                  :class="{ invalid: state.billPayment.billerId && !/^\d{15}$/.test(state.billPayment.billerId) }" />
+                <span class="wz-hint">
+                  ปกติคือเลขผู้เสียภาษี 13 หลัก + suffix 2 หลัก
+                  <button v-if="/^\d{13}$/.test(state.general.taxId)" class="linklike" @click="state.billPayment.billerId = state.general.taxId + '00'">ใช้เลขผู้เสียภาษี + 00</button>
+                </span>
+              </div>
+              <div class="wz-callout info full"><span>🧾</span><span>Ref.1 = บ้านเลขที่ (เช่น {{ state.general.prefix }}/1) · Ref.2 = เลขที่ใบแจ้งหนี้ ระบบจะพิมพ์ QR ลงบนใบแจ้งหนี้ให้อัตโนมัติ</span></div>
+            </div>
+          </div>
+
+          <!-- ═════════ 3. GL ═════════ -->
+          <div v-else-if="state.current === 'glOverview'" class="wz-card">
+            <h3>ลำดับการกรอกข้อมูล GL</h3>
+            <ol class="ov-order">
+              <li v-for="it in SECTIONS[2].items.slice(1)" :key="it.key">
+                <button class="linklike" @click="go(it.key)">{{ it.title }}</button>
+                <span class="wz-muted"> — {{ DESC[it.key] }}</span>
+              </li>
+            </ol>
+            <button class="wz-btn primary" :disabled="state.glOverview.ack" @click="state.glOverview.ack = true; next()">
+              {{ state.glOverview.ack ? '✓ รับทราบแล้ว' : 'เข้าใจแล้ว เริ่มกรอก GL →' }}
+            </button>
+          </div>
+
+          <div v-else-if="state.current === 'expenses'" class="wz-card">
+            <div class="wz-table-wrap">
+              <table class="wz-table">
+                <thead><tr><th>รหัส</th><th>ชื่อรายจ่าย</th><th></th></tr></thead>
+                <tbody>
+                  <tr v-for="e in state.expenses" :key="e.code">
+                    <td class="mono">{{ e.code }}</td>
+                    <td><input v-model="e.name" class="wz-input" :class="{ invalid: !e.name }" /></td>
+                    <td><button class="wz-btn sm ghost danger" title="ลบ" @click="removeExpense(e.code)">✕</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="row-actions">
+              <button class="wz-btn sm" @click="addExpense()">+ เพิ่มรายจ่าย</button>
+              <span class="wz-muted">หรือเพิ่มจากรายการมาตรฐาน:</span>
+              <button v-for="p in expensePresetsLeft" :key="p" class="chip" @click="addExpense(p)">+ {{ p }}</button>
+            </div>
+          </div>
+
+          <div v-else-if="state.current === 'policy'" class="wz-card">
+            <div class="pol">
+              <span class="wz-label">เกณฑ์การบันทึกบัญชี</span>
+              <div class="wz-choice-row">
+                <label class="wz-choice" :class="{ on: state.policy.basis === 'accrual' }">
+                  <input v-model="state.policy.basis" type="radio" value="accrual" />
+                  <span>เกณฑ์คงค้าง (แนะนำ)<small>รับรู้รายได้/ค่าใช้จ่ายเมื่อเกิดขึ้น</small></span>
+                </label>
+                <label class="wz-choice" :class="{ on: state.policy.basis === 'cash' }">
+                  <input v-model="state.policy.basis" type="radio" value="cash" />
+                  <span>เกณฑ์เงินสด<small>รับรู้เมื่อรับ/จ่ายเงินจริง</small></span>
+                </label>
+              </div>
+            </div>
+            <div class="pol">
+              <span class="wz-label">รับรู้รายได้เมื่อ</span>
+              <div class="wz-choice-row">
+                <label class="wz-choice" :class="{ on: state.policy.revenue === 'invoice' }">
+                  <input v-model="state.policy.revenue" type="radio" value="invoice" :disabled="state.policy.basis === 'cash'" />
+                  <span>ออกใบแจ้งหนี้<small>บันทึกลูกหนี้ ณ วันแจ้งหนี้</small></span>
+                </label>
+                <label class="wz-choice" :class="{ on: state.policy.revenue === 'receipt' }">
+                  <input v-model="state.policy.revenue" type="radio" value="receipt" />
+                  <span>รับชำระเงิน<small>บันทึกรายได้ ณ วันออกใบเสร็จ</small></span>
+                </label>
+              </div>
+            </div>
+            <div class="pol">
+              <span class="wz-label">เงินที่ลูกบ้านจ่ายเกิน / จ่ายล่วงหน้า</span>
+              <div class="wz-choice-row">
+                <label class="wz-choice" :class="{ on: state.policy.advance === 'liability' }">
+                  <input v-model="state.policy.advance" type="radio" value="liability" />
+                  <span>บันทึกเป็นเงินรับล่วงหน้า<small>ตัดชำระบิลถัดไปอัตโนมัติ</small></span>
+                </label>
+                <label class="wz-choice" :class="{ on: state.policy.advance === 'income' }">
+                  <input v-model="state.policy.advance" type="radio" value="income" />
+                  <span>บันทึกเป็นรายได้อื่น<small>ไม่ยกไปบิลถัดไป</small></span>
+                </label>
+              </div>
+            </div>
+            <label class="wz-check pol"><input v-model="state.policy.wht" type="checkbox" />คำนวณภาษีหัก ณ ที่จ่ายอัตโนมัติเมื่อจ่ายเจ้าหนี้</label>
+
+            <div class="je">
+              <div class="wz-label">ตัวอย่างการบันทึกบัญชี เมื่อ{{ state.policy.revenue === 'invoice' ? 'ออกใบแจ้งหนี้' : 'รับชำระ' }}ค่าส่วนกลาง</div>
+              <table class="wz-table">
+                <thead><tr><th>บัญชี</th><th class="r">เดบิต</th><th class="r">เครดิต</th></tr></thead>
+                <tbody>
+                  <tr><td>{{ state.policy.revenue === 'invoice' ? 'ลูกหนี้ค่าส่วนกลาง' : 'เงินฝากธนาคาร' }}</td><td class="r">✓</td><td></td></tr>
+                  <tr><td>รายได้ค่าส่วนกลาง</td><td></td><td class="r">✓</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="wz-callout warn">
+              <span>🔒</span>
+              <label class="wz-check"><input v-model="state.policy.confirmed" type="checkbox" />ฉันตรวจสอบนโยบายบันทึกบัญชีแล้ว (เปลี่ยนภายหลังจะกระทบรายงานย้อนหลัง)</label>
+            </div>
+          </div>
+
+          <!-- ═════════ 4. AP ═════════ -->
+          <div v-else-if="state.current === 'apOverview'" class="wz-card">
+            <h3>ลำดับการกรอกข้อมูล AP</h3>
+            <ol class="ov-order">
+              <li v-for="it in SECTIONS[3].items.slice(1)" :key="it.key">
+                <button class="linklike" @click="go(it.key)">{{ it.title }}</button>
+                <span class="wz-muted"> — {{ DESC[it.key] }}</span>
+              </li>
+            </ol>
+            <div class="wz-callout info"><span>🔗</span><span>ขั้นนี้จะนำรายรับจากขั้น AR ({{ state.incomes.length }} รายการ) และรายจ่ายจากขั้น GL ({{ state.expenses.length }} รายการ) มาผูกกับผังบัญชี</span></div>
+            <button class="wz-btn primary" style="margin-top:14px" :disabled="state.apOverview.ack" @click="state.apOverview.ack = true; next()">
+              {{ state.apOverview.ack ? '✓ รับทราบแล้ว' : 'เข้าใจแล้ว เริ่มกรอก AP →' }}
+            </button>
+          </div>
+
+          <template v-else-if="state.current === 'coa'">
+            <div v-if="!state.coa.accounts.length" class="wz-card">
+              <h3>เริ่มจาก…</h3>
+              <div class="wz-choice-row" style="margin-top:12px">
+                <button class="wz-choice src" @click="usePresetCoa">
+                  <span>⭐ ผังบัญชีมาตรฐานนิติบุคคล<small>{{ PRESET_COA.length }} บัญชี พร้อมใช้ ปรับแก้ได้ (แนะนำ)</small></span>
+                </button>
+                <label class="wz-choice src">
+                  <input type="file" accept=".xlsx,.xls,.csv" hidden @change="onCoaFile" />
+                  <span>⬆ นำเข้าจากระบบเดิม<small>Excel / CSV: รหัสบัญชี · ชื่อบัญชี · ประเภท</small></span>
+                </label>
+              </div>
+            </div>
+            <div v-else class="wz-card">
+              <div class="coa-bar">
+                <div class="tabs">
+                  <button v-for="(t, k) in COA_FILTERS" :key="k" class="tab" :class="{ on: coaFilter === k }" @click="coaFilter = k">{{ t }}</button>
+                </div>
+                <span class="wz-muted">{{ state.coa.accounts.length }} บัญชี · {{ state.coa.source === 'import' ? 'นำเข้าจากไฟล์' : 'ผังมาตรฐาน' }}</span>
+              </div>
+              <div v-if="state.coa.importResult" class="wz-callout warn">
+                <span>⚠️</span><span>นำเข้า {{ state.coa.importResult.fileName }}: {{ state.coa.importResult.warning }}</span>
+              </div>
+              <div class="wz-table-wrap">
+                <table class="wz-table">
+                  <thead><tr><th>ใช้บ่อย</th><th>รหัสบัญชี</th><th>ชื่อบัญชี</th><th>ประเภท</th><th></th></tr></thead>
+                  <tbody>
+                    <tr v-for="a in filteredCoa" :key="a._k">
+                      <td><button class="star" :class="{ on: state.favorites.includes(a.code) }" @click="toggleFav(a.code)">★</button></td>
+                      <td><input v-model="a.code" class="wz-input mono" style="width:110px" :class="{ invalid: dupCodes.has(a.code) }" /></td>
+                      <td><input v-model="a.name" class="wz-input" /></td>
+                      <td>
+                        <select v-model="a.type" class="wz-input">
+                          <option v-for="(t, k) in ACCOUNT_TYPES" :key="k" :value="k">{{ t }}</option>
+                        </select>
+                      </td>
+                      <td><button class="wz-btn sm ghost danger" @click="removeAccount(a)">✕</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div v-if="dupCodes.size" class="wz-err" style="margin-top:8px">รหัสบัญชีซ้ำ: {{ [...dupCodes].join(', ') }}</div>
+              <div class="row-actions">
+                <button class="wz-btn sm" @click="addAccount">+ เพิ่มบัญชี</button>
+                <button class="wz-btn sm ghost danger" @click="clearCoa">เปลี่ยนแหล่งผังบัญชี</button>
+              </div>
+            </div>
+          </template>
+
+          <template v-else-if="state.current === 'incomeMap' || state.current === 'expenseMap' || state.current === 'favorites'">
+            <div v-if="!state.coa.accounts.length" class="wz-card">
+              <div class="wz-callout warn" style="margin-top:0"><span>⚠️</span><span>ยังไม่มีผังบัญชี — ตั้งผังบัญชีก่อนจึงจะผูกบัญชีได้</span></div>
+              <button class="wz-btn primary" style="margin-top:14px" @click="go('coa')">ไปตั้งผังบัญชี →</button>
+            </div>
+
+            <div v-else-if="state.current === 'incomeMap'" class="wz-card">
+              <div class="map-bar">
+                <span class="wz-muted">ผูกแล้ว {{ state.incomes.length - unmappedIncomes.length }}/{{ state.incomes.length }}</span>
+                <button class="wz-btn sm" @click="autoMapIncomes">✨ แนะนำการผูกอัตโนมัติ</button>
+              </div>
+              <div class="map-head"><span>รายรับ</span><span>บัญชีรายได้</span><span>บัญชีลูกหนี้</span></div>
+              <div v-for="inc in state.incomes" :key="inc.code" class="map-row">
+                <div><span class="mono wz-muted">{{ inc.code }}</span> {{ inc.name }}</div>
+                <SsoAccountPicker :model-value="state.incomeMap[inc.code]?.rev || ''" prefix="4" @update:model-value="v => setIncomeMap(inc.code, 'rev', v)" />
+                <SsoAccountPicker :model-value="state.incomeMap[inc.code]?.ar || ''" prefix="11" @update:model-value="v => setIncomeMap(inc.code, 'ar', v)" />
+              </div>
+            </div>
+
+            <div v-else-if="state.current === 'expenseMap'" class="wz-card">
+              <div class="wz-field" style="max-width:360px">
+                <label>บัญชีเจ้าหนี้เริ่มต้น <span class="req">*</span></label>
+                <SsoAccountPicker v-model="state.expenseMap.apAccount" prefix="2" />
+              </div>
+              <div class="map-bar" style="margin-top:18px">
+                <span class="wz-muted">ผูกแล้ว {{ state.expenses.length - unmappedExpenses.length }}/{{ state.expenses.length }}</span>
+                <button class="wz-btn sm" @click="autoMapExpenses">✨ แนะนำการผูกอัตโนมัติ</button>
+              </div>
+              <div class="map-head two"><span>รายจ่าย</span><span>บัญชีค่าใช้จ่าย</span></div>
+              <div v-for="e in state.expenses" :key="e.code" class="map-row two">
+                <div><span class="mono wz-muted">{{ e.code }}</span> {{ e.name }}</div>
+                <SsoAccountPicker v-model="state.expenseMap.map[e.code]" prefix="5" />
+              </div>
+            </div>
+
+            <div v-else class="wz-card">
+              <div class="map-bar">
+                <span class="wz-muted">เลือกแล้ว {{ state.favorites.length }} บัญชี — จะแสดงเป็นอันดับแรกทุกครั้งที่เลือกบัญชี</span>
+                <button class="wz-btn sm" @click="suggestFavorites">✨ ใช้ชุดแนะนำ</button>
+              </div>
+              <div class="fav-grid">
+                <button v-for="a in state.coa.accounts" :key="a._k" class="fav" :class="{ on: state.favorites.includes(a.code) }" @click="toggleFav(a.code)">
+                  <span class="star" :class="{ on: state.favorites.includes(a.code) }">★</span>
+                  <span class="mono wz-muted">{{ a.code }}</span> {{ a.name }}
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- Footer nav -->
+          <div class="st-foot">
+            <button class="wz-btn" :disabled="curIdx === 0" @click="prev">← ย้อนกลับ</button>
+            <button class="wz-btn ghost" @click="toastMsg('บันทึกร่างแล้ว')">บันทึกร่าง</button>
+            <button v-if="curIdx < ORDER.length - 1" class="wz-btn primary" @click="next">
+              {{ curItem && !isDone(curItem.key) ? 'ข้ามไปก่อน →' : isLastFinanceItem ? 'เสร็จสิ้น → ตรวจสอบ' : 'ถัดไป →' }}
+            </button>
+          </div>
+        </main>
+      </div>
+    </template>
 
     <transition name="wz-toast-fade">
       <div v-if="toast" class="wz-toast">{{ toast }}</div>
@@ -706,10 +768,14 @@
 <script setup>
 import { ref, reactive, computed, nextTick } from 'vue'
 import SsoAccountPicker from './SsoAccountPicker.vue'
+import SsoFinanceCards from './SsoFinanceCards.vue'
+import SsoTemplatePicker from './SsoTemplatePicker.vue'
 import {
-  SECTIONS, ALL_ITEMS, BASE_DATASETS, RATE_TYPES, FREQS, BANKS, PRESET_COA, ACCOUNT_TYPES,
-  state, savedAt, resetState, isDone, itemStatus, doneCount, progressPercent, sectionDone,
-  unitCoverage, ruleSize, incomesForUnit, suggestAccount, withKey, fmtTHB, fmtDate, fmtTimeICT,
+  SECTIONS, ALL_ITEMS, FINANCE_SECTIONS, FINANCE_KEYS, TEMPLATES, BASE_DATASETS, RATE_TYPES, FREQS, BANKS,
+  PRESET_COA, ACCOUNT_TYPES, INCOME_PRESETS, EXPENSE_PRESETS,
+  state, savedAt, resetState, applyTemplate, isDone, itemStatus, doneCount, progressPercent, sectionDone,
+  unitCoverage, ruleSize, incomesForUnit, suggestAccount, withKey, unmappedIncomes, unmappedExpenses,
+  fmtTHB, fmtDate, fmtTimeICT,
 } from './store.js'
 
 const emit = defineEmits(['intro', 'live'])
@@ -719,6 +785,7 @@ const MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มี�
 const DESC = {
   project: 'ข้อมูลพื้นฐานของนิติบุคคล ใช้พิมพ์บนใบแจ้งหนี้และใบเสร็จ',
   accounting: 'กำหนดวันเริ่มใช้ระบบและรอบปีบัญชี',
+  template: 'เลือกรูปแบบเริ่มต้นที่ใกล้เคียงโครงการของคุณที่สุด ระบบจะกรอกรายรับ ค่าปรับ ผังบัญชี และการผูกบัญชีให้อัตโนมัติ ปรับแก้ได้ทุกขั้น',
   arOverview: 'ภาพรวมข้อมูลที่ต้องเตรียม และลำดับการกรอกข้อมูลลูกหนี้',
   incomes: 'รายรับที่นิติเรียกเก็บจากลูกบ้าน พร้อมวิธีคิดและอัตรา',
   unitRules: 'ห้อง/บ้านไหนถูกแจ้งหนี้ค่าอะไรบ้าง และมองเห็นรายรับอะไร',
@@ -743,21 +810,19 @@ const PENALTY_TYPES = {
   step: { label: 'ขั้นบันได', desc: 'อัตราเพิ่มขึ้นเมื่อค้างนานเกินกำหนด' },
 }
 
-const INCOME_PRESETS = [
-  { name: 'เงินกองทุน', rateType: 'area', rate: 0 },
-  { name: 'ค่าเก็บขยะ', rateType: 'fixed', rate: 0 },
-  { name: 'ค่าบัตรผ่านเข้า-ออก', rateType: 'fixed', rate: 0 },
-  { name: 'ค่าเช่าพื้นที่ส่วนกลาง', rateType: 'fixed', rate: 0 },
-]
-const EXPENSE_PRESETS = ['ค่าน้ำประปาส่วนกลาง', 'ค่าบริหารจัดการ', 'ค่าเบี้ยประกันภัยอาคาร', 'ค่าสอบบัญชี']
 const COA_FILTERS = { all: 'ทั้งหมด', ...ACCOUNT_TYPES }
 const SAMPLE = { area: 60, usage: 12 }
 
+// ── View: overview page vs. the full-screen AR/GL/AP finance wizard ─────
+const WIZARD_KEYS = new Set(['template', ...FINANCE_KEYS])
+const view = computed(() => (WIZARD_KEYS.has(state.current) ? 'wizard' : 'overview'))
+
 // ── Navigation ──────────────────────────────────────────────────
-const ORDER = [...ALL_ITEMS.map(i => i.key), 'review']
+const ORDER = ['project', 'accounting', 'template', ...FINANCE_KEYS, 'review']
 const curIdx = computed(() => ORDER.indexOf(state.current))
 const curItem = computed(() => ALL_ITEMS.find(i => i.key === state.current))
 const curSection = computed(() => SECTIONS.find(s => s.key === curItem.value?.section))
+const isLastFinanceItem = computed(() => ORDER[curIdx.value + 1] === 'review')
 
 if (!state.visited.includes(state.current)) state.visited.push(state.current)
 
@@ -779,6 +844,15 @@ function go(key) {
 }
 function next() { if (curIdx.value < ORDER.length - 1) go(ORDER[curIdx.value + 1]) }
 function prev() { if (curIdx.value > 0) go(ORDER[curIdx.value - 1]) }
+function backToOverview() { go(state.visited.includes('accounting') ? 'accounting' : 'project') }
+
+function pickTemplate(level) {
+  const dirty = state.finance.template || [...FINANCE_KEYS].some(k => state.visited.includes(k))
+  if (dirty && !confirm(`เปลี่ยนไปใช้ template "${TEMPLATES[level].label}"? ข้อมูลบัญชีการเงินที่กรอกไว้จะถูกแทนที่`)) return
+  applyTemplate(level)
+  toastMsg(`ใช้ template "${TEMPLATES[level].label}" แล้ว`)
+  go('arOverview')
+}
 
 function exitDemo() {
   resetState()
@@ -972,8 +1046,6 @@ const dupCodes = computed(() => {
 function setIncomeMap(code, field, v) {
   state.incomeMap[code] = { ...(state.incomeMap[code] || {}), [field]: v }
 }
-const unmappedIncomes = computed(() => state.incomes.filter(i => !(state.incomeMap[i.code]?.rev && state.incomeMap[i.code]?.ar)))
-const unmappedExpenses = computed(() => state.expenses.filter(e => !state.expenseMap.map[e.code]))
 
 function autoMapIncomes() {
   let n = 0
@@ -1069,6 +1141,25 @@ function goLive() {
 .st-foot{ display:flex; justify-content:space-between; gap:10px; margin-top:22px; padding-top:18px; border-top:1px solid var(--bl); }
 .st-foot .ghost{ margin-left:auto; }
 
+/* finance wizard shell */
+.wiz{ display:flex; flex-direction:column; gap:14px; }
+.wiz-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.wiz-top-title{ display:flex; align-items:center; gap:10px; }
+.wiz-top-title b{ font-size:16px; color:var(--t1); }
+.wiz-groups{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; }
+.wiz-group{ text-align:left; font:inherit; background:#fff; border:1.5px solid var(--bl); border-radius:12px; padding:12px 14px; cursor:pointer; display:flex; flex-direction:column; gap:8px; }
+.wiz-group:hover{ border-color:var(--blue400); }
+.wiz-group.on{ border-color:var(--blue); background:var(--blue50); }
+.wiz-group-head{ display:flex; justify-content:space-between; align-items:center; }
+.wiz-group-head b{ font-size:14px; color:var(--t1); }
+.wiz-pills{ display:flex; flex-wrap:wrap; gap:8px; }
+.wiz-pill{ font:inherit; font-size:12.5px; padding:6px 14px; border-radius:9999px; border:1.5px solid var(--bl); background:#fff; color:var(--t3); cursor:pointer; }
+.wiz-pill:hover{ border-color:var(--blue400); }
+.wiz-pill.on{ border-color:var(--blue); color:var(--blue600); background:var(--blue50); font-weight:600; }
+.wiz-pill.done{ color:var(--green); }
+.wiz-pill.done::before{ content:'✓ '; }
+.wiz-body{ margin-top:2px; }
+
 /* overview */
 .ov-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px; }
 .ov-item{ padding:9px 12px; border:1.5px solid var(--bl); border-radius:10px; }
@@ -1159,6 +1250,8 @@ function goLive() {
   .acc-row .wz-btn{ font-size:12px; padding:6px 10px; }
   .st-head h2{ font-size:20px; }
   .ov-grid, .fav-grid, .rv-grid{ grid-template-columns:1fr; }
+  .wiz-groups{ grid-template-columns:1fr; }
+  .wiz-top{ flex-direction:column; align-items:flex-start; }
   .map-head{ display:none; }
   .map-row, .map-row.two{ grid-template-columns:1fr; gap:8px; }
   .rv-sum{ grid-template-columns:1fr; gap:2px; }

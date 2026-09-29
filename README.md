@@ -62,7 +62,16 @@ npm start
 │   │   ├── PmsJuDrawer.vue           # PMS Notification Center prototype
 │   │   ├── pmsJuDrawerStyles.css     # Styles for PmsJuDrawer
 │   │   ├── MigratePermissions.vue    # Permissions migration view
-│   │   └── RoomPriceQuiz.vue         # Room pricing quiz view
+│   │   ├── RoomPriceQuiz.vue         # Room pricing quiz view
+│   │   ├── LosHomepage.vue           # LivingOS marketing homepage (currently unrouted)
+│   │   ├── PmsCloneTool.vue          # New-project setup / clone-from-existing prototype
+│   │   ├── PmsSidebarDemo.vue        # Sidebar behavior demo
+│   │   ├── CheckTemplateSwitcher.vue # Cheque template editor/switcher prototype
+│   │   ├── AutoGlReceiptPosting.vue  # Auto GL receipt-posting settings prototype
+│   │   ├── PmsSelfServiceOnboarding.vue # Self-service onboarding brief/PRD page
+│   │   ├── AdvancePaymentDemo.vue    # เงินทดรองจ่าย advance payment prototype
+│   │   ├── SelfOnboardWizard.vue     # Self-onboard wizard shell
+│   │   └── self-onboard/             # Wizard sub-components (setup, home dashboard, welcome dialog, store)
 │   ├── router/                       # Vue Router configuration
 │   │   └── index.js
 │   ├── App.vue                       # Root component
