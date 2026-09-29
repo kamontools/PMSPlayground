@@ -87,6 +87,7 @@
             <span>T-001 : โครงการนิติบุคคล หมื่นสิริ คอนโดมิเนียม เขตบางนา</span>
             <svg class="pca-swap-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10l-3-3M16 13H6l3 3"/></svg>
           </div>
+          <router-link class="pca-exit" to="/prototype/advance-payment-v2">ลอง v2 →</router-link>
           <router-link class="pca-exit" to="/">← หน้าหลัก</router-link>
         </div>
       </div>

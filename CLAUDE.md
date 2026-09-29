@@ -67,6 +67,7 @@ server/index.js                   # Express API server
 | `/prototype/pms-clone-tool` | PmsCloneTool | New-project setup / clone-from-existing |
 | `/prototype/pms-sidebar-demo` | PmsSidebarDemo | Sidebar behavior demo |
 | `/prototype/advance-payment` | AdvancePaymentDemo | เงินทดรองจ่าย request → clearing flow |
+| `/prototype/advance-payment-v2` | AdvancePaymentDemoV2 | เงินทดรองจ่าย alt version: status filters + inline status change, 2-section layout |
 | `/migrate-permissions` | MigratePermissions | Permissions migration prototype |
 | `/room-price-quiz` | RoomPriceQuiz | Room price quiz prototype |
 

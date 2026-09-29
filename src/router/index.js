@@ -11,6 +11,7 @@ import CheckTemplateSwitcher from '../views/CheckTemplateSwitcher.vue'
 import AutoGlReceiptPosting from '../views/AutoGlReceiptPosting.vue'
 import PmsSelfServiceOnboarding from '../views/PmsSelfServiceOnboarding.vue'
 import AdvancePaymentDemo from '../views/AdvancePaymentDemo.vue'
+import AdvancePaymentDemoV2 from '../views/AdvancePaymentDemoV2.vue'
 import SelfOnboardWizard from '../views/SelfOnboardWizard.vue'
 const routes = [
   {
@@ -62,6 +63,11 @@ const routes = [
     path: '/prototype/advance-payment',
     name: 'AdvancePaymentDemo',
     component: AdvancePaymentDemo
+  },
+  {
+    path: '/prototype/advance-payment-v2',
+    name: 'AdvancePaymentDemoV2',
+    component: AdvancePaymentDemoV2
   },
   {
     path: '/migrate-permissions',
