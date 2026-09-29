@@ -1,5 +1,5 @@
 <template>
-  <div class="pca-page">
+  <div class="pca-page" @click="onDateInputClick">
     <!-- ============ SIDEBAR ============ -->
     <aside class="pca-sidebar">
       <div class="pca-brand">
@@ -649,7 +649,9 @@
                   <tr v-for="(row, idx) in clearRows" :key="row.id">
                     <td class="pca-col-num">{{ idx + 1 }}</td>
                     <td><input type="text" v-model="row.code" class="pca-table-input" placeholder="รหัส" /></td>
-                    <td><input type="text" v-model="row.name" class="pca-table-input" placeholder="ชื่อรายจ่าย" /></td>
+                    <td>
+                      <input type="text" v-model="row.name" list="pcv2-expense-names" class="pca-table-input" placeholder="เลือก หรือ พิมพ์ชื่อรายจ่าย" />
+                    </td>
                     <td><input type="text" v-model="row.detail" class="pca-table-input" maxlength="100" placeholder="รายละเอียด" /></td>
                     <td class="pca-col-num"><input type="number" v-model.number="row.amount" class="pca-table-input pca-table-input-num" placeholder="0.00" /></td>
                     <td><input type="text" v-model="row.docRef" class="pca-table-input" placeholder="เอกสารอ้างอิง" /></td>
@@ -661,6 +663,9 @@
                   </tr>
                 </tbody>
               </table>
+              <datalist id="pcv2-expense-names">
+                <option v-for="n in EXPENSE_NAMES" :key="n" :value="n" />
+              </datalist>
             </div>
 
             <div class="pca-charges-footer">
@@ -894,6 +899,7 @@ const CHECK_DOCS = [
 const PAYMENT_TYPES = ['เช็คสั่งจ่ายตรง', 'เช็คขีดคร่อม A/C Payee Only']
 const PAY_FROM_ACCOUNTS = ['ธนาคารกสิกรไทย ออมทรัพย์ 718-2-68929-1', 'ธนาคารไทยพาณิชย์ ออมทรัพย์ 111-2-22222-3']
 const CHECK_STATUSES = ['รอสั่งจ่าย', 'สั่งจ่ายแล้ว', 'ยกเลิก']
+const EXPENSE_NAMES = ['ค่าเดินทาง', 'ค่าที่พัก', 'ค่าอาหาร', 'ค่าน้ำมันเชื้อเพลิง', 'ค่าจัดซื้ออุปกรณ์สำนักงาน', 'ค่าซ่อมบำรุง', 'ค่าใช้จ่ายจัดกิจกรรม', 'อื่นๆ']
 
 const FILTERS = [
   { value: 'all', label: 'ทั้งหมด' },
@@ -973,6 +979,13 @@ function showToast(message) {
 }
 function showUploadToast() {
   showToast('อัปโหลดไฟล์ (ตัวอย่างสาธิต)')
+}
+
+function onDateInputClick(event) {
+  const target = event.target
+  if (target?.tagName === 'INPUT' && target.type === 'date' && typeof target.showPicker === 'function') {
+    try { target.showPicker() } catch { /* ignored: unsupported in this browser */ }
+  }
 }
 
 function checkAmountFor(form) {
