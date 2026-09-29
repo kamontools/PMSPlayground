@@ -219,6 +219,186 @@
               </div>
             </div>
           </div>
+
+          <div class="pca-card">
+            <h2 class="pca-card-title">วิธีการชำระ <span class="pcv2-optional-tag">ไม่บังคับ กรอกภายหลังได้</span></h2>
+            <div class="pca-form-grid pca-form-grid-2">
+              <div class="pca-field">
+                <label>ชำระโดย</label>
+                <div class="pca-input-icon">
+                  <select v-model="createForm.payMethod">
+                    <option v-for="opt in PAY_METHODS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                  </select>
+                  <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="createForm.payMethod === 'cash'" class="pca-form-grid pca-form-grid-2">
+              <div class="pca-field">
+                <label>จำนวนเงิน</label>
+                <input type="number" v-model.number="createForm.amount" min="0" placeholder="0.00" />
+              </div>
+            </div>
+
+            <div v-else-if="createForm.payMethod === 'petty-cash'" class="pca-form-grid pca-form-grid-2">
+              <div class="pca-field">
+                <label>จำนวนเงิน</label>
+                <input type="number" v-model.number="createForm.amount" min="0" placeholder="0.00" />
+              </div>
+              <div class="pca-field">
+                <label>รายการเงินสดย่อย (เลขที่เอกสาร)</label>
+                <div class="pca-input-icon">
+                  <select v-model="createForm.pettyCashDocNo">
+                    <option value="" disabled>เลือกเลขที่เอกสาร</option>
+                    <option v-for="doc in PETTY_CASH_DOCS" :key="doc" :value="doc">{{ doc }}</option>
+                  </select>
+                  <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="createForm.payMethod === 'advance-received'" class="pca-form-grid pca-form-grid-2">
+              <div class="pca-field">
+                <label>จำนวนเงิน</label>
+                <input type="number" v-model.number="createForm.amount" min="0" placeholder="0.00" />
+              </div>
+              <div class="pca-field">
+                <label>อ้างอิงรับเงินล่วงหน้า</label>
+                <div class="pca-input-icon">
+                  <select v-model="createForm.advanceRefNo">
+                    <option value="" disabled>เลือกเอกสารอ้างอิง</option>
+                    <option v-for="doc in ADVANCE_RECEIVED_DOCS" :key="doc" :value="doc">{{ doc }}</option>
+                  </select>
+                  <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="createForm.payMethod === 'bank-kbank'" class="pca-form-grid pca-form-grid-3">
+              <div class="pca-field">
+                <label>จำนวนเงิน</label>
+                <input type="number" v-model.number="createForm.amount" min="0" placeholder="0.00" />
+              </div>
+              <div class="pca-field">
+                <label>วันที่</label>
+                <input type="date" v-model="createForm.bankDate" />
+              </div>
+              <div class="pca-field">
+                <label>หลักฐานการชำระเงิน</label>
+                <button type="button" class="pca-btn pca-btn-primary pca-btn-sm" @click="showUploadToast">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V4M6.5 7.5L10 4l3.5 3.5"/><path d="M4 13v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+                  อัปโหลดไฟล์
+                </button>
+              </div>
+            </div>
+
+            <template v-else-if="createForm.payMethod === 'check'">
+              <div class="pca-form-grid pca-form-grid-1">
+                <div class="pca-field">
+                  <label>เลือกเอกสารเลขที่ หรือสร้างใหม่</label>
+                  <div class="pca-check-mode-toggle">
+                    <button type="button" class="pca-mode-btn" :class="{ active: createForm.checkMode === 'existing' }" @click="createForm.checkMode = 'existing'">เลือกเอกสารเดิม</button>
+                    <button type="button" class="pca-mode-btn" :class="{ active: createForm.checkMode === 'new' }" @click="createForm.checkMode = 'new'">สร้างใหม่</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pca-form-grid" :class="createForm.checkMode === 'existing' ? 'pca-form-grid-3' : 'pca-form-grid-2'">
+                <div class="pca-field" v-if="createForm.checkMode === 'existing'">
+                  <label>เลขที่เช็ค</label>
+                  <div class="pca-input-icon">
+                    <select v-model="createForm.checkDocNo">
+                      <option value="" disabled>เลือกเลขที่เช็ค</option>
+                      <option v-for="chq in CHECK_DOCS" :key="chq.docNo" :value="chq.docNo">{{ chq.docNo }} — {{ formatAmount(chq.amount) }} บาท</option>
+                    </select>
+                    <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                  </div>
+                </div>
+                <div class="pca-field" v-else>
+                  <label>เลขที่เช็คใหม่</label>
+                  <input type="text" v-model="createForm.checkNewNo" placeholder="ระบุเลขที่เช็ค" />
+                </div>
+                <div class="pca-field">
+                  <label>จำนวนเงิน (ขึ้นตามเช็ค)</label>
+                  <input type="number" :value="createCheckAmount" @input="onCheckAmountInput(createForm, $event)" :disabled="createForm.checkMode === 'existing'" placeholder="0.00" />
+                </div>
+              </div>
+
+              <div v-if="createForm.checkMode === 'new'" class="pca-paired-check-title">รายละเอียดเช็คประกบ</div>
+
+              <div v-if="createForm.checkMode === 'new'" class="pca-paired-check">
+                <div class="pca-form-grid pca-form-grid-1">
+                  <div class="pca-field">
+                    <label>รายละเอียดเช็ค</label>
+                    <textarea v-model="createForm.pairedCheck.detail" rows="2" placeholder="ระบุรายละเอียดเช็ค"></textarea>
+                  </div>
+                </div>
+                <div class="pca-form-grid pca-form-grid-2">
+                  <div class="pca-field">
+                    <label>วันที่ชำระ</label>
+                    <input type="date" v-model="createForm.pairedCheck.paymentDate" />
+                  </div>
+                  <div class="pca-field">
+                    <label>วันที่ครบกำหนด</label>
+                    <input type="date" v-model="createForm.pairedCheck.dueDate" />
+                  </div>
+                </div>
+                <div class="pca-form-grid pca-form-grid-3">
+                  <div class="pca-field">
+                    <label>ผู้จัดจำหน่าย</label>
+                    <input type="text" v-model="createForm.pairedCheck.vendor" placeholder="ระบุผู้จัดจำหน่าย" />
+                  </div>
+                  <div class="pca-field">
+                    <label>ประเภทการชำระ</label>
+                    <div class="pca-input-icon">
+                      <select v-model="createForm.pairedCheck.paymentType">
+                        <option value="" disabled>เลือกประเภทการชำระ</option>
+                        <option v-for="t in PAYMENT_TYPES" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                      <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                    </div>
+                  </div>
+                  <div class="pca-field">
+                    <label>ชื่อพนักงาน</label>
+                    <input type="text" v-model="createForm.pairedCheck.employeeName" placeholder="ระบุชื่อพนักงาน" />
+                  </div>
+                </div>
+                <div class="pca-form-grid pca-form-grid-3">
+                  <div class="pca-field">
+                    <label>จ่ายจากบัญชี</label>
+                    <div class="pca-input-icon">
+                      <select v-model="createForm.pairedCheck.payFromAccount">
+                        <option value="" disabled>เลือกบัญชี</option>
+                        <option v-for="a in PAY_FROM_ACCOUNTS" :key="a" :value="a">{{ a }}</option>
+                      </select>
+                      <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                    </div>
+                  </div>
+                  <div class="pca-field">
+                    <label>สถานะ</label>
+                    <div class="pca-input-icon">
+                      <select v-model="createForm.pairedCheck.status">
+                        <option value="" disabled>เลือกสถานะ</option>
+                        <option v-for="s in CHECK_STATUSES" :key="s" :value="s">{{ s }}</option>
+                      </select>
+                      <svg class="pca-field-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                    </div>
+                  </div>
+                  <div class="pca-field">
+                    <label>วันที่หักจากบัญชี</label>
+                    <input type="date" v-model="createForm.pairedCheck.accountDeductDate" />
+                  </div>
+                </div>
+                <div class="pca-form-grid pca-form-grid-1">
+                  <div class="pca-field">
+                    <label>ชื่อผู้รับ</label>
+                    <input type="text" v-model="createForm.pairedCheck.payeeName" placeholder="ระบุชื่อผู้รับ" />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
         </template>
 
         <!-- ================= DISBURSE ================= -->
@@ -1005,10 +1185,13 @@ function blankCreateForm() {
     bookDate: todayIso(),
     dueDate: '',
     description: '',
-    payee: ''
+    payee: '',
+    ...blankPayMethodForm()
   }
 }
 const createForm = ref(blankCreateForm())
+const createCheckAmount = computed(() => checkAmountFor(createForm.value))
+const createAmount = computed(() => createForm.value.payMethod === 'check' ? createCheckAmount.value : (createForm.value.amount || 0))
 
 const canSaveCreate = computed(() =>
   createForm.value.bookDate !== '' && createForm.value.dueDate !== ''
@@ -1020,6 +1203,8 @@ function openCreate() {
 }
 
 function saveCreate() {
+  const amount = createAmount.value
+  const payMethodLabel = PAY_METHODS.find(m => m.value === createForm.value.payMethod)?.label || createForm.value.payMethod
   items.value.push({
     id: itemSeq,
     docNo: nextDocNo.value,
@@ -1027,9 +1212,9 @@ function saveCreate() {
     dueDate: isoToThaiDate(createForm.value.dueDate),
     payee: createForm.value.payee || '—',
     description: createForm.value.description || '—',
-    payMethod: '',
-    amount: null,
-    status: 'awaiting-disburse'
+    payMethod: amount > 0 ? payMethodLabel : '',
+    amount: amount > 0 ? amount : null,
+    status: amount > 0 ? 'awaiting-clear' : 'awaiting-disburse'
   })
   itemSeq++
   showToast('สร้างเงินทดรองจ่ายเรียบร้อยแล้ว')
@@ -1530,6 +1715,16 @@ function saveClear() {
 .pcv2-summary-item-grow { flex: 1; min-width: 200px; }
 .pcv2-summary-label { font-size: 11px; color: var(--color-text-tertiary); }
 .pcv2-summary-value { font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); }
+
+.pcv2-optional-tag {
+  font-size: 11px; font-weight: 500;
+  color: var(--color-text-tertiary);
+  background: var(--color-disabled-bg);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
 
 .pcv2-list-table-wrap td, .pcv2-list-table-wrap th { white-space: nowrap; }
 .pcv2-list-table-wrap .pca-table { min-width: 1100px; }
