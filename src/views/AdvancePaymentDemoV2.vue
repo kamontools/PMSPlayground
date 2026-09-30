@@ -137,7 +137,7 @@
                   <tr v-if="filteredItems.length === 0">
                     <td colspan="9" class="pca-empty">ไม่มีรายการเงินทดรองจ่าย</td>
                   </tr>
-                  <tr v-for="item in filteredItems" :key="item.id">
+                  <tr v-for="item in filteredItems" :key="item.id" class="pcv2-row-clickable" title="ดับเบิลคลิกเพื่อดูรายละเอียด" @dblclick="openDetail(item)">
                     <td class="pca-cell-strong">{{ item.docNo }}</td>
                     <td><span class="pca-status" :class="'pca-status--' + item.status">{{ statusLabel(item.status) }}</span></td>
                     <td>{{ item.bookDate }}</td>
@@ -624,8 +624,19 @@
               </button>
               <h1 class="pca-title">รายละเอียดเงินทดรองจ่าย {{ selectedItem.docNo }}</h1>
             </div>
+            <div class="pcv2-layout-toggle" role="group" aria-label="รูปแบบการแสดงผล">
+              <button type="button" class="pcv2-layout-btn" :class="{ active: detailLayout === '1col' }" title="แสดงผล 1 คอลัมน์" :aria-pressed="detailLayout === '1col'" @click="setDetailLayout('1col')">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="13" height="5" rx="1.2"/><rect x="3.5" y="11.5" width="13" height="5" rx="1.2"/></svg>
+                <span>1 คอลัมน์</span>
+              </button>
+              <button type="button" class="pcv2-layout-btn" :class="{ active: detailLayout === '2col' }" title="แสดงผล 2 คอลัมน์" :aria-pressed="detailLayout === '2col'" @click="setDetailLayout('2col')">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="5.5" height="13" rx="1.2"/><rect x="11" y="3.5" width="5.5" height="13" rx="1.2"/></svg>
+                <span>2 คอลัมน์</span>
+              </button>
+            </div>
           </div>
 
+          <div class="pcv2-detail-layout" :class="'pcv2-detail-layout--' + detailLayout">
           <div class="pca-card">
             <div class="pca-charges-header">
               <h2 class="pca-card-title" style="margin:0">ส่วน คำขอเงินทดรองจ่าย</h2>
@@ -699,7 +710,7 @@
                 </div>
                 <div class="pca-field">
                   <label>ชำระโดย</label>
-                  <input type="text" :value="selectedItem.clearing.payMethodLabel" disabled />
+                  <input type="text" :value="selectedItem.clearing.payMethodLabel || 'ยอดตรงตามยอดเบิก — ไม่มีการชำระเพิ่มเติม'" disabled />
                 </div>
               </div>
 
@@ -743,6 +754,7 @@
               </div>
             </template>
             <div v-else class="pca-empty">{{ selectedItem.status === 'awaiting-disburse' ? 'ต้องเบิกเงินทดรองจ่ายก่อน จึงจะสามารถเคลียร์ได้' : 'ยังไม่มีการเคลียร์เงินทดรองจ่ายรายการนี้' }}</div>
+          </div>
           </div>
         </template>
 
@@ -850,6 +862,8 @@
 
             <div class="pca-charges-footer">
               <div class="pca-footer-row">
+                <span v-if="clearDiff < 0" class="pcv2-diff-tag pcv2-diff-tag--under">น้อยกว่ายอดเบิก</span>
+                <span v-else-if="clearDiff > 0" class="pcv2-diff-tag pcv2-diff-tag--over">มากกว่ายอดเบิก</span>
                 <span>ยอดรวม</span>
                 <div class="pca-total-box">{{ formatAmount(clearTotal) }} บาท</div>
               </div>
@@ -870,7 +884,7 @@
             </div>
           </div>
 
-          <div class="pca-card">
+          <div v-if="clearDiff !== 0" class="pca-card">
             <h2 class="pca-card-title">วิธีการชำระ</h2>
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
@@ -1223,6 +1237,16 @@ function saveCreate() {
 
 // ---- detail ----
 const selectedItem = ref(null)
+
+const DETAIL_LAYOUT_KEY = 'pcv2-detail-layout'
+function readDetailLayout() {
+  try { return localStorage.getItem(DETAIL_LAYOUT_KEY) === '2col' ? '2col' : '1col' } catch { return '1col' }
+}
+const detailLayout = ref(readDetailLayout()) // '1col' | '2col'
+function setDetailLayout(layout) {
+  detailLayout.value = layout
+  try { localStorage.setItem(DETAIL_LAYOUT_KEY, layout) } catch {}
+}
 function openDetail(item) {
   selectedItem.value = item
   page.value = 'detail'
@@ -1300,6 +1324,7 @@ const clearForm = ref(blankClearForm({ dueDate: '', description: '' }))
 const clearRows = ref([])
 const clearCheckAmount = computed(() => checkAmountFor(clearForm.value))
 const clearTotal = computed(() => clearRows.value.reduce((sum, r) => sum + (Number(r.amount) || 0), 0))
+const clearDiff = computed(() => selectedItem.value ? clearTotal.value - selectedItem.value.amount : 0)
 
 const canSaveClear = computed(() =>
   clearForm.value.bookDate !== '' && clearForm.value.dueDate !== '' && clearRows.value.length > 0
@@ -1325,7 +1350,9 @@ function saveClear() {
   const item = selectedItem.value
   if (!item) return
   const total = clearTotal.value
-  const payMethodLabel = PAY_METHODS.find(m => m.value === clearForm.value.payMethod)?.label || clearForm.value.payMethod
+  const payMethodLabel = clearDiff.value !== 0
+    ? (PAY_METHODS.find(m => m.value === clearForm.value.payMethod)?.label || clearForm.value.payMethod)
+    : ''
   item.clearing = {
     bookDate: isoToThaiDate(clearForm.value.bookDate),
     payMethodLabel,
@@ -1504,7 +1531,7 @@ function saveClear() {
 .pca-project-chip svg { width: 14px; height: 14px; flex-shrink: 0; }
 .pca-swap-ic { color: var(--color-text-tertiary); cursor: pointer; }
 
-.pca-content { padding: 24px 28px 60px; max-width: 1120px; }
+.pca-content { padding: 24px 28px 60px; }
 
 .pca-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .pca-header-left { display: flex; align-items: center; gap: 10px; }
@@ -1726,8 +1753,19 @@ function saveClear() {
   vertical-align: middle;
 }
 
+.pcv2-diff-tag {
+  font-size: var(--font-size-xs); font-weight: 600;
+  padding: 3px 10px; border-radius: 999px;
+  margin-right: auto;
+}
+.pcv2-diff-tag--under { background: var(--color-attention-bg); color: var(--color-attention); }
+.pcv2-diff-tag--over { background: var(--color-error-bg); color: var(--color-error); }
+
 .pcv2-list-table-wrap td, .pcv2-list-table-wrap th { white-space: nowrap; }
 .pcv2-list-table-wrap .pca-table { min-width: 1100px; }
+
+.pcv2-row-clickable { cursor: pointer; user-select: none; }
+.pcv2-row-clickable:hover td { background: var(--color-disabled-bg); }
 
 .pcv2-col-sticky {
   position: sticky;
@@ -1752,9 +1790,75 @@ td.pcv2-col-sticky { z-index: 1; }
 .pca-icon-btn svg { width: 17px; height: 17px; }
 .pca-icon-btn:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); }
 
+/* ---------- DETAIL LAYOUT TOGGLE ---------- */
+.pcv2-layout-toggle {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--color-white);
+  border: 1px solid var(--color-dividers);
+  border-radius: var(--radius-md);
+}
+.pcv2-layout-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-family: inherit; font-size: var(--font-size-xs); font-weight: 600;
+  color: var(--color-text-secondary);
+  background: transparent; border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px; cursor: pointer;
+}
+.pcv2-layout-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.pcv2-layout-btn:hover:not(.active) { color: var(--color-primary-500); }
+.pcv2-layout-btn.active { background: var(--color-primary-200); color: var(--color-primary-click); }
+
+.pcv2-detail-layout--2col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.pcv2-detail-layout--2col > .pca-card { margin-bottom: 0; }
+/* each column is half-width, so squeeze the inner 3-column rows */
+.pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
+
+/* ---------- RESPONSIVE ---------- */
+.pca-content { width: 100%; }
+.pca-header-row { gap: 12px; flex-wrap: wrap; }
+.pca-header-left { min-width: 0; }
+.pca-charges-header { gap: 12px; flex-wrap: wrap; }
+.pca-table-wrap { -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 1200px) {
+  .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
+  .pcv2-detail-layout--2col .pca-form-grid-2,
+  .pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1024px) {
+  .pcv2-layout-toggle { display: none; }
+  .pcv2-detail-layout--2col { display: block; }
+  .pcv2-detail-layout--2col > .pca-card { margin-bottom: 20px; }
+}
+
 @media (max-width: 900px) {
   .pca-sidebar { display: none; }
   .pca-main { margin-left: 0; }
+  .pca-topbar { padding: 12px 20px; }
+  .pca-content { padding: 20px 20px 48px; }
   .pca-form-grid-2, .pca-form-grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .pca-topbar { padding: 10px 16px; gap: 8px; }
+  .pca-breadcrumb { display: none; }
+  .pca-topbar-right { flex: 1; justify-content: flex-end; }
+  .pca-content { padding: 16px 16px 40px; }
+  .pca-card { padding: 16px; margin-bottom: 16px; }
+  .pca-title { font-size: 18px; }
+  .pca-header-row > .pca-btn,
+  .pca-header-row > div:last-child:not(.pca-header-left) { flex-shrink: 0; }
+  .pca-charges-footer { align-items: stretch; }
+  .pca-footer-row { justify-content: space-between; }
+  .pca-total-box { min-width: 0; flex: 1; }
+  .pca-toast { width: calc(100% - 32px); text-align: center; }
+  .pca-modal-toolbar { margin-bottom: 8px; }
 }
 </style>
