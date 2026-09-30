@@ -459,35 +459,13 @@
               <span v-if="sectionState(0) !== 'pending'" class="pcv3-sec-toggle">{{ isOpen(0) ? 'ย่อ' : 'ดูรายละเอียด' }}<svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg></span>
             </button>
             <div v-if="isOpen(0)" class="pcv3-sec-body">
-            <div class="pca-form-grid pca-form-grid-3">
-              <div class="pca-field">
-                <label>เลขที่เอกสาร</label>
-                <input type="text" :value="selectedItem.docNo" disabled />
-              </div>
-              <div class="pca-field">
-                <label>วันที่บันทึก</label>
-                <input type="text" :value="selectedItem.bookDate" disabled />
-              </div>
-              <div class="pca-field">
-                <label>วันที่ครบกำหนดเคลียร์</label>
-                <input type="text" :value="selectedItem.dueDate" disabled />
-              </div>
-            </div>
-
-            <div class="pca-form-grid pca-form-grid-1">
-              <div class="pca-field">
-                <label>คำอธิบาย</label>
-                <textarea :value="selectedItem.description" rows="2" disabled></textarea>
-              </div>
-            </div>
-
-            <div class="pca-form-grid pca-form-grid-3">
-              <div class="pca-field">
-                <label>ผู้เบิก</label>
-                <input type="text" :value="selectedItem.payee" disabled />
-              </div>
-            </div>
-
+              <dl class="pcv3-kv">
+                <div><dt>เลขที่เอกสาร</dt><dd>{{ selectedItem.docNo }}</dd></div>
+                <div><dt>วันที่บันทึก</dt><dd>{{ selectedItem.bookDate }}</dd></div>
+                <div><dt>วันที่ครบกำหนดเคลียร์</dt><dd>{{ selectedItem.dueDate }}</dd></div>
+                <div><dt>ผู้เบิก</dt><dd>{{ selectedItem.payee }}</dd></div>
+                <div class="pcv3-kv-full"><dt>คำอธิบาย</dt><dd>{{ selectedItem.description }}</dd></div>
+              </dl>
             </div>
           </section>
 
@@ -1986,6 +1964,22 @@ td.pcv2-col-sticky { z-index: 1; }
 
 .pcv3-sec-body { padding: 4px 20px 20px 66px; }
 .pcv3-sec-body > .pca-form-grid:last-child { margin-bottom: 0; }
+
+/* read-only facts: one row of short values, then the free-text description on its own line */
+.pcv3-kv {
+  margin: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 24px;
+  border-top: 1px solid var(--color-dividers);
+}
+.pcv3-kv > div { padding: 12px 0; min-width: 0; }
+.pcv3-kv-full { grid-column: 1 / -1; border-top: 1px dashed var(--color-dividers); }
+.pcv3-kv dt { font-size: var(--font-size-xs); color: var(--color-text-tertiary); margin-bottom: 4px; }
+.pcv3-kv dd { margin: 0; font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); line-height: 1.5; overflow-wrap: anywhere; }
+.pcv3-kv-full dd { font-weight: 400; }
+@media (max-width: 640px) {
+  .pcv3-kv { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+}
 
 .pcv3-sub { padding: 16px 0; border-top: 1px solid var(--color-dividers); }
 .pcv3-sub:first-child { border-top: none; padding-top: 4px; }
