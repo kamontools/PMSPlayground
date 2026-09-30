@@ -784,7 +784,7 @@
                 <ul
                   v-if="expenseMenu"
                   class="pcv2-expense-menu"
-                  :style="{ top: expenseMenu.top + 'px', left: expenseMenu.left + 'px', minWidth: expenseMenu.width + 'px' }"
+                  :style="{ top: expenseMenu.top + 'px', left: expenseMenu.left + 'px', minWidth: expenseMenu.width + 'px', maxHeight: expenseMenu.maxH + 'px' }"
                 >
                   <li
                     v-for="n in EXPENSE_NAMES"
@@ -1274,7 +1274,13 @@ const clearRows = ref([])
 const expenseMenu = ref(null)
 function openExpenseMenu(row, e) {
   const r = e.target.getBoundingClientRect()
-  expenseMenu.value = { row, top: r.bottom + 4, left: r.left, width: r.width }
+  const menuH = Math.min(260, EXPENSE_NAMES.length * 37 + 10)
+  const below = window.innerHeight - r.bottom - 8
+  // not enough room under the input -> open upwards, so the list is never pushed off-screen
+  const flip = below < menuH && r.top > below
+  const maxH = Math.max(120, Math.min(menuH, flip ? r.top - 8 : below))
+  const top = flip ? r.top - 4 - maxH : r.bottom + 4
+  expenseMenu.value = { row, top, left: r.left, width: r.width, maxH }
 }
 function closeExpenseMenu() { expenseMenu.value = null }
 function pickExpenseName(name) {

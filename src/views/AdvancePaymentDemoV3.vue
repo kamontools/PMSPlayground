@@ -103,40 +103,6 @@
             </button>
           </div>
 
-          <section v-if="guideOpen" class="pca-card pcv3-overview">
-            <div class="pcv3-overview-head">
-              <div>
-                <h2 class="pca-card-title" style="margin:0">เงินทดรองจ่ายมี 3 ขั้นตอน</h2>
-                <p class="pcv3-overview-sub">ทุกรายการเดินจากซ้ายไปขวา — ดูว่าแต่ละขั้นใครทำ ต้องทำอะไร และสถานะจะเปลี่ยนเป็นอะไร</p>
-              </div>
-              <button type="button" class="pca-link-btn" @click="setGuideOpen(false)">ซ่อนคู่มือ</button>
-            </div>
-            <WorkflowScene :steps="WORKFLOW_STEPS" :active-step="-1" :show-labels="false" @highlight="overviewHighlight = $event" />
-            <ol class="pcv3-ov-steps">
-              <li v-for="(s, i) in WORKFLOW_STEPS" :key="s.key" class="pcv3-ov-step" :class="{ highlight: overviewHighlight === i }">
-                <div class="pcv3-ov-top">
-                  <span class="pcv3-ov-num">{{ i + 1 }}</span>
-                  <div>
-                    <div class="pcv3-ov-title">{{ s.title }}</div>
-                    <div class="pcv3-ov-who">{{ s.who }}</div>
-                  </div>
-                </div>
-                <ul class="pcv3-ov-todo">
-                  <li v-for="t in s.todo" :key="t">{{ t }}</li>
-                </ul>
-                <div class="pcv3-ov-result">
-                  <span>ผลลัพธ์</span>
-                  <span class="pca-status" :class="'pca-status--' + s.result">{{ statusLabel(s.result) }}</span>
-                </div>
-                <button type="button" class="pca-btn pca-btn-outline pca-btn-sm pcv3-ov-action" @click="overviewAction(i)">{{ overviewActionLabel(i) }}</button>
-              </li>
-            </ol>
-          </section>
-          <button v-else type="button" class="pcv3-guide-reopen" @click="setGuideOpen(true)">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.5"/><path d="M7.8 7.6a2.3 2.3 0 014.4.9c0 1.5-2.2 1.8-2.2 3.1M10 14.2v.1"/></svg>
-            แสดงคู่มือ 3 ขั้นตอน
-          </button>
-
           <div class="pcv2-filters">
             <button
               v-for="f in FILTERS"
@@ -218,21 +184,7 @@
             </button>
           </div>
 
-          <div class="pca-card pcv3-progress-card">
-            <WorkflowScene :steps="WORKFLOW_STEPS" :active-step="0" compact />
-            <div class="pcv3-guide">
-              <div class="pcv3-guide-head">
-                <span class="pcv3-guide-kicker">ขั้นตอนที่ 1 จาก 3 · {{ WORKFLOW_STEPS[0].who }}</span>
-                <h3 class="pcv3-guide-title">บันทึกคำขอเงินทดรองจ่าย</h3>
-                <p class="pcv3-guide-desc">กรอกข้อมูลคำขอให้ครบ แล้วกด "บันทึก" ด้านบน</p>
-                <div class="pcv3-guide-next">
-                  <template v-if="createAmount > 0">กรอกวิธีการชำระไว้แล้ว — บันทึกแล้วจะข้ามขั้นเบิก ไปเป็น <span class="pca-status pca-status--awaiting-clear">รอเคลียร์</span> ทันที</template>
-                  <template v-else>บันทึกแล้วสถานะจะเป็น <span class="pca-status pca-status--awaiting-disburse">รอเบิก</span> ให้ฝ่ายการเงินทำขั้นตอนที่ 2 ต่อ</template>
-                </div>
-              </div>
-              <GuideChecklist :items="createChecklist" />
-            </div>
-          </div>
+          <StepperBar :steps="createStepper" class="pcv3-stepper" />
 
           <div class="pca-card">
             <h2 class="pca-card-title">รายละเอียด</h2>
@@ -277,8 +229,14 @@
             </div>
           </div>
 
-          <div class="pca-card">
-            <h2 class="pca-card-title">วิธีการชำระ <span class="pcv2-optional-tag">ไม่บังคับ กรอกภายหลังได้</span></h2>
+          <div class="pca-card pcv3-disclose-card" :class="{ open: createPayOpen }">
+            <button type="button" class="pcv3-disclose" :aria-expanded="createPayOpen" @click="toggleCreatePay">
+              <svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+              <span class="pcv3-disclose-title">วิธีการชำระ</span>
+              <span class="pcv2-optional-tag" style="margin-left:0">ไม่บังคับ</span>
+              <span class="pcv3-disclose-hint">{{ createPayOpen ? 'ปิดเพื่อกรอกภายหลังในขั้นตอนเบิกเงิน' : 'กรอกตอนนี้จะข้ามขั้นเบิกเงิน ไปเป็นรอเคลียร์ทันที' }}</span>
+            </button>
+            <div v-if="createPayOpen" class="pcv3-disclose-body">
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
                 <label>ชำระโดย</label>
@@ -455,6 +413,7 @@
                 </div>
               </div>
             </template>
+            </div>
           </div>
         </template>
 
@@ -466,53 +425,40 @@
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l-6 6 6 6"/></svg>
               </button>
               <h1 class="pca-title">รายละเอียดเงินทดรองจ่าย {{ selectedItem.docNo }}</h1>
-            </div>
-            <div v-if="selectedItem.status !== 'awaiting-disburse'" class="pcv2-layout-toggle" role="group" aria-label="รูปแบบการแสดงผล">
-              <button type="button" class="pcv2-layout-btn" :class="{ active: detailLayout === '1col' }" title="แสดงผล 1 คอลัมน์" :aria-pressed="detailLayout === '1col'" @click="setDetailLayout('1col')">
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="13" height="5" rx="1.2"/><rect x="3.5" y="11.5" width="13" height="5" rx="1.2"/></svg>
-                <span>1 คอลัมน์</span>
-              </button>
-              <button type="button" class="pcv2-layout-btn" :class="{ active: detailLayout === '2col' }" title="แสดงผล 2 คอลัมน์" :aria-pressed="detailLayout === '2col'" @click="setDetailLayout('2col')">
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="5.5" height="13" rx="1.2"/><rect x="11" y="3.5" width="5.5" height="13" rx="1.2"/></svg>
-                <span>2 คอลัมน์</span>
-              </button>
+              <span class="pca-status" :class="'pca-status--' + selectedItem.status">{{ statusLabel(selectedItem.status) }}</span>
             </div>
           </div>
 
-          <div class="pca-card pcv3-progress-card">
-            <WorkflowScene :steps="WORKFLOW_STEPS" :active-step="detailStep" compact />
-            <div v-if="detailStep < 3" class="pcv3-guide">
-              <div class="pcv3-guide-head">
-                <span class="pcv3-guide-kicker">ขั้นตอนที่ {{ detailStep + 1 }} จาก 3 · {{ WORKFLOW_STEPS[detailStep].who }}</span>
-                <h3 class="pcv3-guide-title">{{ detailGuide.title }}</h3>
-                <p class="pcv3-guide-desc">{{ detailGuide.desc }}</p>
-                <div class="pcv3-guide-next">
-                  บันทึกแล้วสถานะจะเป็น <span class="pca-status" :class="'pca-status--' + WORKFLOW_STEPS[detailStep].result">{{ statusLabel(WORKFLOW_STEPS[detailStep].result) }}</span>
-                </div>
-                <button type="button" class="pca-btn pca-btn-outline pca-btn-sm pcv3-guide-jump" @click="scrollToActiveCard">
-                  ไปที่ฟอร์ม
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M5 11l5 5 5-5"/></svg>
-                </button>
-              </div>
-              <GuideChecklist :items="detailChecklist" />
-            </div>
-            <div v-else class="pcv3-guide-done">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.3l2.4 2.3 4.6-5"/></svg>
-              <div>
-                <div class="pcv3-guide-title">ครบทั้ง 3 ขั้นตอนแล้ว</div>
-                <p class="pcv3-guide-desc">รายการนี้เคลียร์เรียบร้อย ไม่มีอะไรต้องทำเพิ่ม</p>
-              </div>
-            </div>
-          </div>
+          <div class="pcv3-detail-grid">
+          <aside class="pcv3-rail">
+            <StepperBar :steps="detailStepper" vertical @select="goToSection" />
+            <dl class="pcv3-facts">
+              <div><dt>ผู้เบิก</dt><dd>{{ selectedItem.payee }}</dd></div>
+              <div><dt>ครบกำหนดเคลียร์</dt><dd>{{ selectedItem.dueDate }}</dd></div>
+              <div><dt>ยอดเบิก</dt><dd>{{ selectedItem.payMethod ? formatAmount(selectedItem.amount) + ' บาท' : '—' }}</dd></div>
+              <div v-if="selectedItem.clearing"><dt>ยอดเคลียร์</dt><dd>{{ formatAmount(selectedItem.clearing.total) }} บาท</dd></div>
+              <div v-else-if="detailStep === 2 && clearRows.length"><dt>ยอดเคลียร์ (กำลังกรอก)</dt><dd>{{ formatAmount(clearTotal) }} บาท</dd></div>
+            </dl>
+          </aside>
 
-          <div class="pcv2-detail-layout" :class="selectedItem.status !== 'awaiting-disburse' && 'pcv2-detail-layout--' + detailLayout">
-          <div class="pca-card" :class="{ 'pcv3-card-active': detailStep === 1 }">
-            <div class="pca-charges-header">
-              <h2 class="pca-card-title" style="margin:0">ส่วน คำขอเงินทดรองจ่าย</h2>
-              <span class="pcv3-step-tag" :class="detailStep === 1 ? 'pcv3-step-tag--active' : 'pcv3-step-tag--done'">
-                {{ detailStep === 1 ? 'ขั้นตอนที่ 2 · กำลังทำ' : 'ขั้นตอนที่ 1–2 · เสร็จแล้ว' }}
+          <div class="pcv3-main">
+          <StepperBar :steps="detailStepper" class="pcv3-stepper pcv3-stepper--h" @select="goToSection" />
+
+          <!-- 1. request -->
+          <section id="pcv3-sec-0" class="pcv3-sec" :class="'pcv3-sec--' + sectionState(0)">
+            <button type="button" class="pcv3-sec-head" :aria-expanded="isOpen(0)" :disabled="sectionState(0) === 'pending'" @click="toggleSection(0)">
+              <span class="pcv3-sec-num">
+                <template v-if="sectionState(0) === 'done'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.5l3.2 3L15 6.5"/></svg></template>
+                <template v-else-if="sectionState(0) === 'pending'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="10" height="8" rx="1.5"/><path d="M7 9V7a3 3 0 016 0v2"/></svg></template>
+                <template v-else>1</template>
               </span>
-            </div>
+              <span class="pcv3-sec-titles">
+                <span class="pcv3-sec-title">ข้อมูลคำขอ<span v-if="sectionState(0) === 'active'" class="pcv3-sec-badge">ต้องทำตอนนี้</span></span>
+                <span class="pcv3-sec-summary">{{ selectedItem.payee }} · บันทึก {{ selectedItem.bookDate }} · ครบกำหนดเคลียร์ {{ selectedItem.dueDate }}</span>
+              </span>
+              <span v-if="sectionState(0) !== 'pending'" class="pcv3-sec-toggle">{{ isOpen(0) ? 'ย่อ' : 'ดูรายละเอียด' }}<svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg></span>
+            </button>
+            <div v-if="isOpen(0)" class="pcv3-sec-body">
             <div class="pca-form-grid pca-form-grid-3">
               <div class="pca-field">
                 <label>เลขที่เอกสาร</label>
@@ -535,18 +481,32 @@
               </div>
             </div>
 
-            <div class="pca-form-grid pca-form-grid-2">
+            <div class="pca-form-grid pca-form-grid-3">
               <div class="pca-field">
                 <label>ผู้เบิก</label>
                 <input type="text" :value="selectedItem.payee" disabled />
               </div>
-              <div class="pca-field">
-                <label>สถานะ</label>
-                <div><span class="pca-status" :class="'pca-status--' + selectedItem.status">{{ statusLabel(selectedItem.status) }}</span></div>
-              </div>
             </div>
 
-            <template v-if="selectedItem.payMethod">
+            </div>
+          </section>
+
+          <!-- 2. disburse -->
+          <section id="pcv3-sec-1" class="pcv3-sec" :class="'pcv3-sec--' + sectionState(1)">
+            <button type="button" class="pcv3-sec-head" :aria-expanded="isOpen(1)" :disabled="sectionState(1) === 'pending'" @click="toggleSection(1)">
+              <span class="pcv3-sec-num">
+                <template v-if="sectionState(1) === 'done'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.5l3.2 3L15 6.5"/></svg></template>
+                <template v-else-if="sectionState(1) === 'pending'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="10" height="8" rx="1.5"/><path d="M7 9V7a3 3 0 016 0v2"/></svg></template>
+                <template v-else>2</template>
+              </span>
+              <span class="pcv3-sec-titles">
+                <span class="pcv3-sec-title">เบิกเงิน<span v-if="sectionState(1) === 'active'" class="pcv3-sec-badge">ต้องทำตอนนี้</span></span>
+                <span class="pcv3-sec-summary">{{ selectedItem.payMethod ? selectedItem.payMethod + ' · ' + formatAmount(selectedItem.amount) + ' บาท' : 'เลือกวิธีการชำระและระบุจำนวนเงินที่จ่ายจริง' }}</span>
+              </span>
+              <span v-if="sectionState(1) !== 'pending'" class="pcv3-sec-toggle">{{ isOpen(1) ? 'ย่อ' : 'ดูรายละเอียด' }}<svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg></span>
+            </button>
+            <div v-if="isOpen(1)" class="pcv3-sec-body">
+              <template v-if="selectedItem.payMethod">
               <div class="pca-form-grid pca-form-grid-2">
                 <div class="pca-field">
                   <label>ชำระโดย</label>
@@ -557,9 +517,8 @@
                   <input type="text" :value="formatAmount(selectedItem.amount) + ' บาท'" disabled />
                 </div>
               </div>
-            </template>
-            <div v-else class="pcv2-inline-pay">
-              <div class="pcv2-inline-pay-title">วิธีการชำระ</div>
+              </template>
+              <template v-else>
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
                 <label>ชำระโดย<span class="pca-req">*</span></label>
@@ -736,24 +695,33 @@
                 </div>
               </div>
             </template>
-              <div class="pcv2-inline-pay-actions">
-                <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveDisburse" @click="saveDisburse">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
-                  บันทึกวิธีการชำระ
-                </button>
-              </div>
+                <div class="pcv3-sec-actions">
+                  <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveDisburse" @click="saveDisburse">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
+                    บันทึกการเบิกเงิน
+                  </button>
+                  <span v-if="!canSaveDisburse" class="pcv3-sec-actions-hint">ระบุจำนวนเงินก่อนบันทึก</span>
+                </div>
+              </template>
             </div>
-          </div>
+          </section>
 
-          <div v-if="selectedItem.status !== 'awaiting-disburse'" class="pca-card" :class="{ 'pcv3-card-active': detailStep === 2 }">
-            <div class="pca-charges-header">
-              <h2 class="pca-card-title" style="margin:0">ส่วน เคลียร์เงินทดรองจ่าย</h2>
-              <span class="pcv3-step-tag" :class="detailStep === 2 ? 'pcv3-step-tag--active' : 'pcv3-step-tag--done'">
-                {{ detailStep === 2 ? 'ขั้นตอนที่ 3 · กำลังทำ' : 'ขั้นตอนที่ 3 · เสร็จแล้ว' }}
+          <!-- 3. clear -->
+          <section id="pcv3-sec-2" class="pcv3-sec" :class="'pcv3-sec--' + sectionState(2)">
+            <button type="button" class="pcv3-sec-head" :aria-expanded="isOpen(2)" :disabled="sectionState(2) === 'pending'" @click="toggleSection(2)">
+              <span class="pcv3-sec-num">
+                <template v-if="sectionState(2) === 'done'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.5l3.2 3L15 6.5"/></svg></template>
+                <template v-else-if="sectionState(2) === 'pending'"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="10" height="8" rx="1.5"/><path d="M7 9V7a3 3 0 016 0v2"/></svg></template>
+                <template v-else>3</template>
               </span>
-            </div>
-
-            <template v-if="selectedItem.clearing">
+              <span class="pcv3-sec-titles">
+                <span class="pcv3-sec-title">เคลียร์เงิน<span v-if="sectionState(2) === 'active'" class="pcv3-sec-badge">ต้องทำตอนนี้</span></span>
+                <span class="pcv3-sec-summary">{{ selectedItem.clearing ? 'เคลียร์ ' + selectedItem.clearing.bookDate + ' · ยอดรวม ' + formatAmount(selectedItem.clearing.total) + ' บาท' : sectionState(2) === 'pending' ? 'เปิดให้กรอกหลังบันทึกการเบิกเงินแล้ว' : 'บันทึกค่าใช้จ่ายจริงเทียบกับยอดเบิก ' + formatAmount(selectedItem.amount) + ' บาท' }}</span>
+              </span>
+              <span v-if="sectionState(2) !== 'pending'" class="pcv3-sec-toggle">{{ isOpen(2) ? 'ย่อ' : 'ดูรายละเอียด' }}<svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg></span>
+            </button>
+            <div v-if="isOpen(2)" class="pcv3-sec-body">
+              <template v-if="selectedItem.clearing">
               <div class="pca-form-grid pca-form-grid-2">
                 <div class="pca-field">
                   <label>วันที่บันทึก</label>
@@ -803,9 +771,10 @@
                   <div class="pca-total-box">{{ formatAmount(selectedItem.clearing.total) }} บาท</div>
                 </div>
               </div>
-            </template>
-            <template v-else-if="selectedItem.status === 'awaiting-clear'">
-
+              </template>
+              <template v-else>
+                <div class="pcv3-sub">
+                  <div class="pcv3-sub-head"><span class="pcv3-sub-num">1</span>วันที่เคลียร์</div>
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
                 <label>วันที่บันทึก<span class="pca-req">*</span></label>
@@ -817,8 +786,11 @@
               </div>
             </div>
 
+                </div>
+
+                <div class="pcv3-sub">
             <div class="pca-charges-header">
-              <h2 class="pca-card-title" style="margin:0">รายการค่าใช้จ่าย</h2>
+              <div class="pcv3-sub-head" style="margin:0"><span class="pcv3-sub-num">2</span><span>รายการค่าใช้จ่าย<span class="pca-req">*</span></span></div>
               <button type="button" class="pca-btn pca-btn-outline pca-btn-sm" @click="addClearRow">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M4 10h12"/></svg>
                 เพิ่มรายการ
@@ -873,7 +845,7 @@
                 <ul
                   v-if="expenseMenu"
                   class="pcv2-expense-menu"
-                  :style="{ top: expenseMenu.top + 'px', left: expenseMenu.left + 'px', minWidth: expenseMenu.width + 'px' }"
+                  :style="{ top: expenseMenu.top + 'px', left: expenseMenu.left + 'px', minWidth: expenseMenu.width + 'px', maxHeight: expenseMenu.maxH + 'px' }"
                 >
                   <li
                     v-for="n in EXPENSE_NAMES"
@@ -899,17 +871,15 @@
               </div>
             </div>
 
-            <div class="pca-form-grid pca-form-grid-1" style="margin-top:16px">
-              <div class="pca-field">
-                <div class="pca-field-label-row">
-                  <label>หมายเหตุ</label>
-                  <span class="pca-char-count">{{ clearForm.note.length }}/255</span>
                 </div>
-                <textarea v-model="clearForm.note" rows="2" maxlength="255" placeholder="ระบุหมายเหตุ"></textarea>
-              </div>
-            </div>
-              <div v-if="clearRows.length && clearDiff !== 0" class="pcv2-inline-pay">
-              <div class="pcv2-inline-pay-title">วิธีการชำระ</div>
+
+                <transition name="pcv3-reveal">
+                  <div v-if="clearRows.length && clearDiff !== 0" class="pcv3-sub pcv3-sub--warn">
+                    <div class="pcv3-sub-head"><span class="pcv3-sub-num">3</span><span>ชำระส่วนต่าง<span class="pca-req">*</span></span></div>
+                    <p class="pcv3-sub-hint">
+                      ยอดเคลียร์{{ clearDiff < 0 ? 'น้อยกว่า' : 'มากกว่า' }}ยอดเบิก {{ formatAmount(Math.abs(clearDiff)) }} บาท —
+                      {{ clearDiff < 0 ? 'ระบุช่องทางที่ผู้เบิกคืนเงินส่วนที่เหลือ' : 'ระบุช่องทางที่จ่ายเงินเพิ่มให้ผู้เบิก' }}
+                    </p>
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
                 <label>ชำระโดย<span class="pca-req">*</span></label>
@@ -1086,15 +1056,35 @@
                 </div>
               </div>
             </template>
-              </div>
-              <div class="pcv2-inline-pay-actions">
-                <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveClear" @click="saveClear">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
-                  บันทึกการเคลียร์
-                </button>
-              </div>
-            </template>
-            <div v-else class="pca-empty">{{ selectedItem.status === 'awaiting-disburse' ? 'ต้องเบิกเงินทดรองจ่ายก่อน จึงจะสามารถเคลียร์ได้' : 'ยังไม่มีการเคลียร์เงินทดรองจ่ายรายการนี้' }}</div>
+                  </div>
+                </transition>
+
+                <div class="pcv3-sub">
+                  <button type="button" class="pcv3-disclose pcv3-disclose--inline" :aria-expanded="clearNoteOpen" @click="clearNoteOpen = !clearNoteOpen">
+                    <svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+                    <span class="pcv3-disclose-title">หมายเหตุ</span>
+                    <span class="pcv2-optional-tag" style="margin-left:0">ไม่บังคับ</span>
+                    <span v-if="!clearNoteOpen && clearForm.note" class="pcv3-disclose-hint">{{ clearForm.note }}</span>
+                  </button>
+                  <div v-if="clearNoteOpen" class="pca-field" style="margin-top:10px">
+                    <div class="pca-field-label-row">
+                      <span></span>
+                      <span class="pca-char-count">{{ clearForm.note.length }}/255</span>
+                    </div>
+                    <textarea v-model="clearForm.note" rows="2" maxlength="255" placeholder="ระบุหมายเหตุ"></textarea>
+                  </div>
+                </div>
+
+                <div class="pcv3-sec-actions">
+                  <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveClear" @click="saveClear">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
+                    บันทึกการเคลียร์
+                  </button>
+                  <span v-if="!canSaveClear" class="pcv3-sec-actions-hint">{{ clearBlocker }}</span>
+                </div>
+              </template>
+            </div>
+          </section>
           </div>
           </div>
         </template>
@@ -1109,9 +1099,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import WorkflowScene from './advance-payment-v3/WorkflowScene.vue'
-import GuideChecklist from './advance-payment-v3/GuideChecklist.vue'
-import { WORKFLOW_STEPS, stepIndexForStatus } from './advance-payment-v3/steps.js'
+import StepperBar from './advance-payment-v3/StepperBar.vue'
+import { WORKFLOW_STEPS, stepIndexForStatus, stepState } from './advance-payment-v3/steps.js'
 
 const PAY_METHODS = [
   { value: 'cash', label: 'เงินสด' },
@@ -1250,6 +1239,7 @@ const canSaveCreate = computed(() =>
 
 function openCreate() {
   createForm.value = blankCreateForm()
+  createPayOpen.value = false
   page.value = 'create'
 }
 
@@ -1274,21 +1264,14 @@ function saveCreate() {
 
 // ---- detail ----
 const selectedItem = ref(null)
-
-const DETAIL_LAYOUT_KEY = 'pcv3-detail-layout'
-function readDetailLayout() {
-  try { return localStorage.getItem(DETAIL_LAYOUT_KEY) === '2col' ? '2col' : '1col' } catch { return '1col' }
-}
-const detailLayout = ref(readDetailLayout()) // '1col' | '2col'
-function setDetailLayout(layout) {
-  detailLayout.value = layout
-  try { localStorage.setItem(DETAIL_LAYOUT_KEY, layout) } catch {}
-}
 function openDetail(item) {
   selectedItem.value = item
   disburseForm.value = blankPayMethodForm()
   clearForm.value = blankClearForm(item)
   clearRows.value = []
+  clearNoteOpen.value = false
+  resetOpenSections()
+  detailOpenedAt = performance.now()
   page.value = 'detail'
 }
 
@@ -1329,87 +1312,79 @@ function saveDisburse() {
   item.amount = disburseAmount.value
   item.status = 'awaiting-clear'
   showToast('บันทึกการเบิกเงินทดรองจ่ายเรียบร้อยแล้ว')
+  advanceToCurrentStep()
 }
 
-// ---- step guide (V3) ----
-const GUIDE_KEY = 'pcv3-guide-open'
-const guideOpen = ref((() => { try { return localStorage.getItem(GUIDE_KEY) !== '0' } catch { return true } })())
-function setGuideOpen(open) {
-  guideOpen.value = open
-  try { localStorage.setItem(GUIDE_KEY, open ? '1' : '0') } catch {}
-}
-const overviewHighlight = ref(0)
-function overviewActionLabel(i) {
-  if (i === 0) return 'สร้างคำขอใหม่'
-  if (i === 1) return `ดูรายการรอเบิก (${filterCounts.value['awaiting-disburse']})`
-  return `ดูรายการรอเคลียร์ (${filterCounts.value['awaiting-clear']})`
-}
-function overviewAction(i) {
-  if (i === 0) return openCreate()
-  activeFilter.value = i === 1 ? 'awaiting-disburse' : 'awaiting-clear'
-}
+// ---- stepper + progressive disclosure (V3) ----
 function miniDotClass(item, i) {
-  const step = stepIndexForStatus(item.status)
-  return i < step ? 'done' : i === step ? 'active' : ''
+  return stepState(i, stepIndexForStatus(item.status)).replace('pending', '')
 }
 
-const createChecklist = computed(() => [
-  { text: 'ระบุวันที่บันทึก', done: createForm.value.bookDate !== '' },
-  { text: 'ระบุวันที่ครบกำหนดเคลียร์', done: createForm.value.dueDate !== '' },
-  { text: 'ใส่คำอธิบายว่าเบิกไปทำอะไร', done: createForm.value.description.trim() !== '', optional: true },
-  { text: 'ระบุชื่อผู้เบิก', done: createForm.value.payee.trim() !== '', optional: true },
-  { text: 'กดปุ่ม "บันทึก" ด้านบน', action: true, ready: canSaveCreate.value }
-])
+const createStepper = computed(() => WORKFLOW_STEPS.map((s, i) => ({
+  ...s,
+  state: stepState(i, 0),
+  sub: i === 0 ? 'กำลังทำ' : i === 1 && createAmount.value > 0 ? 'จะข้ามขั้นนี้' : 'ยังไม่ถึง'
+})))
+
+const createPayOpen = ref(false)
+function toggleCreatePay() {
+  createPayOpen.value = !createPayOpen.value
+  // closing means "fill it in later", so drop anything typed — otherwise it would still be saved
+  if (!createPayOpen.value) Object.assign(createForm.value, blankPayMethodForm())
+}
 
 const detailStep = computed(() => selectedItem.value ? stepIndexForStatus(selectedItem.value.status) : 0)
-const detailGuide = computed(() => detailStep.value === 1
-  ? { title: 'เบิกเงินให้ผู้เบิก', desc: 'เลือกวิธีการชำระและจำนวนเงินที่จ่ายจริงในการ์ด "ส่วน คำขอเงินทดรองจ่าย"' }
-  : { title: 'เคลียร์เงินด้วยค่าใช้จ่ายจริง', desc: 'บันทึกค่าใช้จ่ายตามใบเสร็จในการ์ด "ส่วน เคลียร์เงินทดรองจ่าย" แล้วตรวจยอดเทียบกับยอดเบิก' })
+function sectionState(i) { return stepState(i, detailStep.value) }
 
-const DISBURSE_EXTRA = {
-  'petty-cash': f => ({ text: 'เลือกรายการเงินสดย่อย', done: !!f.pettyCashDocNo, optional: true }),
-  'advance-received': f => ({ text: 'เลือกเอกสารอ้างอิงรับเงินล่วงหน้า', done: !!f.advanceRefNo, optional: true }),
-  'bank-kbank': f => ({ text: 'ระบุวันที่โอนและแนบหลักฐาน', done: !!f.bankDate, optional: true }),
-  check: f => f.checkMode === 'new'
-    ? { text: 'กรอกรายละเอียดเช็คประกบ', done: !!f.pairedCheck.detail.trim(), optional: true }
-    : null
-}
-const detailChecklist = computed(() => {
-  if (detailStep.value === 1) {
-    const f = disburseForm.value
-    const extra = DISBURSE_EXTRA[f.payMethod]?.(f)
-    return [
-      { text: 'เลือกวิธีการชำระ', done: !!f.payMethod },
-      { text: f.payMethod === 'check' ? 'เลือกเลขที่เช็ค หรือกรอกเช็คใหม่พร้อมจำนวนเงิน' : 'ระบุจำนวนเงินที่จ่ายจริง', done: disburseAmount.value > 0 },
-      ...(extra ? [extra] : []),
-      { text: 'กดปุ่ม "บันทึกวิธีการชำระ"', action: true, ready: canSaveDisburse.value }
-    ]
-  }
-  if (detailStep.value === 2) {
-    const hasRows = clearRows.value.length > 0
-    const diffItem = !hasRows
-      ? { text: 'ตรวจยอดรวมเทียบกับยอดเบิก', done: false }
-      : clearDiff.value === 0
-        ? { text: 'ยอดรวมตรงกับยอดเบิกแล้ว', done: true }
-        : { text: `ยอดต่างจากยอดเบิก ${formatAmount(Math.abs(clearDiff.value))} บาท — ระบุวิธีการชำระส่วนต่าง`, done: clearPayAmount.value > 0, warn: true }
-    return [
-      { text: 'ระบุวันที่บันทึกและวันครบกำหนดเคลียร์', done: clearForm.value.bookDate !== '' && clearForm.value.dueDate !== '' },
-      { text: 'เพิ่มรายการค่าใช้จ่ายอย่างน้อย 1 รายการ', done: hasRows },
-      { text: 'ใส่ชื่อรายจ่ายและจำนวนเงินให้ครบทุกรายการ', done: clearRowsComplete.value },
-      diffItem,
-      { text: 'กดปุ่ม "บันทึกการเคลียร์"', action: true, ready: canSaveClear.value }
-    ]
-  }
-  return []
+const detailStepper = computed(() => {
+  const item = selectedItem.value
+  if (!item) return []
+  const subs = [
+    'บันทึก ' + item.bookDate,
+    item.payMethod ? formatAmount(item.amount) + ' บาท' : 'กำลังทำ',
+    item.clearing ? 'เคลียร์ ' + item.clearing.bookDate : detailStep.value === 2 ? 'กำลังทำ' : 'ยังไม่ถึง'
+  ]
+  return WORKFLOW_STEPS.map((s, i) => ({ ...s, state: sectionState(i), sub: subs[i] }))
 })
 
-async function scrollToActiveCard() {
-  await nextTick()
-  const el = document.querySelector('.pcv3-card-active')
-  if (!el) return
-  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
+// only the section for the current step starts expanded; finished ones collapse to a summary line
+const openSections = ref(new Set())
+function resetOpenSections() {
+  openSections.value = new Set([Math.min(detailStep.value, 2)])
 }
+function isOpen(i) { return sectionState(i) !== 'pending' && openSections.value.has(i) }
+// the row double-click that opens this page can land on a section header once it renders; ignore that stray click
+let detailOpenedAt = 0
+function toggleSection(i) {
+  if (sectionState(i) === 'pending') return
+  if (performance.now() - detailOpenedAt < 400) return
+  const next = new Set(openSections.value)
+  next.has(i) ? next.delete(i) : next.add(i)
+  openSections.value = next
+}
+async function goToSection(i) {
+  if (sectionState(i) === 'pending') return
+  if (!openSections.value.has(i)) openSections.value = new Set([...openSections.value, i])
+  await nextTick()
+  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  document.getElementById('pcv3-sec-' + i)?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
+}
+// after a step is saved, fold it up and bring the next one into view
+async function advanceToCurrentStep() {
+  resetOpenSections()
+  await nextTick()
+  goToSection(Math.min(detailStep.value, 2))
+}
+
+const clearNoteOpen = ref(false)
+
+const clearBlocker = computed(() => {
+  if (!clearForm.value.bookDate || !clearForm.value.dueDate) return 'ระบุวันที่ให้ครบก่อนบันทึก'
+  if (!clearRows.value.length) return 'เพิ่มรายการค่าใช้จ่ายอย่างน้อย 1 รายการ'
+  if (!clearRowsComplete.value) return 'ใส่ชื่อรายจ่ายและจำนวนเงินให้ครบทุกรายการ'
+  if (!clearDiffSettled.value) return 'ระบุจำนวนเงินของส่วนต่าง'
+  return ''
+})
 
 // ---- clear ----
 let clearRowSeq = 100
@@ -1446,7 +1421,13 @@ const clearRows = ref([])
 const expenseMenu = ref(null)
 function openExpenseMenu(row, e) {
   const r = e.target.getBoundingClientRect()
-  expenseMenu.value = { row, top: r.bottom + 4, left: r.left, width: r.width }
+  const menuH = Math.min(260, EXPENSE_NAMES.length * 37 + 10)
+  const below = window.innerHeight - r.bottom - 8
+  // not enough room under the input -> open upwards, so the list is never pushed off-screen
+  const flip = below < menuH && r.top > below
+  const maxH = Math.max(120, Math.min(menuH, flip ? r.top - 8 : below))
+  const top = flip ? r.top - 4 - maxH : r.bottom + 4
+  expenseMenu.value = { row, top, left: r.left, width: r.width, maxH }
 }
 function closeExpenseMenu() { expenseMenu.value = null }
 function pickExpenseName(name) {
@@ -1505,6 +1486,7 @@ function saveClear() {
   item.dueDate = isoToThaiDate(clearForm.value.dueDate)
   item.status = 'cleared'
   showToast('บันทึกการเคลียร์เงินทดรองจ่ายเรียบร้อยแล้ว')
+  advanceToCurrentStep()
 }
 </script>
 
@@ -1931,9 +1913,6 @@ td.pcv2-col-sticky { z-index: 1; }
 .pca-icon-btn svg { width: 17px; height: 17px; }
 .pca-icon-btn:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); }
 
-.pcv2-inline-pay { border-top: 1px solid var(--color-dividers); margin-top: 4px; padding-top: 16px; }
-.pcv2-inline-pay-title { font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); margin-bottom: 12px; }
-.pcv2-inline-pay-actions { display: flex; justify-content: flex-start; margin-top: 4px; }
 
 .pcv2-expense-menu {
   position: fixed; z-index: 300;
@@ -1953,121 +1932,125 @@ td.pcv2-col-sticky { z-index: 1; }
 .pcv2-expense-option:hover { background: var(--color-disabled-bg); }
 .pcv2-expense-option.active { background: var(--color-primary-200); color: var(--color-primary-click); font-weight: 600; }
 
-/* ---------- DETAIL LAYOUT TOGGLE ---------- */
-.pcv2-layout-toggle {
-  display: inline-flex; gap: 2px; padding: 3px;
-  background: var(--color-white);
-  border: 1px solid var(--color-dividers);
-  border-radius: var(--radius-md);
-}
-.pcv2-layout-btn {
-  display: flex; align-items: center; gap: 6px;
-  font-family: inherit; font-size: var(--font-size-xs); font-weight: 600;
-  color: var(--color-text-secondary);
-  background: transparent; border: none;
-  border-radius: var(--radius-sm);
-  padding: 6px 10px; cursor: pointer;
-}
-.pcv2-layout-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-.pcv2-layout-btn:hover:not(.active) { color: var(--color-primary-500); }
-.pcv2-layout-btn.active { background: var(--color-primary-200); color: var(--color-primary-click); }
-
-.pcv2-detail-layout--2col {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-.pcv2-detail-layout--2col > .pca-card { margin-bottom: 0; }
-/* each column is half-width, so squeeze the inner 3-column rows */
-.pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
-
-/* ---------- V3: STEP GUIDE ---------- */
-.pcv3-overview { padding: 20px 24px; }
-.pcv3-overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.pcv3-overview-head .pca-link-btn { white-space: nowrap; flex-shrink: 0; }
-.pcv3-overview-sub { margin: 4px 0 0; font-size: var(--font-size-sm); color: var(--color-text-tertiary); }
-
-.pcv3-ov-steps {
-  list-style: none; margin: 14px 0 0; padding: 0;
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
-}
-.pcv3-ov-step {
-  display: flex; flex-direction: column; gap: 10px;
-  border: 1px solid var(--color-dividers); border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  transition: border-color .3s, box-shadow .3s, background .3s;
-}
-.pcv3-ov-step.highlight { border-color: var(--color-primary-500); background: #fafcff; box-shadow: 0 0 0 3px var(--color-primary-200); }
-.pcv3-ov-top { display: flex; align-items: center; gap: 10px; }
-.pcv3-ov-num {
-  width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700;
-  background: var(--color-primary-200); color: var(--color-primary-click);
-}
-.pcv3-ov-step.highlight .pcv3-ov-num { background: var(--color-primary-500); color: var(--color-white); }
-.pcv3-ov-title { font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
-.pcv3-ov-who { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
-.pcv3-ov-todo { margin: 0; padding-left: 18px; font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.6; flex: 1; }
-.pcv3-ov-result { display: flex; align-items: center; gap: 8px; font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
-.pcv3-ov-action { align-self: flex-start; }
-
-.pcv3-guide-reopen {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: inherit; font-size: var(--font-size-xs); font-weight: 600;
-  color: var(--color-primary-500); background: var(--color-white);
-  border: 1px dashed var(--color-primary-500); border-radius: 999px;
-  padding: 6px 12px; margin-bottom: 16px; cursor: pointer;
-}
-.pcv3-guide-reopen svg { width: 15px; height: 15px; }
-.pcv3-guide-reopen:hover { background: var(--color-primary-200); }
-
+/* ---------- V3: STEPPER + SECTIONS ---------- */
 .pcv3-status-cell { display: flex; align-items: center; gap: 8px; }
 .pcv3-mini-steps { display: inline-flex; gap: 3px; }
 .pcv3-mini-steps i { width: 14px; height: 4px; border-radius: 999px; background: var(--color-dividers); }
 .pcv3-mini-steps i.done { background: var(--color-success); }
 .pcv3-mini-steps i.active { background: var(--color-primary-500); }
 
-.pcv3-progress-card { padding: 16px 20px 20px; }
-.pcv3-guide {
-  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px;
-  margin-top: 16px; padding-top: 16px;
-  border-top: 1px solid var(--color-dividers);
-}
-.pcv3-guide-head { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
-.pcv3-guide-kicker { font-size: var(--font-size-xs); font-weight: 700; color: var(--color-primary-500); }
-.pcv3-guide-title { margin: 0; font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
-.pcv3-guide-desc { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.5; }
-.pcv3-guide-next {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
-  margin-top: 6px; font-size: var(--font-size-xs); color: var(--color-text-tertiary);
-}
-.pcv3-guide-jump { margin-top: 8px; }
-.pcv3-guide-done {
-  display: flex; align-items: center; gap: 12px;
-  margin-top: 16px; padding: 12px 16px;
+.pcv3-stepper { margin-bottom: 16px; }
+.pca-header-left .pca-status { margin-left: 2px; }
+
+.pcv3-chev { width: 16px; height: 16px; flex-shrink: 0; transition: transform .2s ease; }
+
+.pcv3-sec {
+  background: var(--color-white);
+  border: 1px solid var(--color-dividers);
   border-radius: var(--radius-lg);
-  background: var(--color-success-bg); color: var(--color-success);
+  margin-bottom: 12px;
+  scroll-margin-top: 16px;
+  transition: border-color .2s, box-shadow .2s;
 }
-.pcv3-guide-done svg { width: 28px; height: 28px; flex-shrink: 0; }
-.pcv3-guide-done .pcv3-guide-desc { color: var(--color-text-secondary); }
+.pcv3-sec--active { border-color: var(--color-primary-500); box-shadow: 0 0 0 3px var(--color-primary-200); }
+.pcv3-sec--pending { background: var(--color-disabled-bg); border-style: dashed; }
 
-.pca-card.pcv3-card-active { border-color: var(--color-primary-500); box-shadow: 0 0 0 3px var(--color-primary-200); scroll-margin-top: 16px; }
-.pcv3-step-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-.pcv3-step-tag--active { background: var(--color-primary-500); color: var(--color-white); }
-.pcv3-step-tag--done { background: var(--color-success-bg); color: var(--color-success); }
-
-@media (max-width: 900px) {
-  .pcv3-ov-steps { grid-template-columns: 1fr; }
-  .pcv3-guide { grid-template-columns: 1fr; gap: 16px; }
+.pcv3-sec-head {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px;
+  font-family: inherit; text-align: left;
+  background: none; border: none; border-radius: inherit;
+  cursor: pointer;
 }
+.pcv3-sec-head:disabled { cursor: not-allowed; }
+.pcv3-sec-head:focus-visible { outline: 2px solid var(--color-primary-500); outline-offset: -2px; }
+.pcv3-sec-num {
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  background: var(--color-disabled-bg); color: var(--color-text-tertiary);
+}
+.pcv3-sec-num svg { width: 16px; height: 16px; }
+.pcv3-sec--done .pcv3-sec-num { background: var(--color-success-bg); color: var(--color-success); }
+.pcv3-sec--active .pcv3-sec-num { background: var(--color-primary-500); color: var(--color-white); }
+.pcv3-sec--pending .pcv3-sec-num { background: var(--color-white); color: var(--color-text-placeholder); }
+
+.pcv3-sec-titles { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.pcv3-sec-title { display: flex; align-items: center; gap: 8px; font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
+.pcv3-sec--pending .pcv3-sec-title { color: var(--color-text-tertiary); }
+.pcv3-sec-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--color-primary-200); color: var(--color-primary-click); }
+.pcv3-sec-summary { font-size: var(--font-size-xs); color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pcv3-sec-toggle { display: flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: var(--font-size-xs); font-weight: 600; color: var(--color-primary-500); }
+.pcv3-sec-head[aria-expanded="true"] .pcv3-chev { transform: rotate(180deg); }
+
+.pcv3-sec-body { padding: 4px 20px 20px 66px; }
+.pcv3-sec-body > .pca-form-grid:last-child { margin-bottom: 0; }
+
+.pcv3-sub { padding: 16px 0; border-top: 1px solid var(--color-dividers); }
+.pcv3-sub:first-child { border-top: none; padding-top: 4px; }
+.pcv3-sub > .pca-form-grid:last-child { margin-bottom: 0; }
+.pcv3-sub-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: var(--font-size-sm); font-weight: 700; color: var(--color-text-primary); }
+.pcv3-sub-num {
+  width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  background: var(--color-primary-200); color: var(--color-primary-click);
+}
+.pcv3-sub--warn .pcv3-sub-num { background: var(--color-attention-bg); color: var(--color-attention); }
+.pcv3-sub-hint { margin: -4px 0 12px; font-size: var(--font-size-xs); color: var(--color-attention); }
+
+.pcv3-reveal-enter-active, .pcv3-reveal-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.pcv3-reveal-enter-from, .pcv3-reveal-leave-to { opacity: 0; transform: translateY(-4px); }
+
+.pcv3-sec-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--color-dividers); }
+.pcv3-sec-body > template + .pcv3-sec-actions, .pcv3-sec-body .pca-form-grid + .pcv3-sec-actions { border-top: none; padding-top: 4px; }
+.pcv3-sec-actions-hint { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+
+.pcv3-disclose {
+  width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-family: inherit; text-align: left;
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--color-text-secondary);
+}
+.pcv3-disclose[aria-expanded="true"] .pcv3-chev { transform: rotate(180deg); }
+.pcv3-disclose-title { font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
+.pcv3-disclose--inline .pcv3-disclose-title { font-size: var(--font-size-sm); }
+.pcv3-disclose-hint { font-size: var(--font-size-xs); color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.pcv3-disclose-body { margin-top: 16px; }
+.pcv3-disclose-card:not(.open) { padding-top: 18px; padding-bottom: 18px; }
+
+.pcv3-detail-grid { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 20px; align-items: start; }
+.pcv3-rail { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.pcv3-main { min-width: 0; }
+.pcv3-stepper--h { display: none; }
+.pcv3-main > .pcv3-sec:last-child { margin-bottom: 0; }
+
+.pcv3-facts {
+  margin: 0; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--color-white);
+  border: 1px solid var(--color-dividers);
+  border-radius: var(--radius-lg);
+}
+.pcv3-facts dt { font-size: 11px; color: var(--color-text-tertiary); }
+.pcv3-facts dd { margin: 2px 0 0; font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); overflow-wrap: anywhere; }
+
+@media (max-width: 1100px) {
+  .pcv3-detail-grid { display: block; }
+  .pcv3-rail { display: none; }
+  .pcv3-stepper--h { display: flex; }
+}
+
 @media (max-width: 640px) {
-  .pcv3-overview { padding: 16px; }
-  .pcv3-progress-card { padding: 14px 16px 16px; }
+  .pcv3-sec-head { padding: 14px 16px; gap: 10px; align-items: flex-start; }
+  .pcv3-sec-body { padding: 0 16px 16px; }
+  .pcv3-sec-summary { white-space: normal; }
+  .pcv3-sec-toggle span, .pcv3-sec-toggle { font-size: 0; gap: 0; }
+  .pcv3-sec-toggle .pcv3-chev { width: 18px; height: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pcv3-ov-step { transition: none; }
+  .pcv3-chev, .pcv3-sec, .pcv3-reveal-enter-active, .pcv3-reveal-leave-active { transition: none; }
 }
 
 /* ---------- RESPONSIVE ---------- */
@@ -2079,14 +2062,6 @@ td.pcv2-col-sticky { z-index: 1; }
 
 @media (max-width: 1200px) {
   .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
-  .pcv2-detail-layout--2col .pca-form-grid-2,
-  .pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 1024px) {
-  .pcv2-layout-toggle { display: none; }
-  .pcv2-detail-layout--2col { display: block; }
-  .pcv2-detail-layout--2col > .pca-card { margin-bottom: 20px; }
 }
 
 @media (max-width: 900px) {

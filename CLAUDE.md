@@ -68,7 +68,7 @@ server/index.js                   # Express API server
 | `/prototype/pms-sidebar-demo` | PmsSidebarDemo | Sidebar behavior demo |
 | `/prototype/advance-payment` | AdvancePaymentDemo | เงินทดรองจ่าย request → clearing flow |
 | `/prototype/advance-payment-v2` | AdvancePaymentDemoV2 | เงินทดรองจ่าย alt version: status filters + inline status change, 2-section layout |
-| `/prototype/advance-payment-v3` | AdvancePaymentDemoV3 | v2 + 3-step workflow guide: three.js step scene (`advance-payment-v3/`), live checklists |
+| `/prototype/advance-payment-v3` | AdvancePaymentDemoV3 | v2 + top stepper and step-by-step collapsible detail sections (progressive disclosure); helpers in `advance-payment-v3/` |
 | `/migrate-permissions` | MigratePermissions | Permissions migration prototype |
 | `/room-price-quiz` | RoomPriceQuiz | Room price quiz prototype |
 
