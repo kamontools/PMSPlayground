@@ -53,6 +53,11 @@
               💸 เงินทดรองจ่าย (request → clearing)
             </router-link>
           </li>
+          <li>
+            <router-link to="/prototype/advance-payment-v3" class="nav-link" active-class="active">
+              💸 เงินทดรองจ่าย v3 (คู่มือขั้นตอน)
+            </router-link>
+          </li>
         </ul>
       </div>
 

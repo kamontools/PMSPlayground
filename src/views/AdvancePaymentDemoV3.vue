@@ -87,7 +87,7 @@
             <span>T-001 : โครงการนิติบุคคล หมื่นสิริ คอนโดมิเนียม เขตบางนา</span>
             <svg class="pca-swap-ic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10l-3-3M16 13H6l3 3"/></svg>
           </div>
-          <router-link class="pca-exit" to="/prototype/advance-payment">← v1 เดิม</router-link>
+          <router-link class="pca-exit" to="/prototype/advance-payment-v2">← v2</router-link>
           <router-link class="pca-exit" to="/">หน้าหลัก</router-link>
         </div>
       </div>
@@ -102,6 +102,40 @@
               สร้างเงินทดรองจ่าย
             </button>
           </div>
+
+          <section v-if="guideOpen" class="pca-card pcv3-overview">
+            <div class="pcv3-overview-head">
+              <div>
+                <h2 class="pca-card-title" style="margin:0">เงินทดรองจ่ายมี 3 ขั้นตอน</h2>
+                <p class="pcv3-overview-sub">ทุกรายการเดินจากซ้ายไปขวา — ดูว่าแต่ละขั้นใครทำ ต้องทำอะไร และสถานะจะเปลี่ยนเป็นอะไร</p>
+              </div>
+              <button type="button" class="pca-link-btn" @click="setGuideOpen(false)">ซ่อนคู่มือ</button>
+            </div>
+            <WorkflowScene :steps="WORKFLOW_STEPS" :active-step="-1" :show-labels="false" @highlight="overviewHighlight = $event" />
+            <ol class="pcv3-ov-steps">
+              <li v-for="(s, i) in WORKFLOW_STEPS" :key="s.key" class="pcv3-ov-step" :class="{ highlight: overviewHighlight === i }">
+                <div class="pcv3-ov-top">
+                  <span class="pcv3-ov-num">{{ i + 1 }}</span>
+                  <div>
+                    <div class="pcv3-ov-title">{{ s.title }}</div>
+                    <div class="pcv3-ov-who">{{ s.who }}</div>
+                  </div>
+                </div>
+                <ul class="pcv3-ov-todo">
+                  <li v-for="t in s.todo" :key="t">{{ t }}</li>
+                </ul>
+                <div class="pcv3-ov-result">
+                  <span>ผลลัพธ์</span>
+                  <span class="pca-status" :class="'pca-status--' + s.result">{{ statusLabel(s.result) }}</span>
+                </div>
+                <button type="button" class="pca-btn pca-btn-outline pca-btn-sm pcv3-ov-action" @click="overviewAction(i)">{{ overviewActionLabel(i) }}</button>
+              </li>
+            </ol>
+          </section>
+          <button v-else type="button" class="pcv3-guide-reopen" @click="setGuideOpen(true)">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7.5"/><path d="M7.8 7.6a2.3 2.3 0 014.4.9c0 1.5-2.2 1.8-2.2 3.1M10 14.2v.1"/></svg>
+            แสดงคู่มือ 3 ขั้นตอน
+          </button>
 
           <div class="pcv2-filters">
             <button
@@ -139,7 +173,14 @@
                   </tr>
                   <tr v-for="item in filteredItems" :key="item.id" class="pcv2-row-clickable" title="ดับเบิลคลิกเพื่อดูรายละเอียด" @dblclick="openDetail(item)">
                     <td class="pca-cell-strong">{{ item.docNo }}</td>
-                    <td><span class="pca-status" :class="'pca-status--' + item.status">{{ statusLabel(item.status) }}</span></td>
+                    <td>
+                      <div class="pcv3-status-cell">
+                        <span class="pca-status" :class="'pca-status--' + item.status">{{ statusLabel(item.status) }}</span>
+                        <span class="pcv3-mini-steps" :title="'ขั้นตอน ' + Math.min(stepIndexForStatus(item.status) + 1, 3) + '/3'">
+                          <i v-for="n in 3" :key="n" :class="miniDotClass(item, n - 1)"></i>
+                        </span>
+                      </div>
+                    </td>
                     <td>{{ item.bookDate }}</td>
                     <td>{{ item.dueDate }}</td>
                     <td>{{ item.payee }}</td>
@@ -175,6 +216,22 @@
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
               บันทึก
             </button>
+          </div>
+
+          <div class="pca-card pcv3-progress-card">
+            <WorkflowScene :steps="WORKFLOW_STEPS" :active-step="0" compact />
+            <div class="pcv3-guide">
+              <div class="pcv3-guide-head">
+                <span class="pcv3-guide-kicker">ขั้นตอนที่ 1 จาก 3 · {{ WORKFLOW_STEPS[0].who }}</span>
+                <h3 class="pcv3-guide-title">บันทึกคำขอเงินทดรองจ่าย</h3>
+                <p class="pcv3-guide-desc">กรอกข้อมูลคำขอให้ครบ แล้วกด "บันทึก" ด้านบน</p>
+                <div class="pcv3-guide-next">
+                  <template v-if="createAmount > 0">กรอกวิธีการชำระไว้แล้ว — บันทึกแล้วจะข้ามขั้นเบิก ไปเป็น <span class="pca-status pca-status--awaiting-clear">รอเคลียร์</span> ทันที</template>
+                  <template v-else>บันทึกแล้วสถานะจะเป็น <span class="pca-status pca-status--awaiting-disburse">รอเบิก</span> ให้ฝ่ายการเงินทำขั้นตอนที่ 2 ต่อ</template>
+                </div>
+              </div>
+              <GuideChecklist :items="createChecklist" />
+            </div>
           </div>
 
           <div class="pca-card">
@@ -422,10 +479,39 @@
             </div>
           </div>
 
+          <div class="pca-card pcv3-progress-card">
+            <WorkflowScene :steps="WORKFLOW_STEPS" :active-step="detailStep" compact />
+            <div v-if="detailStep < 3" class="pcv3-guide">
+              <div class="pcv3-guide-head">
+                <span class="pcv3-guide-kicker">ขั้นตอนที่ {{ detailStep + 1 }} จาก 3 · {{ WORKFLOW_STEPS[detailStep].who }}</span>
+                <h3 class="pcv3-guide-title">{{ detailGuide.title }}</h3>
+                <p class="pcv3-guide-desc">{{ detailGuide.desc }}</p>
+                <div class="pcv3-guide-next">
+                  บันทึกแล้วสถานะจะเป็น <span class="pca-status" :class="'pca-status--' + WORKFLOW_STEPS[detailStep].result">{{ statusLabel(WORKFLOW_STEPS[detailStep].result) }}</span>
+                </div>
+                <button type="button" class="pca-btn pca-btn-outline pca-btn-sm pcv3-guide-jump" @click="scrollToActiveCard">
+                  ไปที่ฟอร์ม
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v12M5 11l5 5 5-5"/></svg>
+                </button>
+              </div>
+              <GuideChecklist :items="detailChecklist" />
+            </div>
+            <div v-else class="pcv3-guide-done">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.3l2.4 2.3 4.6-5"/></svg>
+              <div>
+                <div class="pcv3-guide-title">ครบทั้ง 3 ขั้นตอนแล้ว</div>
+                <p class="pcv3-guide-desc">รายการนี้เคลียร์เรียบร้อย ไม่มีอะไรต้องทำเพิ่ม</p>
+              </div>
+            </div>
+          </div>
+
           <div class="pcv2-detail-layout" :class="selectedItem.status !== 'awaiting-disburse' && 'pcv2-detail-layout--' + detailLayout">
-          <div class="pca-card">
+          <div class="pca-card" :class="{ 'pcv3-card-active': detailStep === 1 }">
             <div class="pca-charges-header">
               <h2 class="pca-card-title" style="margin:0">ส่วน คำขอเงินทดรองจ่าย</h2>
+              <span class="pcv3-step-tag" :class="detailStep === 1 ? 'pcv3-step-tag--active' : 'pcv3-step-tag--done'">
+                {{ detailStep === 1 ? 'ขั้นตอนที่ 2 · กำลังทำ' : 'ขั้นตอนที่ 1–2 · เสร็จแล้ว' }}
+              </span>
             </div>
             <div class="pca-form-grid pca-form-grid-3">
               <div class="pca-field">
@@ -659,9 +745,12 @@
             </div>
           </div>
 
-          <div v-if="selectedItem.status !== 'awaiting-disburse'" class="pca-card">
+          <div v-if="selectedItem.status !== 'awaiting-disburse'" class="pca-card" :class="{ 'pcv3-card-active': detailStep === 2 }">
             <div class="pca-charges-header">
               <h2 class="pca-card-title" style="margin:0">ส่วน เคลียร์เงินทดรองจ่าย</h2>
+              <span class="pcv3-step-tag" :class="detailStep === 2 ? 'pcv3-step-tag--active' : 'pcv3-step-tag--done'">
+                {{ detailStep === 2 ? 'ขั้นตอนที่ 3 · กำลังทำ' : 'ขั้นตอนที่ 3 · เสร็จแล้ว' }}
+              </span>
             </div>
 
             <template v-if="selectedItem.clearing">
@@ -799,8 +888,8 @@
 
             <div class="pca-charges-footer">
               <div class="pca-footer-row">
-                <span v-if="clearDiff < 0" class="pcv2-diff-tag pcv2-diff-tag--under">น้อยกว่ายอดเบิก</span>
-                <span v-else-if="clearDiff > 0" class="pcv2-diff-tag pcv2-diff-tag--over">มากกว่ายอดเบิก</span>
+                <span v-if="clearRows.length && clearDiff < 0" class="pcv2-diff-tag pcv2-diff-tag--under">น้อยกว่ายอดเบิก</span>
+                <span v-else-if="clearRows.length && clearDiff > 0" class="pcv2-diff-tag pcv2-diff-tag--over">มากกว่ายอดเบิก</span>
                 <span>ยอดรวม</span>
                 <div class="pca-total-box">{{ formatAmount(clearTotal) }} บาท</div>
               </div>
@@ -819,7 +908,7 @@
                 <textarea v-model="clearForm.note" rows="2" maxlength="255" placeholder="ระบุหมายเหตุ"></textarea>
               </div>
             </div>
-              <div v-if="clearDiff !== 0" class="pcv2-inline-pay">
+              <div v-if="clearRows.length && clearDiff !== 0" class="pcv2-inline-pay">
               <div class="pcv2-inline-pay-title">วิธีการชำระ</div>
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
@@ -1019,7 +1108,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import WorkflowScene from './advance-payment-v3/WorkflowScene.vue'
+import GuideChecklist from './advance-payment-v3/GuideChecklist.vue'
+import { WORKFLOW_STEPS, stepIndexForStatus } from './advance-payment-v3/steps.js'
 
 const PAY_METHODS = [
   { value: 'cash', label: 'เงินสด' },
@@ -1176,14 +1268,14 @@ function saveCreate() {
     status: amount > 0 ? 'awaiting-clear' : 'awaiting-disburse'
   })
   itemSeq++
-  showToast('สร้างเงินทดรองจ่ายเรียบร้อยแล้ว')
-  page.value = 'list'
+  showToast('สร้างเงินทดรองจ่ายเรียบร้อยแล้ว — ไปต่อขั้นตอนถัดไปได้เลย')
+  openDetail(items.value[items.value.length - 1])
 }
 
 // ---- detail ----
 const selectedItem = ref(null)
 
-const DETAIL_LAYOUT_KEY = 'pcv2-detail-layout'
+const DETAIL_LAYOUT_KEY = 'pcv3-detail-layout'
 function readDetailLayout() {
   try { return localStorage.getItem(DETAIL_LAYOUT_KEY) === '2col' ? '2col' : '1col' } catch { return '1col' }
 }
@@ -1237,6 +1329,86 @@ function saveDisburse() {
   item.amount = disburseAmount.value
   item.status = 'awaiting-clear'
   showToast('บันทึกการเบิกเงินทดรองจ่ายเรียบร้อยแล้ว')
+}
+
+// ---- step guide (V3) ----
+const GUIDE_KEY = 'pcv3-guide-open'
+const guideOpen = ref((() => { try { return localStorage.getItem(GUIDE_KEY) !== '0' } catch { return true } })())
+function setGuideOpen(open) {
+  guideOpen.value = open
+  try { localStorage.setItem(GUIDE_KEY, open ? '1' : '0') } catch {}
+}
+const overviewHighlight = ref(0)
+function overviewActionLabel(i) {
+  if (i === 0) return 'สร้างคำขอใหม่'
+  if (i === 1) return `ดูรายการรอเบิก (${filterCounts.value['awaiting-disburse']})`
+  return `ดูรายการรอเคลียร์ (${filterCounts.value['awaiting-clear']})`
+}
+function overviewAction(i) {
+  if (i === 0) return openCreate()
+  activeFilter.value = i === 1 ? 'awaiting-disburse' : 'awaiting-clear'
+}
+function miniDotClass(item, i) {
+  const step = stepIndexForStatus(item.status)
+  return i < step ? 'done' : i === step ? 'active' : ''
+}
+
+const createChecklist = computed(() => [
+  { text: 'ระบุวันที่บันทึก', done: createForm.value.bookDate !== '' },
+  { text: 'ระบุวันที่ครบกำหนดเคลียร์', done: createForm.value.dueDate !== '' },
+  { text: 'ใส่คำอธิบายว่าเบิกไปทำอะไร', done: createForm.value.description.trim() !== '', optional: true },
+  { text: 'ระบุชื่อผู้เบิก', done: createForm.value.payee.trim() !== '', optional: true },
+  { text: 'กดปุ่ม "บันทึก" ด้านบน', action: true, ready: canSaveCreate.value }
+])
+
+const detailStep = computed(() => selectedItem.value ? stepIndexForStatus(selectedItem.value.status) : 0)
+const detailGuide = computed(() => detailStep.value === 1
+  ? { title: 'เบิกเงินให้ผู้เบิก', desc: 'เลือกวิธีการชำระและจำนวนเงินที่จ่ายจริงในการ์ด "ส่วน คำขอเงินทดรองจ่าย"' }
+  : { title: 'เคลียร์เงินด้วยค่าใช้จ่ายจริง', desc: 'บันทึกค่าใช้จ่ายตามใบเสร็จในการ์ด "ส่วน เคลียร์เงินทดรองจ่าย" แล้วตรวจยอดเทียบกับยอดเบิก' })
+
+const DISBURSE_EXTRA = {
+  'petty-cash': f => ({ text: 'เลือกรายการเงินสดย่อย', done: !!f.pettyCashDocNo, optional: true }),
+  'advance-received': f => ({ text: 'เลือกเอกสารอ้างอิงรับเงินล่วงหน้า', done: !!f.advanceRefNo, optional: true }),
+  'bank-kbank': f => ({ text: 'ระบุวันที่โอนและแนบหลักฐาน', done: !!f.bankDate, optional: true }),
+  check: f => f.checkMode === 'new'
+    ? { text: 'กรอกรายละเอียดเช็คประกบ', done: !!f.pairedCheck.detail.trim(), optional: true }
+    : null
+}
+const detailChecklist = computed(() => {
+  if (detailStep.value === 1) {
+    const f = disburseForm.value
+    const extra = DISBURSE_EXTRA[f.payMethod]?.(f)
+    return [
+      { text: 'เลือกวิธีการชำระ', done: !!f.payMethod },
+      { text: f.payMethod === 'check' ? 'เลือกเลขที่เช็ค หรือกรอกเช็คใหม่พร้อมจำนวนเงิน' : 'ระบุจำนวนเงินที่จ่ายจริง', done: disburseAmount.value > 0 },
+      ...(extra ? [extra] : []),
+      { text: 'กดปุ่ม "บันทึกวิธีการชำระ"', action: true, ready: canSaveDisburse.value }
+    ]
+  }
+  if (detailStep.value === 2) {
+    const hasRows = clearRows.value.length > 0
+    const diffItem = !hasRows
+      ? { text: 'ตรวจยอดรวมเทียบกับยอดเบิก', done: false }
+      : clearDiff.value === 0
+        ? { text: 'ยอดรวมตรงกับยอดเบิกแล้ว', done: true }
+        : { text: `ยอดต่างจากยอดเบิก ${formatAmount(Math.abs(clearDiff.value))} บาท — ระบุวิธีการชำระส่วนต่าง`, done: clearPayAmount.value > 0, warn: true }
+    return [
+      { text: 'ระบุวันที่บันทึกและวันครบกำหนดเคลียร์', done: clearForm.value.bookDate !== '' && clearForm.value.dueDate !== '' },
+      { text: 'เพิ่มรายการค่าใช้จ่ายอย่างน้อย 1 รายการ', done: hasRows },
+      { text: 'ใส่ชื่อรายจ่ายและจำนวนเงินให้ครบทุกรายการ', done: clearRowsComplete.value },
+      diffItem,
+      { text: 'กดปุ่ม "บันทึกการเคลียร์"', action: true, ready: canSaveClear.value }
+    ]
+  }
+  return []
+})
+
+async function scrollToActiveCard() {
+  await nextTick()
+  const el = document.querySelector('.pcv3-card-active')
+  if (!el) return
+  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
 }
 
 // ---- clear ----
@@ -1293,8 +1465,13 @@ const clearCheckAmount = computed(() => checkAmountFor(clearForm.value))
 const clearTotal = computed(() => clearRows.value.reduce((sum, r) => sum + (Number(r.amount) || 0), 0))
 const clearDiff = computed(() => selectedItem.value ? clearTotal.value - selectedItem.value.amount : 0)
 
+const clearRowsComplete = computed(() =>
+  clearRows.value.length > 0 && clearRows.value.every(r => r.name.trim() !== '' && Number(r.amount) > 0)
+)
+const clearPayAmount = computed(() => clearForm.value.payMethod === 'check' ? clearCheckAmount.value : (clearForm.value.amount || 0))
+const clearDiffSettled = computed(() => clearRows.value.length === 0 || clearDiff.value === 0 || clearPayAmount.value > 0)
 const canSaveClear = computed(() =>
-  clearForm.value.bookDate !== '' && clearForm.value.dueDate !== '' && clearRows.value.length > 0
+  clearForm.value.bookDate !== '' && clearForm.value.dueDate !== '' && clearRowsComplete.value && clearDiffSettled.value
 )
 
 function openClear(item) {
@@ -1804,6 +1981,94 @@ td.pcv2-col-sticky { z-index: 1; }
 .pcv2-detail-layout--2col > .pca-card { margin-bottom: 0; }
 /* each column is half-width, so squeeze the inner 3-column rows */
 .pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
+
+/* ---------- V3: STEP GUIDE ---------- */
+.pcv3-overview { padding: 20px 24px; }
+.pcv3-overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.pcv3-overview-head .pca-link-btn { white-space: nowrap; flex-shrink: 0; }
+.pcv3-overview-sub { margin: 4px 0 0; font-size: var(--font-size-sm); color: var(--color-text-tertiary); }
+
+.pcv3-ov-steps {
+  list-style: none; margin: 14px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+}
+.pcv3-ov-step {
+  display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--color-dividers); border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  transition: border-color .3s, box-shadow .3s, background .3s;
+}
+.pcv3-ov-step.highlight { border-color: var(--color-primary-500); background: #fafcff; box-shadow: 0 0 0 3px var(--color-primary-200); }
+.pcv3-ov-top { display: flex; align-items: center; gap: 10px; }
+.pcv3-ov-num {
+  width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  background: var(--color-primary-200); color: var(--color-primary-click);
+}
+.pcv3-ov-step.highlight .pcv3-ov-num { background: var(--color-primary-500); color: var(--color-white); }
+.pcv3-ov-title { font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
+.pcv3-ov-who { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+.pcv3-ov-todo { margin: 0; padding-left: 18px; font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.6; flex: 1; }
+.pcv3-ov-result { display: flex; align-items: center; gap: 8px; font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+.pcv3-ov-action { align-self: flex-start; }
+
+.pcv3-guide-reopen {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: inherit; font-size: var(--font-size-xs); font-weight: 600;
+  color: var(--color-primary-500); background: var(--color-white);
+  border: 1px dashed var(--color-primary-500); border-radius: 999px;
+  padding: 6px 12px; margin-bottom: 16px; cursor: pointer;
+}
+.pcv3-guide-reopen svg { width: 15px; height: 15px; }
+.pcv3-guide-reopen:hover { background: var(--color-primary-200); }
+
+.pcv3-status-cell { display: flex; align-items: center; gap: 8px; }
+.pcv3-mini-steps { display: inline-flex; gap: 3px; }
+.pcv3-mini-steps i { width: 14px; height: 4px; border-radius: 999px; background: var(--color-dividers); }
+.pcv3-mini-steps i.done { background: var(--color-success); }
+.pcv3-mini-steps i.active { background: var(--color-primary-500); }
+
+.pcv3-progress-card { padding: 16px 20px 20px; }
+.pcv3-guide {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px;
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid var(--color-dividers);
+}
+.pcv3-guide-head { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.pcv3-guide-kicker { font-size: var(--font-size-xs); font-weight: 700; color: var(--color-primary-500); }
+.pcv3-guide-title { margin: 0; font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
+.pcv3-guide-desc { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.5; }
+.pcv3-guide-next {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-top: 6px; font-size: var(--font-size-xs); color: var(--color-text-tertiary);
+}
+.pcv3-guide-jump { margin-top: 8px; }
+.pcv3-guide-done {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 16px; padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-success-bg); color: var(--color-success);
+}
+.pcv3-guide-done svg { width: 28px; height: 28px; flex-shrink: 0; }
+.pcv3-guide-done .pcv3-guide-desc { color: var(--color-text-secondary); }
+
+.pca-card.pcv3-card-active { border-color: var(--color-primary-500); box-shadow: 0 0 0 3px var(--color-primary-200); scroll-margin-top: 16px; }
+.pcv3-step-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.pcv3-step-tag--active { background: var(--color-primary-500); color: var(--color-white); }
+.pcv3-step-tag--done { background: var(--color-success-bg); color: var(--color-success); }
+
+@media (max-width: 900px) {
+  .pcv3-ov-steps { grid-template-columns: 1fr; }
+  .pcv3-guide { grid-template-columns: 1fr; gap: 16px; }
+}
+@media (max-width: 640px) {
+  .pcv3-overview { padding: 16px; }
+  .pcv3-progress-card { padding: 14px 16px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcv3-ov-step { transition: none; }
+}
 
 /* ---------- RESPONSIVE ---------- */
 .pca-content { width: 100%; }
