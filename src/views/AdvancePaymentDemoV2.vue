@@ -152,7 +152,7 @@
                           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 10S4.5 4 10 4s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6z"/><circle cx="10" cy="10" r="2.4"/></svg>
                         </button>
                         <button v-if="item.status === 'awaiting-disburse'" type="button" class="pca-btn pca-btn-outline pca-btn-sm" @click="openDisburse(item)">เบิกเงินทดรองจ่าย</button>
-                        <button v-else-if="item.status === 'awaiting-clear'" type="button" class="pca-btn pca-btn-outline pca-btn-sm" @click="openClear(item)">เคลียร์เงินทดรองจ่าย</button>
+                        <button v-else-if="item.status === 'awaiting-clear'" type="button" class="pca-btn pca-btn-outline pca-btn-sm pcv2-tooltip pcv2-tooltip--left" :data-tooltip="CLEAR_TOOLTIP" :aria-label="'เคลียร์เงินทดรองจ่าย — ' + CLEAR_TOOLTIP" @click="openClear(item)">เคลียร์เงินทดรองจ่าย</button>
                       </div>
                     </td>
                   </tr>
@@ -410,22 +410,55 @@
               </button>
               <h1 class="pca-title">รายละเอียดเงินทดรองจ่าย {{ selectedItem.docNo }}</h1>
             </div>
-            <div v-if="selectedItem.status !== 'awaiting-disburse'" class="pcv2-layout-toggle" role="group" aria-label="รูปแบบการแสดงผล">
-              <button type="button" class="pcv2-layout-btn" :class="{ active: detailLayout === '1col' }" title="แสดงผล 1 คอลัมน์" :aria-pressed="detailLayout === '1col'" @click="setDetailLayout('1col')">
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="13" height="5" rx="1.2"/><rect x="3.5" y="11.5" width="13" height="5" rx="1.2"/></svg>
-                <span>1 คอลัมน์</span>
-              </button>
-              <button type="button" class="pcv2-layout-btn" :class="{ active: detailLayout === '2col' }" title="แสดงผล 2 คอลัมน์" :aria-pressed="detailLayout === '2col'" @click="setDetailLayout('2col')">
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="3.5" width="5.5" height="13" rx="1.2"/><rect x="11" y="3.5" width="5.5" height="13" rx="1.2"/></svg>
-                <span>2 คอลัมน์</span>
-              </button>
+            <div class="pcv2-header-actions">
+            <button v-if="isCheckPayment" type="button" class="pca-btn pca-btn-outline" @click="printCheck">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="10" height="6"/><path d="M6 7V4h8v3M6 13v3h8v-3"/></svg>
+              พิมพ์เช็ค
+            </button>
+            <button v-if="selectedItem.status === 'awaiting-clear' && !showClearSection" type="button" class="pca-btn pca-btn-outline pcv2-tooltip" :data-tooltip="CLEAR_TOOLTIP" :aria-label="'เคลียร์เงินทดรองจ่ายนี้ — ' + CLEAR_TOOLTIP" @click="startClear">
+              เคลียร์เงินทดรองจ่ายนี้
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
+            </button>
             </div>
           </div>
 
-          <div class="pcv2-detail-layout" :class="selectedItem.status !== 'awaiting-disburse' && 'pcv2-detail-layout--' + detailLayout">
-          <div class="pca-card">
+          <!-- section switcher: คำขอ / เคลียร์ are separate sections, click to flip between them -->
+          <div class="pcv2-section-tabs" role="tablist" aria-label="ส่วนของเอกสาร">
+            <button
+              type="button" role="tab" class="pcv2-section-tab"
+              :class="{ active: detailTab === 'request' }" :aria-selected="detailTab === 'request'"
+              @click="selectDetailTab('request')"
+            >
+              <span class="pcv2-section-tab-dot"></span>
+              <span class="pcv2-section-tab-text">
+                <span class="pcv2-section-tab-title">คำขอเงินทดรองจ่าย</span>
+                <span class="pcv2-section-tab-sub">{{ selectedItem.docNo }}</span>
+              </span>
+            </button>
+            <span class="pcv2-section-tab-sep" aria-hidden="true"><i></i><i></i><i></i></span>
+            <button
+              type="button" role="tab" class="pcv2-section-tab"
+              :class="{ active: detailTab === 'clear' }" :aria-selected="detailTab === 'clear'"
+              :disabled="selectedItem.status === 'awaiting-disburse'"
+              :title="selectedItem.status === 'awaiting-disburse' ? 'ต้องเบิกเงินทดรองจ่ายก่อน จึงจะสามารถเคลียร์ได้' : ''"
+              @click="selectDetailTab('clear')"
+            >
+              <span class="pcv2-section-tab-dot"></span>
+              <span class="pcv2-section-tab-text">
+                <span class="pcv2-section-tab-title">เคลียร์เงินทดรองจ่าย</span>
+                <span class="pcv2-section-tab-sub">{{ clearTabSub }}</span>
+              </span>
+            </button>
+          </div>
+
+          <div>
+          <div v-show="detailTab === 'request'" class="pca-card">
             <div class="pca-charges-header">
               <h2 class="pca-card-title" style="margin:0">ส่วน คำขอเงินทดรองจ่าย</h2>
+              <button v-if="selectedItem.payMethod" type="button" class="pca-btn pca-btn-outline" @click="printVoucher">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="10" height="6"/><path d="M6 7V4h8v3M6 13v3h8v-3"/></svg>
+                พิมพ์เอกสาร
+              </button>
             </div>
             <div class="pca-form-grid pca-form-grid-3">
               <div class="pca-field">
@@ -659,7 +692,7 @@
             </div>
           </div>
 
-          <div v-if="selectedItem.status !== 'awaiting-disburse'" class="pca-card">
+          <div v-if="showClearSection && detailTab === 'clear'" class="pca-card">
             <div class="pca-charges-header">
               <h2 class="pca-card-title" style="margin:0">ส่วน เคลียร์เงินทดรองจ่าย</h2>
             </div>
@@ -1015,6 +1048,199 @@
     <transition name="pca-toast-fade">
       <div v-if="toast" class="pca-toast">{{ toast }}</div>
     </transition>
+
+    <!-- ============ DISBURSE SAVED DIALOG ============ -->
+    <transition name="pca-modal-fade">
+      <div v-if="disburseDialog" class="pcv2-dialog-overlay" @click.self="disburseDialog = null">
+        <div class="pcv2-dialog" role="dialog" aria-modal="true" aria-labelledby="pcv2-disburse-dialog-title">
+          <!-- documents fly from the รอเบิก folder to the รอเคลียร์ folder -->
+          <div class="pcv2-flow" aria-hidden="true">
+            <div class="pcv2-flow-stage">
+              <svg class="pcv2-flow-arc" viewBox="0 0 280 120">
+                <path d="M100 56 Q140 24 180 56" />
+                <path class="pcv2-flow-arc-head" d="M176.9 48.6 L180 56 L172.1 54.6" />
+              </svg>
+              <span v-for="n in 3" :key="n" class="pcv2-flow-doc" :style="{ animationDelay: (n - 1) * 0.6 + 's' }"><i></i><i></i><i></i></span>
+              <div class="pcv2-flow-side pcv2-flow-side--from">
+                <svg class="pcv2-flow-folder pcv2-flow-folder--from" viewBox="0 0 64 52" aria-hidden="true">
+                  <path class="pcv2-flow-folder-back" d="M4 8a4 4 0 0 1 4-4h14l6 6h28a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/>
+                  <rect class="pcv2-flow-folder-paper" x="14" y="12" width="36" height="22" rx="2"/>
+                  <path class="pcv2-flow-folder-front" d="M4 22a4 4 0 0 1 4-4h48a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/>
+                </svg>
+                <span class="pca-status pca-status--awaiting-disburse">{{ statusLabel('awaiting-disburse') }}</span>
+              </div>
+              <div class="pcv2-flow-side pcv2-flow-side--to">
+                <svg class="pcv2-flow-folder pcv2-flow-folder--to" viewBox="0 0 64 52" aria-hidden="true">
+                  <path class="pcv2-flow-folder-back" d="M4 8a4 4 0 0 1 4-4h14l6 6h28a4 4 0 0 1 4 4v30a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/>
+                  <rect class="pcv2-flow-folder-paper" x="14" y="12" width="36" height="22" rx="2"/>
+                  <path class="pcv2-flow-folder-front" d="M4 22a4 4 0 0 1 4-4h48a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/>
+                </svg>
+                <span class="pca-status pca-status--awaiting-clear">{{ statusLabel('awaiting-clear') }}</span>
+              </div>
+            </div>
+          </div>
+          <h2 id="pcv2-disburse-dialog-title" class="pcv2-dialog-title">บันทึกการเบิกเงินทดรองจ่ายแล้ว</h2>
+          <p class="pcv2-dialog-text">
+            รายการ <strong>{{ disburseDialog.docNo }}</strong> จะเปลี่ยนจาก
+            <span class="pca-status pca-status--awaiting-disburse">{{ statusLabel('awaiting-disburse') }}</span>
+            เป็น
+            <span class="pca-status pca-status--awaiting-clear">{{ statusLabel('awaiting-clear') }}</span>
+          </p>
+          <div class="pcv2-dialog-summary">
+            <div><span>จำนวนเงิน</span><strong>{{ formatAmount(disburseDialog.amount) }} บาท</strong></div>
+            <div><span>โดยวิธีการ</span><strong>{{ disburseDialog.payMethod }}</strong></div>
+          </div>
+          <div class="pcv2-dialog-actions">
+            <button type="button" class="pca-btn pca-btn-outline" @click="printVoucher">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="10" height="6"/><path d="M6 7V4h8v3M6 13v3h8v-3"/></svg>
+              พิมพ์เอกสาร
+            </button>
+            <button type="button" class="pca-btn pca-btn-outline" :disabled="!isCheckPayment" :title="isCheckPayment ? '' : 'ใช้ได้เฉพาะรายการที่จ่ายด้วยเช็ค'" @click="printCheck">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="10" height="6"/><path d="M6 7V4h8v3M6 13v3h8v-3"/></svg>
+              พิมพ์เช็ค
+            </button>
+            <button type="button" class="pca-btn pca-btn-primary" @click="disburseDialog = null">ปิด</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- ============ PAYMENT VOUCHER MODAL ============ -->
+    <transition name="pca-modal-fade">
+      <div v-if="voucherModalOpen && voucherData" class="pca-modal-overlay" @click.self="closeVoucherModal">
+        <div class="pca-modal-toolbar">
+          <span class="pca-modal-zoom-label">{{ Math.round(voucherZoom * 100) }}%</span>
+          <button type="button" class="pca-modal-tool-btn" title="ซูมออก" @click="zoomVoucher(-0.1)">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M6 8.5h5"/><path d="M16 16l-3.4-3.4"/></svg>
+          </button>
+          <button type="button" class="pca-modal-tool-btn" title="ซูมเข้า" @click="zoomVoucher(0.1)">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M8.5 6v5M6 8.5h5"/><path d="M16 16l-3.4-3.4"/></svg>
+          </button>
+          <button type="button" class="pca-modal-tool-btn pca-modal-close-btn" title="ปิด" @click="closeVoucherModal">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
+          </button>
+        </div>
+
+        <div class="pca-modal-scroll">
+          <div class="pca-voucher-paper" :style="{ transform: 'scale(' + voucherZoom + ')' }">
+            <div class="pcv-head">
+              <div class="pcv-head-title">
+                <h2>ใบสำคัญจ่าย</h2>
+                <span>Payment Voucher</span>
+              </div>
+            </div>
+            <div class="pcv-original">(ต้นฉบับ/Original)</div>
+
+            <div class="pcv-meta-row">
+              <div class="pcv-meta-left">
+                <span class="pcv-meta-label">ผู้เบิก/Withdrawer:</span>
+                <span class="pcv-meta-value">{{ voucherData.payee }}</span>
+              </div>
+              <div class="pcv-meta-right">
+                <div><span class="pcv-meta-label">เลขที่/No:</span><span class="pcv-meta-value">{{ voucherData.docNo }}</span></div>
+                <div><span class="pcv-meta-label">วันที่บันทึก/Date:</span><span class="pcv-meta-value">{{ voucherData.bookDate }}</span></div>
+                <div><span class="pcv-meta-label">ครบกำหนด/Due date:</span><span class="pcv-meta-value">{{ voucherData.dueDate }}</span></div>
+              </div>
+            </div>
+
+            <table class="pcv-table">
+              <thead>
+                <tr>
+                  <th class="pcv-col-no">ลำดับ<br />No.</th>
+                  <th>เลขใบสำคัญจ่าย<br />Ref. No.</th>
+                  <th>วันที่บันทึก<br />Date</th>
+                  <th>รายละเอียด<br />Description</th>
+                  <th class="pcv-col-num">จำนวนหน่วย<br />Unit</th>
+                  <th class="pcv-col-num">จำนวนเงิน<br />Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="pcv-col-no pcv-row-tall">1</td>
+                  <td class="pcv-row-tall">{{ voucherData.docNo }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.bookDate }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.description }}</td>
+                  <td class="pcv-col-num pcv-row-tall">1</td>
+                  <td class="pcv-col-num pcv-row-tall">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4" class="pcv-total-text">{{ voucherData.amountText }}</td>
+                  <td class="pcv-total-label">จำนวนเงิน/Amount</td>
+                  <td class="pcv-col-num pcv-total-amount">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <table class="pcv-table pcv-account-table">
+              <thead>
+                <tr>
+                  <th class="pcv-col-code">รหัสบัญชี</th>
+                  <th>ชื่อบัญชี</th>
+                  <th class="pcv-col-num">เดบิต</th>
+                  <th class="pcv-col-num">เครดิต</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="pcv-col-code pcv-row-tall">{{ voucherData.debitAccount.code }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.debitAccount.name }} - {{ voucherData.description }} - #{{ voucherData.docNo }}</td>
+                  <td class="pcv-col-num pcv-row-tall">{{ formatAmount(voucherData.amount) }}</td>
+                  <td class="pcv-col-num pcv-row-tall">-</td>
+                </tr>
+                <tr>
+                  <td class="pcv-col-code pcv-row-tall">{{ voucherData.creditAccount.code }}</td>
+                  <td class="pcv-row-tall">{{ voucherData.creditAccount.name }} - {{ voucherData.description }} - #{{ voucherData.docNo }}</td>
+                  <td class="pcv-col-num pcv-row-tall">-</td>
+                  <td class="pcv-col-num pcv-row-tall">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td class="pcv-total-label">รวม/Total</td>
+                  <td class="pcv-total-text">{{ voucherData.amountText }}</td>
+                  <td class="pcv-col-num pcv-total-amount">{{ formatAmount(voucherData.amount) }}</td>
+                  <td class="pcv-col-num pcv-total-amount">{{ formatAmount(voucherData.amount) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="pcv-remarks">
+              <div class="pcv-remarks-title">หมายเหตุ/Remarks:</div>
+              <div>-</div>
+            </div>
+
+            <div class="pcv-conditions">
+              <div class="pcv-remarks-title">การชำระเงิน(Conditions of Payments)</div>
+              <div class="pcv-conditions-line">{{ voucherData.payMethod }}</div>
+              <div class="pcv-conditions-line">- จำนวน {{ formatAmount(voucherData.amount) }} บาท วันที่ {{ voucherData.bookDate }}</div>
+            </div>
+
+            <div class="pcv-signatures">
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้จัดทำ / Organizer</span>
+              </div>
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้ตรวจสอบ / Approver</span>
+              </div>
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้มีอำนาจลงนาม / Authorized</span>
+              </div>
+              <div class="pcv-sig-col">
+                <div class="pcv-sig-line"></div>
+                <span>ผู้รับเงิน / Receiver</span>
+              </div>
+            </div>
+
+            <div class="pcv-page-no">1/1</div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -1065,6 +1291,44 @@ function isoToThaiDate(iso) {
 
 function formatAmount(n) {
   return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+const THAI_DIGIT_TEXT = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า']
+const THAI_PLACE_TEXT = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน']
+function thaiIntegerText(digits) {
+  let out = ''
+  const len = digits.length
+  if (len > 7) {
+    const cut = len - 6
+    out += thaiIntegerText(digits.slice(0, cut)) + 'ล้าน'
+    digits = digits.slice(cut)
+  }
+  const n = digits.length
+  for (let i = 0; i < n; i++) {
+    const d = Number(digits[i])
+    if (d === 0) continue
+    if (i === n - 1 && d === 1 && n > 1) out += 'เอ็ด'
+    else if (i === n - 2 && d === 2) out += 'ยี่'
+    else if (i === n - 2 && d === 1) out += ''
+    else out += THAI_DIGIT_TEXT[d]
+    out += THAI_PLACE_TEXT[n - i - 1]
+  }
+  return out || 'ศูนย์'
+}
+function numberToThaiBahtText(amount) {
+  const fixed = Number(amount || 0).toFixed(2)
+  const [intPart, decPart] = fixed.split('.')
+  let text = thaiIntegerText(intPart.replace(/^0+(?=\d)/, '')) + 'บาท'
+  text += decPart === '00' ? 'ถ้วน' : thaiIntegerText(decPart) + 'สตางค์'
+  return text
+}
+
+function creditAccountForMethod(payMethodLabel) {
+  if (/เช็ค/.test(payMethodLabel)) return { code: '2111-03', name: 'เช็คจ่ายลงวันที่ล่วงหน้า' }
+  if (/เงินสดย่อย/.test(payMethodLabel)) return { code: '1112-00', name: 'เงินสดย่อย' }
+  if (/รับเงินล่วงหน้า/.test(payMethodLabel)) return { code: '2113-00', name: 'เงินรับล่วงหน้า' }
+  if (/ธนาคาร|โอนเงิน/.test(payMethodLabel)) return { code: '1121-01', name: payMethodLabel }
+  return { code: '1111-00', name: 'เงินสด' }
 }
 
 const page = ref('list') // 'list' | 'create' | 'detail'
@@ -1164,7 +1428,7 @@ function openCreate() {
 function saveCreate() {
   const amount = createAmount.value
   const payMethodLabel = PAY_METHODS.find(m => m.value === createForm.value.payMethod)?.label || createForm.value.payMethod
-  items.value.push({
+  const newItem = {
     id: itemSeq,
     docNo: nextDocNo.value,
     bookDate: isoToThaiDate(createForm.value.bookDate),
@@ -1174,26 +1438,82 @@ function saveCreate() {
     payMethod: amount > 0 ? payMethodLabel : '',
     amount: amount > 0 ? amount : null,
     status: amount > 0 ? 'awaiting-clear' : 'awaiting-disburse'
-  })
+  }
+  items.value.push(newItem)
   itemSeq++
   showToast('สร้างเงินทดรองจ่ายเรียบร้อยแล้ว')
-  page.value = 'list'
+  // stay on the saved record instead of bouncing back to the list
+  openDetail(newItem)
 }
 
 // ---- detail ----
 const selectedItem = ref(null)
 
-const DETAIL_LAYOUT_KEY = 'pcv2-detail-layout'
-function readDetailLayout() {
-  try { return localStorage.getItem(DETAIL_LAYOUT_KEY) === '2col' ? '2col' : '1col' } catch { return '1col' }
+// which detail section is showing: 'request' | 'clear'
+const detailTab = ref('request')
+function selectDetailTab(tab) {
+  if (tab === 'clear') {
+    if (selectedItem.value?.status === 'awaiting-disburse') return
+    startClear()
+    return
+  }
+  detailTab.value = tab
 }
-const detailLayout = ref(readDetailLayout()) // '1col' | '2col'
-function setDetailLayout(layout) {
-  detailLayout.value = layout
-  try { localStorage.setItem(DETAIL_LAYOUT_KEY, layout) } catch {}
+const clearTabSub = computed(() => {
+  const item = selectedItem.value
+  if (!item) return ''
+  if (item.clearing) return 'เคลียร์แล้ว · ' + formatAmount(item.clearing.total) + ' บาท'
+  if (item.status === 'awaiting-disburse') return 'ต้องเบิกก่อน'
+  return 'รอเคลียร์'
+})
+// ---- payment voucher modal (same document as v1) ----
+const voucherModalOpen = ref(false)
+const voucherZoom = ref(0.9)
+const voucherData = computed(() => {
+  const item = selectedItem.value
+  if (!item || !item.payMethod) return null
+  return {
+    docNo: item.docNo,
+    payee: item.payee,
+    bookDate: item.bookDate,
+    dueDate: item.dueDate,
+    description: item.description,
+    amount: item.amount,
+    amountText: numberToThaiBahtText(item.amount),
+    payMethod: item.payMethod,
+    debitAccount: { code: '1153-01', name: 'เงินทดรองจ่าย' },
+    creditAccount: creditAccountForMethod(item.payMethod)
+  }
+})
+const isCheckPayment = computed(() => /เช็ค/.test(selectedItem.value?.payMethod || ''))
+function printCheck() {
+  showToast('พิมพ์เช็ค (ตัวอย่างสาธิต)')
 }
+function printVoucher() {
+  voucherZoom.value = 0.9
+  voucherModalOpen.value = true
+}
+function closeVoucherModal() {
+  voucherModalOpen.value = false
+}
+function zoomVoucher(delta) {
+  voucherZoom.value = Math.min(1.6, Math.max(0.5, Math.round((voucherZoom.value + delta) * 100) / 100))
+}
+
+const CLEAR_TOOLTIP = 'จะใช้ในกรณีที่คุณใช้เงินตามวงเงิน และพร้อมที่จะแจกแจงค่าใช้จ่ายแล้ว'
+
+// the clearing inputs stay hidden until the user clicks "เคลียร์เงินทดรองจ่ายนี้"
+const clearStarted = ref(false)
+const showClearSection = computed(() => !!selectedItem.value?.clearing || clearStarted.value)
+function startClear() {
+  clearStarted.value = true
+  detailTab.value = 'clear'
+}
+
 function openDetail(item) {
   selectedItem.value = item
+  clearStarted.value = false
+  detailTab.value = 'request'
   disburseForm.value = blankPayMethodForm()
   clearForm.value = blankClearForm(item)
   clearRows.value = []
@@ -1225,6 +1545,8 @@ const canSaveDisburse = computed(() => disburseAmount.value > 0)
 
 function openDisburse(item) {
   selectedItem.value = item
+  clearStarted.value = false
+  detailTab.value = 'request'
   disburseForm.value = blankPayMethodForm()
   page.value = 'detail'
 }
@@ -1236,8 +1558,10 @@ function saveDisburse() {
   item.payMethod = payMethodLabel
   item.amount = disburseAmount.value
   item.status = 'awaiting-clear'
-  showToast('บันทึกการเบิกเงินทดรองจ่ายเรียบร้อยแล้ว')
+  disburseDialog.value = { docNo: item.docNo, amount: item.amount, payMethod: item.payMethod }
 }
+// summary dialog shown after a disburse is saved (รอเบิก → รอเคลียร์)
+const disburseDialog = ref(null)
 
 // ---- clear ----
 let clearRowSeq = 100
@@ -1305,6 +1629,8 @@ const canSaveClear = computed(() =>
 
 function openClear(item) {
   selectedItem.value = item
+  clearStarted.value = true
+  detailTab.value = 'clear'
   clearForm.value = blankClearForm(item)
   clearRows.value = []
   page.value = 'detail'
@@ -1677,7 +2003,7 @@ function saveClear() {
   position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
   background: var(--color-text-primary); color: var(--color-white);
   padding: 10px 18px; border-radius: var(--radius-md);
-  font-size: var(--font-size-sm); z-index: 200;
+  font-size: var(--font-size-sm); z-index: 400;
 }
 .pca-toast-fade-enter-active, .pca-toast-fade-leave-active { transition: opacity .2s ease; }
 .pca-toast-fade-enter-from, .pca-toast-fade-leave-to { opacity: 0; }
@@ -1783,33 +2109,252 @@ td.pcv2-col-sticky { z-index: 1; }
 .pcv2-expense-option.active { background: var(--color-primary-200); color: var(--color-primary-click); font-weight: 600; }
 
 /* ---------- DETAIL LAYOUT TOGGLE ---------- */
-.pcv2-layout-toggle {
-  display: inline-flex; gap: 2px; padding: 3px;
+.pcv2-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+/* ---------- SECTION TABS (คำขอ / เคลียร์) ---------- */
+.pcv2-section-tabs {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+}
+.pcv2-section-tab {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  font-family: inherit; text-align: left;
   background: var(--color-white);
   border: 1px solid var(--color-dividers);
   border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.pcv2-layout-btn {
-  display: flex; align-items: center; gap: 6px;
-  font-family: inherit; font-size: var(--font-size-xs); font-weight: 600;
-  color: var(--color-text-secondary);
-  background: transparent; border: none;
-  border-radius: var(--radius-sm);
-  padding: 6px 10px; cursor: pointer;
+.pcv2-section-tab:hover:not(:disabled):not(.active) { border-color: var(--color-primary-500); }
+.pcv2-section-tab.active { border-color: var(--color-primary-500); box-shadow: 0 0 0 3px var(--color-primary-200); }
+.pcv2-section-tab:disabled { cursor: not-allowed; opacity: .6; }
+.pcv2-section-tab-dot {
+  flex-shrink: 0;
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid var(--color-dividers);
+  background: var(--color-white);
 }
-.pcv2-layout-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-.pcv2-layout-btn:hover:not(.active) { color: var(--color-primary-500); }
-.pcv2-layout-btn.active { background: var(--color-primary-200); color: var(--color-primary-click); }
+.pcv2-section-tab.active .pcv2-section-tab-dot {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-primary-200);
+}
+.pcv2-section-tab-text { display: flex; flex-direction: column; min-width: 0; }
+.pcv2-section-tab-title { font-size: var(--font-size-md, 16px); font-weight: 600; color: var(--color-text-primary); }
+.pcv2-section-tab-sub { font-size: var(--font-size-xs); color: var(--color-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pcv2-section-tab-sep { display: flex; gap: 4px; flex-shrink: 0; }
+.pcv2-section-tab-sep i { width: 6px; height: 6px; border-radius: 50%; background: var(--color-dividers); }
+@media (max-width: 640px) {
+  .pcv2-section-tabs { gap: 8px; }
+  .pcv2-section-tab { padding: 10px 12px; gap: 8px; }
+  .pcv2-section-tab-title { font-size: var(--font-size-sm); }
+  .pcv2-section-tab-sep { display: none; }
+}
 
-.pcv2-detail-layout--2col {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
+
+/* ---------- PAYMENT VOUCHER MODAL ---------- */
+.pca-modal-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(20, 24, 32, .6);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 0 40px;
+  overflow: hidden;
 }
-.pcv2-detail-layout--2col > .pca-card { margin-bottom: 0; }
-/* each column is half-width, so squeeze the inner 3-column rows */
-.pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
+.pca-modal-fade-enter-active, .pca-modal-fade-leave-active { transition: opacity .18s ease; }
+.pca-modal-fade-enter-from, .pca-modal-fade-leave-to { opacity: 0; }
+
+.pca-modal-toolbar {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 6px 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
+.pca-modal-zoom-label {
+  font-size: var(--font-size-xs); font-weight: 600; color: var(--color-text-tertiary);
+  padding: 0 8px; min-width: 46px; text-align: center;
+}
+.pca-modal-tool-btn {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-dividers); background: var(--color-white);
+  color: var(--color-text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pca-modal-tool-btn svg { width: 17px; height: 17px; }
+.pca-modal-tool-btn:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); }
+.pca-modal-close-btn:hover { border-color: var(--color-error); color: var(--color-error); background: var(--color-error-bg); }
+
+.pca-modal-scroll {
+  flex: 1; width: 100%;
+  overflow: auto;
+  display: flex; justify-content: center;
+}
+
+.pca-voucher-paper {
+  flex-shrink: 0;
+  width: 820px; min-height: 1160px;
+  background: var(--color-white);
+  color: #1a1a1a;
+  padding: 56px 64px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  transform-origin: top center;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 auto 40px;
+}
+
+.pcv-head { text-align: right; }
+.pcv-head-title h2 { font-size: 26px; margin: 0; }
+.pcv-head-title span { font-size: 18px; color: #333; }
+.pcv-original { text-align: right; margin-top: 10px; color: #333; }
+
+.pcv-meta-row { display: flex; justify-content: space-between; gap: 24px; margin-top: 28px; }
+.pcv-meta-left, .pcv-meta-right { display: flex; flex-direction: column; gap: 6px; }
+.pcv-meta-right > div { display: flex; gap: 8px; }
+.pcv-meta-label { font-weight: 700; }
+
+.pcv-table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 12.5px; }
+.pcv-table th, .pcv-table td {
+  border: 1px solid #333; padding: 8px 10px; text-align: left; vertical-align: top;
+}
+.pcv-table th { font-weight: 700; background: #fafafa; }
+.pcv-col-no { width: 56px; text-align: center; }
+.pcv-col-num { text-align: right; }
+.pcv-col-code { width: 90px; }
+.pcv-row-tall { height: 90px; }
+.pcv-total-text { font-weight: 700; text-align: center; }
+.pcv-total-label { font-weight: 700; }
+.pcv-total-amount { font-weight: 700; }
+
+.pcv-account-table { margin-top: 20px; }
+
+.pcv-remarks, .pcv-conditions { margin-top: 20px; }
+.pcv-remarks-title { font-weight: 700; }
+.pcv-conditions-line { margin-top: 4px; padding-left: 12px; }
+
+.pcv-signatures { display: flex; justify-content: space-between; gap: 16px; margin-top: 72px; }
+.pcv-sig-col { flex: 1; text-align: center; font-size: 12.5px; }
+.pcv-sig-line { border-bottom: 1px dotted #555; height: 36px; }
+
+.pcv-page-no { text-align: right; margin-top: 32px; color: #666; font-size: 12px; }
+
+/* ---------- DISBURSE SAVED DIALOG ---------- */
+/* sits under the voucher modal (z 300) so "พิมพ์เอกสาร" opens on top of it */
+.pcv2-dialog-overlay {
+  position: fixed; inset: 0; z-index: 250;
+  background: rgba(20, 24, 32, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.pcv2-dialog {
+  width: 100%; max-width: 460px;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  padding: 24px;
+  text-align: center;
+}
+.pcv2-flow {
+  margin: -4px -4px 16px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-primary-200), var(--color-white));
+  display: flex; justify-content: center;
+  overflow: hidden;
+}
+/* fixed-size stage so the px motion path lines up with the folders */
+.pcv2-flow-stage { position: relative; width: 280px; height: 132px; flex-shrink: 0; }
+.pcv2-flow-arc { position: absolute; inset: 0 0 auto; width: 280px; height: 120px; }
+.pcv2-flow-arc path {
+  fill: none; stroke: var(--color-primary-500); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  opacity: .35;
+}
+.pcv2-flow-arc path:first-child { stroke-dasharray: 4 6; animation: pcv2-flow-dash 1.2s linear infinite; }
+@keyframes pcv2-flow-dash { to { stroke-dashoffset: -20; } }
+
+.pcv2-flow-side {
+  position: absolute; bottom: 8px; width: 96px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.pcv2-flow-side--from { left: 22px; }
+.pcv2-flow-side--to { right: 22px; }
+.pcv2-flow-folder { width: 56px; height: 46px; display: block; }
+.pcv2-flow-folder-paper { fill: var(--color-white); stroke: var(--color-dividers); }
+.pcv2-flow-folder--from .pcv2-flow-folder-back { fill: #F5C766; }
+.pcv2-flow-folder--from .pcv2-flow-folder-front { fill: var(--color-attention); }
+.pcv2-flow-folder--to .pcv2-flow-folder-back { fill: #8DB6FB; }
+.pcv2-flow-folder--to .pcv2-flow-folder-front { fill: var(--color-primary-500); }
+/* the receiving folder "catches" each document as it lands */
+.pcv2-flow-folder--to { transform-origin: 50% 100%; animation: pcv2-flow-catch .6s ease-out 1.45s infinite; }
+@keyframes pcv2-flow-catch {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.08, .94); }
+  55% { transform: scale(.98, 1.03); }
+}
+.pcv2-flow-side .pca-status { font-size: 11px; }
+
+.pcv2-flow-doc {
+  position: absolute; top: 0; left: 0;
+  width: 18px; height: 22px;
+  padding: 4px 3px;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-text-secondary);
+  border-radius: 2px;
+  display: flex; flex-direction: column; gap: 3px;
+  offset-path: path('M70 62 Q140 -8 210 62');
+  offset-rotate: auto;
+  opacity: 0;
+  animation: pcv2-flow-fly 1.8s cubic-bezier(.45, .05, .55, .95) infinite;
+}
+.pcv2-flow-doc i { display: block; height: 1.5px; background: var(--color-dividers); border-radius: 1px; }
+@keyframes pcv2-flow-fly {
+  0% { offset-distance: 0%; opacity: 0; transform: scale(.6); }
+  12% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  100% { offset-distance: 100%; opacity: 0; transform: scale(.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcv2-flow-doc, .pcv2-flow-folder--to, .pcv2-flow-arc path { animation: none; }
+}
+.pcv2-dialog-title { font-size: 18px; margin: 0 0 10px; }
+.pcv2-dialog-text { margin: 0; line-height: 2; color: var(--color-text-secondary); }
+.pcv2-dialog-summary {
+  margin-top: 16px; padding: 12px 16px;
+  background: var(--color-disabled-bg);
+  border-radius: var(--radius-md);
+  display: flex; flex-direction: column; gap: 6px;
+  text-align: left;
+}
+.pcv2-dialog-summary > div { display: flex; justify-content: space-between; gap: 12px; }
+.pcv2-dialog-summary span { color: var(--color-text-secondary); }
+.pcv2-dialog-summary strong { text-align: right; }
+.pcv2-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+@media (max-width: 480px) {
+  .pcv2-dialog-actions { flex-direction: column-reverse; }
+  .pcv2-dialog-actions .pca-btn { justify-content: center; }
+}
+
+/* ---------- TOOLTIP ---------- */
+.pcv2-tooltip { position: relative; }
+.pcv2-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute; z-index: 50;
+  top: calc(100% + 8px); right: 0;
+  width: max-content; max-width: 260px;
+  padding: 8px 10px;
+  background: var(--color-text-primary, #1a1a1a); color: var(--color-white);
+  font-size: var(--font-size-xs); font-weight: 400; line-height: 1.45;
+  text-align: left; white-space: normal;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .15s ease;
+}
+/* in the table the scroll wrapper would clip a tooltip below the row, so open it to the left */
+.pcv2-tooltip--left::after { top: 50%; right: calc(100% + 8px); transform: translateY(-50%); max-width: 240px; }
+.pcv2-tooltip:hover::after, .pcv2-tooltip:focus-visible::after { opacity: 1; visibility: visible; }
 
 /* ---------- RESPONSIVE ---------- */
 .pca-content { width: 100%; }
@@ -1820,14 +2365,6 @@ td.pcv2-col-sticky { z-index: 1; }
 
 @media (max-width: 1200px) {
   .pca-form-grid-3 { grid-template-columns: 1fr 1fr; }
-  .pcv2-detail-layout--2col .pca-form-grid-2,
-  .pcv2-detail-layout--2col .pca-form-grid-3 { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 1024px) {
-  .pcv2-layout-toggle { display: none; }
-  .pcv2-detail-layout--2col { display: block; }
-  .pcv2-detail-layout--2col > .pca-card { margin-bottom: 20px; }
 }
 
 @media (max-width: 900px) {
@@ -1851,6 +2388,7 @@ td.pcv2-col-sticky { z-index: 1; }
   .pca-footer-row { justify-content: space-between; }
   .pca-total-box { min-width: 0; flex: 1; }
   .pca-toast { width: calc(100% - 32px); text-align: center; }
+  .pca-modal-toolbar { margin-bottom: 8px; }
   .pca-modal-toolbar { margin-bottom: 8px; }
 }
 </style>
