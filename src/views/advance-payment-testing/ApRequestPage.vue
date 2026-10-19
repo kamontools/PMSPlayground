@@ -8,7 +8,8 @@
       <div class="apt-pagehead-actions">
         <template v-if="!rf.isNew">
           <button type="button" class="apt-btn apt-btn-danger" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิก</button>
-          <button type="button" class="apt-btn apt-btn-outline" @click="showToast('เปิดหน้าพิมพ์คำขอ (ตัวอย่างสาธิต)')"><AptIcon name="print" /> พิมพ์คำขอ</button>
+          <GlMenu :doc="rf.doc" />
+          <PrintMenu :doc="rf.doc" />
         </template>
         <button type="button" class="apt-btn apt-btn-primary" @click="rf.onSave"><AptIcon name="save" /> บันทึก</button>
         <template v-if="primary">
@@ -36,8 +37,6 @@
         <div class="apt-card-head">
           <h2 class="apt-card-title">รายละเอียดคำขอ</h2>
           <StatusChip v-if="rf.status" :status="rf.status" />
-          <span class="apt-spacer"></span>
-          <button v-if="rf.glButton" type="button" class="apt-btn apt-btn-outline" @click="rf.onGl"><AptIcon name="ledger" /> {{ rf.glButton }}</button>
         </div>
         <RequestFields :rf="rf" />
       </section>
@@ -58,11 +57,13 @@ import StatusChip from './StatusChip.vue'
 import RequestFields from './RequestFields.vue'
 import RequestPayments from './RequestPayments.vue'
 import RequestDialogs from './RequestDialogs.vue'
+import GlMenu from './GlMenu.vue'
+import PrintMenu from './PrintMenu.vue'
 import { useRequestForm } from './useRequestForm.js'
 import { useAptStore, fmtDate } from './store.js'
 
 const props = defineProps({ docId: { type: String, default: null } })
-const { go, showToast } = useAptStore()
+const { go } = useAptStore()
 
 function goClear() { go('clear', props.docId) }
 const rf = useRequestForm({ docId: props.docId, detailPage: 'request', onGoClear: goClear, onPaymentAdded: () => dismissCoach() })

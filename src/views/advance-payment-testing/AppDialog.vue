@@ -9,6 +9,10 @@
             <dt>{{ row.label }}</dt><dd>{{ row.value }}</dd>
           </template>
         </dl>
+        <div v-if="dlg.note" class="apt-dialog-note">
+          <AptIcon name="calendar" />
+          <div><b>{{ dlg.note.title }}</b>{{ dlg.note.text }}</div>
+        </div>
         <div v-if="dlg.reason" class="apt-field" :class="{ 'apt-field--error': reasonError }">
           <div class="apt-label-row">
             <label class="apt-label" for="apt-dialog-reason">{{ dlg.reason.label }}<span class="apt-req">*</span></label>
@@ -29,6 +33,7 @@
 
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
+import AptIcon from './AptIcon.vue'
 import { useAptStore } from './store.js'
 
 const { state, closeDialog } = useAptStore()

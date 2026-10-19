@@ -14,12 +14,8 @@
         <label class="apt-label" for="rq-due">วันที่ครบกำหนดเคลียร์</label>
         <input id="rq-due" v-model="rf.draft.dueDate" type="date" class="apt-input" :readonly="rf.locked" />
       </div>
-      <div class="apt-field" :class="{ 'apt-field--error': rf.errors.requestedAmount }">
-        <label class="apt-label" for="rq-amount">เงินที่ขอเบิก<span class="apt-req">*</span></label>
-        <input id="rq-amount" v-model.number="rf.draft.requestedAmount" type="number" min="0" step="0.01" placeholder="0.00" class="apt-input apt-input--num" :readonly="rf.locked" />
-        <span v-if="rf.errors.requestedAmount" class="apt-error">กรุณาระบุเงินที่ขอเบิก</span>
-      </div>
-      <div class="apt-field" :class="{ 'apt-field--error': rf.errors.vendorId }">
+      <!-- row 2: who + how much, side by side -->
+      <div class="apt-field apt-req-vendor" :class="{ 'apt-field--error': rf.errors.vendorId }">
         <label class="apt-label" for="rq-vendor">ผู้จัดจำหน่าย/ผู้เบิก<span class="apt-req">*</span></label>
         <select id="rq-vendor" v-model="rf.draft.vendorId" class="apt-select" :disabled="rf.locked">
           <option value="" disabled>เลือกผู้จัดจำหน่าย/ผู้เบิก</option>
@@ -27,7 +23,12 @@
         </select>
         <span v-if="rf.errors.vendorId" class="apt-error">กรุณาเลือกผู้จัดจำหน่าย/ผู้เบิก</span>
       </div>
-      <div class="apt-field apt-span-desc" :class="{ 'apt-field--error': rf.errors.description }">
+      <div class="apt-field" :class="{ 'apt-field--error': rf.errors.requestedAmount }">
+        <label class="apt-label" for="rq-amount">เงินที่ขอเบิก<span class="apt-req">*</span></label>
+        <input id="rq-amount" v-model.number="rf.draft.requestedAmount" type="number" min="0" step="0.01" placeholder="0.00" class="apt-input apt-input--num" :readonly="rf.locked" />
+        <span v-if="rf.errors.requestedAmount" class="apt-error">กรุณาระบุเงินที่ขอเบิก</span>
+      </div>
+      <div class="apt-field apt-span-all" :class="{ 'apt-field--error': rf.errors.description }">
         <div class="apt-label-row">
           <label class="apt-label" for="rq-desc">คำอธิบาย<span class="apt-req">*</span></label>
           <span class="apt-count">{{ rf.draft.description.length }}/250</span>

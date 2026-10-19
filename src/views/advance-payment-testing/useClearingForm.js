@@ -189,7 +189,6 @@ export function useClearingForm({ docId, onLeave } = {}) {
     if (choice === 'confirm') glDlg.value = { readonly: false }
     else showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
   }
-  function onGl() { glDlg.value = { readonly: !!doc.clearing?.gl } }
   function saveGl(entry) {
     doc.clearing.gl = { no: `JV-${doc.docNo}`, ...entry }
     glDlg.value = null
@@ -230,6 +229,6 @@ export function useClearingForm({ docId, onLeave } = {}) {
     doc, status, draft, s, errors, locked, reqTotal, clrTotal, diff, methods, docOptions, chequeTotal, chequeRemaining,
     amountOk, settled, diffTag, rowDlg, chequeDlg, glDlg,
     warnEdit, pickMethod, openRow, saveRow, removeRow, saveCheque, importCheques, removeCheque, setSettleEl,
-    onSave, onCancel, onApprove, onReject, onResubmit, onGl, saveGl, glLater
+    onSave, onCancel, onApprove, onReject, onResubmit, saveGl, glLater
   })
 }

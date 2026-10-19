@@ -7,6 +7,7 @@
       </div>
       <div class="apt-pagehead-actions">
         <button type="button" class="apt-btn apt-btn-danger" @click="cf.onCancel"><AptIcon name="cancel" /> ยกเลิก</button>
+        <GlMenu :doc="cf.doc" />
         <button type="button" class="apt-btn apt-btn-outline" @click="showToast('เปิดหน้าพิมพ์เอกสารเคลียร์ (ตัวอย่างสาธิต)')"><AptIcon name="print" /> พิมพ์เอกสารเคลียร์</button>
         <button type="button" class="apt-btn apt-btn-primary" @click="cf.onSave"><AptIcon name="save" /> บันทึก</button>
         <template v-if="cf.status === 'awaiting-confirm'">
@@ -31,10 +32,6 @@
         <div class="apt-card-head">
           <h2 class="apt-card-title">รายละเอียดคำขอ</h2>
           <StatusChip v-if="cf.status !== 'awaiting-clear' || cf.doc.clearing" :status="cf.status" />
-          <template v-if="cf.status === 'cleared'">
-            <span class="apt-spacer"></span>
-            <button type="button" class="apt-btn apt-btn-outline" @click="cf.onGl"><AptIcon name="ledger" /> {{ cf.doc.clearing?.gl ? 'ดูเอกสารที่บันทึกบัญชี' : 'บันทึกบัญชี' }}</button>
-          </template>
         </div>
         <ClearingFields :cf="cf" />
       </section>
@@ -48,6 +45,7 @@ import AptIcon from './AptIcon.vue'
 import StatusChip from './StatusChip.vue'
 import ClearingFields from './ClearingFields.vue'
 import ClearingDialogs from './ClearingDialogs.vue'
+import GlMenu from './GlMenu.vue'
 import { useClearingForm } from './useClearingForm.js'
 import { useAptStore, fmtDate } from './store.js'
 

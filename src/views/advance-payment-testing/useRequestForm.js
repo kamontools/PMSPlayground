@@ -2,7 +2,7 @@
 // Returns a reactive object so templates can read `rf.draft`, `rf.locked`, … without `.value`.
 import { ref, reactive, computed, onMounted } from 'vue'
 import { guard, ACTOR } from './machine.js'
-import { useAptStore, VENDORS, requestTotal, round2, clone, todayIso, fmtMoney, PAY_FROM_ACCOUNTS } from './store.js'
+import { useAptStore, VENDORS, requestTotal, round2, clone, todayIso, fmtDate, fmtMoney, PAY_FROM_ACCOUNTS } from './store.js'
 
 /**
  * opts.docId          — null for a new request
@@ -68,7 +68,7 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     errors.vendorId = !draft.vendorId
     errors.description = !draft.description.trim()
     errors.requestedAmount = !(Number(draft.requestedAmount) > 0)
-    const firstBad = ['createdAt', 'requestedAmount', 'vendorId', 'description'].find(k => errors[k])
+    const firstBad = ['createdAt', 'vendorId', 'requestedAmount', 'description'].find(k => errors[k])
     if (firstBad) {
       document.getElementById({ createdAt: 'rq-created', requestedAmount: 'rq-amount', vendorId: 'rq-vendor', description: 'rq-desc' }[firstBad])?.focus()
       return false
@@ -158,10 +158,22 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
   async function askPostPay() {
     const { choice } = await ask({
       title: 'บันทึกสำเร็จแล้ว', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย',
-      message: 'หลังจากเบิกคำขอ รายการคำขอนี้เปลี่ยนสถานะเป็น “รอเคลียร์” แล้ว คุณต้องการบันทึกบัญชีของรายการนี้เลยหรือไม่'
+      message: 'หลังจากจ่ายชำระ รายการคำขอนี้เปลี่ยนสถานะเป็น “รอเคลียร์” แล้ว คุณต้องการบันทึกบัญชีของรายการนี้เลยหรือไม่'
     })
     if (choice === 'confirm') glDlg.value = { readonly: false }
-    else showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
+    else notifyPaidLater()
+  }
+
+  // Clearing usually happens weeks later (once the money is spent), so after paying we say so explicitly.
+  function clearLaterNote() {
+    const due = doc.dueDate ? ` · ครบกำหนดเคลียร์ ${fmtDate(doc.dueDate)}` : ''
+    return {
+      title: 'ยังไม่ต้องเคลียร์เงินตอนนี้',
+      text: `เมื่อใช้เงินเสร็จแล้ว (เช่น อีก 1–2 เดือน) ค่อยกลับมาเปิดคำขอ ${doc.docNo} จาก tab “รอเคลียร์” ในหน้ารายการ แล้วเลือก “เคลียร์เงิน”${due}`
+    }
+  }
+  function notifyPaidLater() {
+    notifySuccess('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง', 'จ่ายชำระเรียบร้อยแล้ว', clearLaterNote())
   }
   onMounted(() => {
     if (doc && state.postPay === doc.id) {
@@ -170,23 +182,14 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     }
   })
 
-  const glButton = computed(() => {
-    if (isNew || ['awaiting-disburse', 'cancelled'].includes(status.value)) return ''
-    return doc.pv ? 'ดูเอกสารที่บันทึกบัญชี' : 'บันทึกบัญชี'
-  })
-  function onGl() {
-    if (doc.pv) glDlg.value = { readonly: true }
-    else if (status.value === 'awaiting-clear') glDlg.value = { readonly: false }
-    else warnEdit()
-  }
   function saveGl(pv) {
     doc.pv = { no: `PV-${doc.docNo}`, ...pv }
     glDlg.value = null
-    notifySuccess(`บันทึกบัญชีเรียบร้อยแล้ว เลขที่ ${doc.pv.no}`)
+    notifySuccess(`บันทึกบัญชีเรียบร้อยแล้ว เลขที่ ${doc.pv.no}`, 'บันทึกสำเร็จแล้ว', status.value === 'awaiting-clear' ? clearLaterNote() : null)
   }
   function glLater() {
     glDlg.value = null
-    showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
+    notifyPaidLater()
   }
 
   // ---------- cancel (T2) ----------
@@ -204,8 +207,8 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
   }
 
   return reactive({
-    isNew, doc, status, draft, errors, locked, unpaid, paymentDlg, importOpen, glDlg, glButton,
+    isNew, doc, status, draft, errors, locked, unpaid, paymentDlg, importOpen, glDlg,
     warnEdit, openPayment, savePayment, removePayment, openImport, importPayments,
-    onSave, resetDraft, onCancel, onGl, saveGl, glLater
+    onSave, resetDraft, onCancel, saveGl, glLater
   })
 }

@@ -8,7 +8,8 @@
       </div>
       <div v-if="!rf.isNew" class="apt-pagehead-actions">
         <button type="button" class="apt-btn apt-btn-danger" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิกคำขอ</button>
-        <button type="button" class="apt-btn apt-btn-outline" @click="showToast('เปิดหน้าพิมพ์คำขอ (ตัวอย่างสาธิต)')"><AptIcon name="print" /> พิมพ์คำขอ</button>
+        <GlMenu :doc="rf.doc" />
+        <PrintMenu :doc="rf.doc" />
       </div>
     </div>
 
@@ -25,7 +26,7 @@
             <div><dt>ผู้เบิก</dt><dd>{{ vendorById(factSource.vendorId)?.name || '—' }}</dd></div>
             <div><dt>ครบกำหนดเคลียร์</dt><dd>{{ factSource.dueDate ? fmtDate(factSource.dueDate) : '—' }}</dd></div>
             <div><dt>เงินที่ขอเบิก</dt><dd>{{ factSource.requestedAmount ? `${fmtMoney(factSource.requestedAmount)} บาท` : '—' }}</dd></div>
-            <div><dt>ยอดเบิก</dt><dd>{{ factSource.payments.length ? `${fmtMoney(requestTotal(factSource))} บาท` : '—' }}</dd></div>
+            <div><dt>ยอดจ่ายชำระ</dt><dd>{{ factSource.payments.length ? `${fmtMoney(requestTotal(factSource))} บาท` : '—' }}</dd></div>
             <div v-if="cf && cf.draft.rows.length"><dt>ยอดเคลียร์</dt><dd>{{ fmtMoney(cf.clrTotal) }} บาท</dd></div>
           </dl>
         </aside>
@@ -63,9 +64,9 @@
             </template>
           </StepSection>
 
-          <!-- 2 · เบิกเงิน -->
+          <!-- 2 · จ่ายชำระ -->
           <StepSection
-            id="aps-1" :num="2" title="เบิกเงิน"
+            id="aps-1" :num="2" title="จ่ายชำระ"
             :state="rf.isNew ? 'optional' : state1" :tone="rf.status === 'cancelled' ? 'muted' : ''"
             :badge="state1 === 'active' && !rf.isNew ? 'ต้องทำตอนนี้' : ''" :summary="summary1"
             :open="isOpen(1)" :toggleable="rf.isNew || state1 !== 'pending'" :toggle-label="rf.isNew ? 'กรอกตอนนี้' : 'ดูรายละเอียด'"
@@ -75,9 +76,8 @@
             <RequestPayments :rf="rf" />
             <div class="apt-sec-actions">
               <button v-if="rf.isNew || ['awaiting-disburse', 'awaiting-clear'].includes(rf.status)" type="button" class="apt-btn apt-btn-primary" @click="saveRequest">
-                <AptIcon name="save" /> {{ rf.isNew ? saveLabel : 'บันทึกการเบิกเงิน' }}
+                <AptIcon name="save" /> {{ rf.isNew ? saveLabel : 'บันทึกการจ่ายชำระ' }}
               </button>
-              <button v-if="rf.glButton" type="button" class="apt-btn apt-btn-outline" @click="rf.onGl"><AptIcon name="ledger" /> {{ rf.glButton }}</button>
               <span v-if="rf.status === 'awaiting-disburse'" class="apt-sec-hint">เพิ่มรายการโอน/เช็คอย่างน้อย 1 รายการ แล้วกดบันทึก สถานะจะเป็น “รอเคลียร์”</span>
               <span v-else-if="rf.status === 'awaiting-clear'" class="apt-sec-hint">ลบรายการชำระออกทั้งหมดแล้วบันทึก เพื่อถอยกลับเป็น “รอเบิก”</span>
             </div>
@@ -102,19 +102,21 @@
                   <button type="button" class="apt-btn apt-btn-primary" @click="cf.onSave"><AptIcon name="save" /> บันทึกเอกสารเคลียร์</button>
                   <span class="apt-sec-hint">บันทึกแล้วสถานะจะเป็น “รอยืนยันเคลียร์” เพื่อรอผู้อนุมัติ</span>
                 </template>
+                <!-- edit actions first, then a divider, then the decision -->
                 <template v-else-if="rf.status === 'awaiting-confirm'">
-                  <button type="button" class="apt-btn apt-btn-primary" @click="cf.onApprove">อนุมัติ <AptIcon name="next" /></button>
-                  <button type="button" class="apt-btn apt-btn-danger" @click="cf.onReject">ไม่อนุมัติ</button>
                   <button type="button" class="apt-btn apt-btn-outline" @click="cf.onSave"><AptIcon name="save" /> บันทึก</button>
-                  <button type="button" class="apt-btn apt-btn-ghost" @click="cf.onCancel">ยกเลิกคำขอเคลียร์</button>
+                  <button type="button" class="apt-btn apt-btn-ghost" @click="cf.onCancel">ยกเลิกการเคลียร์</button>
+                  <span class="apt-vsep" aria-hidden="true"></span>
+                  <button type="button" class="apt-btn apt-btn-danger" @click="cf.onReject">ไม่อนุมัติ</button>
+                  <button type="button" class="apt-btn apt-btn-primary" @click="cf.onApprove">อนุมัติ <AptIcon name="next" /></button>
                 </template>
                 <template v-else-if="rf.status === 'rejected'">
-                  <button type="button" class="apt-btn apt-btn-primary" @click="cf.onResubmit">ยื่นคำขออนุมัติ <AptIcon name="next" /></button>
                   <button type="button" class="apt-btn apt-btn-outline" @click="cf.onSave"><AptIcon name="save" /> บันทึก</button>
-                  <button type="button" class="apt-btn apt-btn-ghost" @click="cf.onCancel">ยกเลิกคำขอเคลียร์</button>
+                  <button type="button" class="apt-btn apt-btn-ghost" @click="cf.onCancel">ยกเลิกการเคลียร์</button>
+                  <span class="apt-vsep" aria-hidden="true"></span>
+                  <button type="button" class="apt-btn apt-btn-primary" @click="cf.onResubmit">ยื่นคำขออนุมัติ <AptIcon name="next" /></button>
                 </template>
                 <template v-else-if="rf.status === 'cleared'">
-                  <button type="button" class="apt-btn apt-btn-outline" @click="cf.onGl"><AptIcon name="ledger" /> {{ rf.doc.clearing?.gl ? 'ดูเอกสารที่บันทึกบัญชี' : 'บันทึกบัญชี' }}</button>
                   <button type="button" class="apt-btn apt-btn-outline" @click="showToast('เปิดหน้าพิมพ์เอกสารเคลียร์ (ตัวอย่างสาธิต)')"><AptIcon name="print" /> พิมพ์เอกสารเคลียร์</button>
                 </template>
               </div>
@@ -139,6 +141,8 @@ import RequestPayments from '../RequestPayments.vue'
 import ClearingFields from '../ClearingFields.vue'
 import RequestDialogs from '../RequestDialogs.vue'
 import ClearingDialogs from '../ClearingDialogs.vue'
+import GlMenu from '../GlMenu.vue'
+import PrintMenu from '../PrintMenu.vue'
 import StepperBar from '../../advance-payment-v3/StepperBar.vue'
 import StepSection from './StepSection.vue'
 import { useRequestForm } from '../useRequestForm.js'
@@ -162,7 +166,7 @@ const state1 = computed(() => sectionState(1, rf.status))
 const state2 = computed(() => (rf.isNew ? 'pending' : sectionState(2, rf.status)))
 // the facts rail follows the form while creating, the saved document afterwards
 const factSource = computed(() => (rf.isNew ? rf.draft : rf.doc))
-const saveLabel = computed(() => (rf.isNew && rf.draft.payments.length ? 'บันทึกคำขอและการเบิกเงิน' : 'บันทึกคำขอ'))
+const saveLabel = computed(() => (rf.isNew && rf.draft.payments.length ? 'บันทึกคำขอและการจ่ายชำระ' : 'บันทึกคำขอ'))
 
 const summary0 = computed(() => {
   if (rf.isNew) return 'ระบุวันที่ เงินที่ขอเบิก รายละเอียด และผู้เบิก'
@@ -176,15 +180,15 @@ const summary1 = computed(() => {
 })
 const summary2 = computed(() => {
   switch (rf.status) {
-    case 'awaiting-clear': return 'บันทึกค่าใช้จ่ายจริง แล้วชำระหรือรับคืนส่วนต่าง'
+    case 'awaiting-clear': return 'เมื่อใช้เงินเสร็จแล้ว (เช่น อีก 1–2 เดือน) ค่อยกลับมาบันทึกค่าใช้จ่ายจริง แล้วชำระหรือรับคืนส่วนต่าง'
     case 'awaiting-confirm': return 'ส่งเอกสารเคลียร์แล้ว รอผู้อนุมัติตรวจสอบ'
     case 'rejected': return `ไม่ผ่าน: ${rf.doc.rejection?.reason || ''}`
     case 'cleared': return `ยอดเคลียร์ ${fmtMoney(clearTotal(rf.doc.clearing))} บาท · ${rf.doc.clearing?.gl ? `ลงบัญชี ${rf.doc.clearing.gl.no}` : 'ยังไม่ลงบัญชี'}`
     case 'cancelled': return 'คำขอถูกยกเลิก'
-    default: return 'เปิดให้กรอกหลังบันทึกการเบิกเงินแล้ว'
+    default: return 'เปิดให้กรอกหลังบันทึกการจ่ายชำระแล้ว'
   }
 })
-const badge2 = computed(() => ({ 'awaiting-clear': 'ต้องทำตอนนี้', rejected: 'ต้องแก้ไข' })[rf.status] || '')
+const badge2 = computed(() => ({ 'awaiting-clear': 'ทำภายหลังได้', rejected: 'ต้องแก้ไข' })[rf.status] || '')
 
 // ---------- which sections are expanded ----------
 const openSet = ref(new Set())

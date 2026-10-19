@@ -316,7 +316,7 @@ export function createAptStore() {
   /**
    * Open the app-wide dialog and wait for the user's choice.
    * opts: { title, message, tone: 'success'|'warning'|'danger'|'info', confirmLabel, cancelLabel,
-   *         secondaryLabel, reason: { label, max } (required textarea), summary: [{ label, value }] }
+   *         secondaryLabel, reason: { label, max } (required textarea), summary: [{ label, value }], note: { title, text } }
    * Resolves { choice: 'confirm' | 'secondary' | 'cancel', reason }.
    */
   function ask(opts) {
@@ -330,9 +330,9 @@ export function createAptStore() {
     d?.resolve({ choice, reason })
   }
 
-  /** Success feedback after a save: a dialog the user closes, staying on the current page. */
-  function notifySuccess(message, title = 'บันทึกสำเร็จแล้ว') {
-    return ask({ title, message, tone: 'success', cancelLabel: 'ปิด' })
+  /** Success feedback after a save: a dialog the user closes, staying on the current page. note: { title, text } callout. */
+  function notifySuccess(message, title = 'บันทึกสำเร็จแล้ว', note = null) {
+    return ask({ title, message, note, tone: 'success', cancelLabel: 'ปิด' })
   }
 
   /** Show the guard message for a locked action; onGoClear runs when the user picks "ไปที่เอกสารเคลียร์". */

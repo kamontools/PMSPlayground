@@ -1,8 +1,8 @@
-// Step version: maps the 6 statuses onto the 3 v3-style steps (สร้างคำขอ → เบิกเงิน → เคลียร์เงิน).
+// Step version: maps the 6 statuses onto the 3 v3-style steps (สร้างคำขอ → จ่ายชำระ → เคลียร์เงิน).
 // รอยืนยันเคลียร์ and ไม่ผ่าน stay inside step 3 as sub-states.
 import { fmtDate, fmtMoney, requestTotal } from '../store.js'
 
-export const STEP_TITLES = ['สร้างคำขอ', 'เบิกเงิน', 'เคลียร์เงิน']
+export const STEP_TITLES = ['สร้างคำขอ', 'จ่ายชำระ', 'เคลียร์เงิน']
 
 /** Which section a status is working on: 0 request, 1 disburse, 2 clear, 3 all done, -1 cancelled. */
 export function currentStep(status) {
@@ -27,7 +27,8 @@ export function sectionState(i, status) {
   return 'pending'
 }
 
-const CLEAR_SUB = { 'awaiting-clear': 'กำลังทำ', 'awaiting-confirm': 'รออนุมัติ', rejected: 'ไม่ผ่าน · แก้ไขแล้วยื่นใหม่' }
+// รอเคลียร์ isn't urgent: people clear weeks later, once the money is spent
+const CLEAR_SUB = { 'awaiting-clear': 'ทำได้เมื่อใช้เงินเสร็จ', 'awaiting-confirm': 'รออนุมัติ', rejected: 'ไม่ผ่าน · แก้ไขแล้วยื่นใหม่' }
 
 /** Steps for StepperBar: [{ key, title, sub, state }]. */
 export function buildSteps(doc, { payOpen = false } = {}) {
@@ -37,7 +38,7 @@ export function buildSteps(doc, { payOpen = false } = {}) {
     !doc ? (payOpen ? 'กรอกพร้อมคำขอ' : 'ไม่บังคับ')
       : status === 'cancelled' ? 'ยกเลิกแล้ว'
       : status === 'awaiting-disburse' ? 'กำลังทำ'
-      : `เบิกแล้ว ${fmtMoney(requestTotal(doc))} บาท`,
+      : `จ่ายแล้ว ${fmtMoney(requestTotal(doc))} บาท`,
     status === 'cancelled' ? 'ยกเลิกแล้ว'
       : status === 'cleared' ? `เคลียร์แล้ว ${fmtDate(doc.clearing?.date)}`
       : CLEAR_SUB[status] || 'ยังไม่ถึง'
