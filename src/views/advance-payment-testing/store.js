@@ -68,6 +68,7 @@ export const UNDER_METHODS = [
 ]
 export const PETTY_CASH_DOCS = ['690001', '690002', '690003']
 export const PV_DOCS = ['PV-2026-0101', 'PV-2026-0102', 'PV-2026-0103']
+export const RECEIPT_DOCS = ['RC-690015', 'RC-690016', 'RC-690017']
 
 // Existing payment documents that can be linked via "นำเข้าเอกสาร".
 const IMPORTABLE_SEED = [
@@ -177,7 +178,7 @@ function seedDocs() {
       { id: 'R52', account: '5-413-01', detail: 'เอาไว้เสิร์ฟแขก', amount: 4000 },
       { id: 'R53', account: '5-413-01', detail: 'เอาไว้เสิร์ฟแขก', amount: 4000 }
     ],
-    settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payment: null }
+    settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payments: [] }
   }
   d5.log = [
     logEntry('create', null, 'awaiting-disburse', 'ผู้เบิก', '2026-09-28T09:00:00+07:00'),
@@ -194,7 +195,7 @@ function seedDocs() {
   d6.clearing = {
     docNo: 'CL6900006', date: '2026-10-04', note: '', files: [],
     rows: [{ id: 'R61', account: '5-417-01', detail: 'ดอกไม้และอุปกรณ์ตกแต่ง', amount: 6500 }],
-    settle: { method: 'cash', amount: 1500, docRef: '', account: '', date: '', note: '', payment: null }
+    settle: { method: 'cash', amount: 1500, docRef: '', account: '', date: '', note: '', payments: [] }
   }
   d6.rejection = { reason: 'ไม่มีใบเสร็จแนบสำหรับค่าตกแต่ง กรุณาแนบหลักฐานให้ครบ', by: 'ผู้อนุมัติ', at: '2026-10-06T10:30:00+07:00' }
   d6.log = [
@@ -217,7 +218,7 @@ function seedDocs() {
       { id: 'R71', account: '5-412-01', detail: 'ประดับงานประชุม', amount: 4000 },
       { id: 'R72', account: '5-413-01', detail: 'เอาไว้เสิร์ฟแขก', amount: 8000 }
     ],
-    settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payment: null },
+    settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payments: [] },
     jv: 'JV-6900007'
   }
   d7.log = [
@@ -306,6 +307,11 @@ export function closeDialog(choice, reason = '') {
   const d = state.dialog
   state.dialog = null
   d?.resolve({ choice, reason })
+}
+
+/** Success feedback after a save: a dialog the user closes, staying on the current page. */
+export function notifySuccess(message, title = 'บันทึกสำเร็จแล้ว') {
+  return ask({ title, message, tone: 'success', cancelLabel: 'ปิด' })
 }
 
 /** Show the guard message for a locked action. Offers a jump to the clearing doc when relevant. */

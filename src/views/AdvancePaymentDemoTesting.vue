@@ -61,7 +61,9 @@
       <ApClearPage v-else-if="state.nav.page === 'clear'" :key="`cl-${state.nav.docId}`" :doc-id="state.nav.docId" />
     </div>
 
+    <!-- tucked against the right edge; slides out on hover (or keyboard/tap focus) -->
     <div class="apt-devbar" role="region" aria-label="แถบควบคุมสำหรับทดสอบ">
+      <button type="button" class="apt-devbar-handle" aria-label="เปิดแถบทดสอบ"><AptIcon name="back" /></button>
       <strong>Testing</strong>
       <label>
         Role

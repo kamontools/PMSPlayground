@@ -34,7 +34,7 @@
       <section class="apt-card">
         <div class="apt-card-head">
           <h2 class="apt-card-title">รายละเอียดคำขอ</h2>
-          <StatusChip v-if="status !== 'awaiting-clear'" :status="status" />
+          <StatusChip v-if="status !== 'awaiting-clear' || doc.clearing" :status="status" />
         </div>
         <div class="apt-grid apt-grid-112">
           <div class="apt-field">
@@ -116,48 +116,37 @@
           </div>
         </div>
 
-        <!-- settle the difference -->
-        <div v-if="diff !== 0 && draft.rows.length" ref="settleEl" class="apt-settle" :class="diff > 0 ? 'apt-settle--over' : 'apt-settle--under'">
-          <div class="apt-settle-head">
-            <h3>{{ diff > 0 ? 'ชำระส่วนที่ใช้เกิน' : 'รับคืนส่วนที่เหลือ' }}<span class="apt-req">*</span></h3>
-            <span class="apt-muted">{{ diff > 0 ? 'ใช้เกินยอดคำขอ ต้องจ่ายเพิ่ม' : 'ใช้ไม่หมด ต้องรับเงินคืน' }} {{ fmtMoney(Math.abs(diff)) }} บาท</span>
-          </div>
-          <div class="apt-methods" role="radiogroup" :aria-label="diff > 0 ? 'วิธีชำระส่วนเกิน' : 'วิธีรับคืน'">
-            <button
-              v-for="m in methods"
-              :key="m.value"
-              type="button"
-              role="radio"
-              class="apt-method"
-              :class="{ active: s.method === m.value }"
-              :aria-checked="s.method === m.value"
-              @click="pickMethod(m.value)"
-            >{{ m.label }}</button>
-          </div>
 
-          <div v-if="s.method" class="apt-grid apt-grid-3" style="margin-bottom: 0;">
+        <!-- settle the difference: under the totals, inside the clearing card -->
+        <div v-if="diff !== 0 && draft.rows.length" ref="settleEl" class="apt-settle">
+          <h3 class="apt-settle-title">{{ diff > 0 ? 'การชำระเงินส่วนที่เกิน' : 'การชำระเงินส่วนที่เหลือ' }}</h3>
+          <div class="apt-grid apt-grid-3">
+            <div class="apt-field" :class="{ 'apt-field--error': errors.settle && !s.method }">
+              <label class="apt-label" for="st-method">วิธีการชำระ<span class="apt-req">*</span></label>
+              <select id="st-method" class="apt-select apt-select--plain" :value="s.method" :disabled="locked" @change="pickMethod($event.target.value)">
+                <option value="" disabled>เลือกวิธีการชำระ</option>
+                <option v-for="m in methods" :key="m.value" :value="m.value">{{ m.label }}</option>
+              </select>
+              <span v-if="errors.settle && !s.method" class="apt-error">กรุณาเลือกวิธีการชำระ</span>
+            </div>
             <!-- amount-based -->
             <div v-if="['cash', 'transfer', 'other'].includes(s.method)" class="apt-field" :class="{ 'apt-field--error': errors.settle && !amountOk }">
               <label class="apt-label" for="st-amount">จำนวนเงิน<span class="apt-req">*</span></label>
-              <input id="st-amount" v-model.number="s.amount" type="number" min="0" step="0.01" class="apt-input apt-input--num" :readonly="locked" />
+              <input id="st-amount" v-model.number="s.amount" type="number" min="0" step="0.01" placeholder="0.00" class="apt-input apt-input--num" :readonly="locked" />
               <span v-if="s.amount && !amountOk" class="apt-error">ต้องเท่ากับส่วนต่าง {{ fmtMoney(Math.abs(diff)) }}</span>
             </div>
             <!-- document pickers -->
-            <div v-if="s.method === 'petty-cash' || s.method === 'pv'" class="apt-field" :class="{ 'apt-field--error': errors.settle && !s.docRef }">
-              <label class="apt-label" for="st-doc">เลือกเอกสาร<span class="apt-req">*</span></label>
-              <select id="st-doc" v-model="s.docRef" class="apt-select" :disabled="locked">
+            <div v-if="docOptions" class="apt-field" :class="{ 'apt-field--error': errors.settle && !s.docRef }">
+              <label class="apt-label" for="st-doc">เลขที่เอกสาร<span class="apt-req">*</span></label>
+              <select id="st-doc" v-model="s.docRef" class="apt-select apt-select--btn" :disabled="locked">
                 <option value="" disabled>เลือกเลขที่เอกสาร</option>
-                <option v-for="d in (s.method === 'pv' ? PV_DOCS : PETTY_CASH_DOCS)" :key="d" :value="d">{{ d }}</option>
+                <option v-for="d in docOptions" :key="d" :value="d">{{ d }}</option>
               </select>
             </div>
-            <div v-if="s.method === 'receipt'" class="apt-field" :class="{ 'apt-field--error': errors.settle && !s.docRef }">
-              <label class="apt-label" for="st-receipt">เลขที่เอกสาร (ใบเสร็จ)<span class="apt-req">*</span></label>
-              <input id="st-receipt" v-model="s.docRef" type="text" class="apt-input" placeholder="RC-xxxx" :readonly="locked" />
-            </div>
             <template v-if="s.method === 'transfer'">
-              <div class="apt-field" :class="{ 'apt-field--error': errors.settle && !s.account }">
+              <div class="apt-field apt-col-start" :class="{ 'apt-field--error': errors.settle && !s.account }">
                 <label class="apt-label" for="st-acc">โอนเข้าบัญชี<span class="apt-req">*</span></label>
-                <select id="st-acc" v-model="s.account" class="apt-select" :disabled="locked">
+                <select id="st-acc" v-model="s.account" class="apt-select apt-select--btn" :disabled="locked">
                   <option value="" disabled>เลือกบัญชี</option>
                   <option v-for="a in PAY_FROM_ACCOUNTS" :key="a" :value="a">{{ a }}</option>
                 </select>
@@ -167,35 +156,41 @@
                 <input id="st-date" v-model="s.date" type="date" class="apt-input" :readonly="locked" />
               </div>
             </template>
-            <div v-if="s.method === 'other'" class="apt-field apt-span-2" :class="{ 'apt-field--error': errors.settle && !s.note.trim() }">
-              <label class="apt-label" for="st-note">หมายเหตุ<span class="apt-req">*</span></label>
-              <input id="st-note" v-model="s.note" type="text" class="apt-input" maxlength="250" :readonly="locked" />
+            <div v-if="s.method === 'other'" class="apt-field" :class="{ 'apt-field--error': errors.settle && !s.note.trim() }">
+              <div class="apt-label-row">
+                <label class="apt-label" for="st-note">หมายเหตุ<span class="apt-req">*</span></label>
+                <span class="apt-count">{{ s.note.length }}/100</span>
+              </div>
+              <input id="st-note" v-model="s.note" type="text" class="apt-input" maxlength="100" :readonly="locked" />
             </div>
-            <!-- cheque: same flow as the request's payment -->
-            <div v-if="s.method === 'cheque'" class="apt-span-all">
-              <div v-if="s.payment" class="apt-banner apt-banner--info" style="margin-bottom: 0;">
-                <AptIcon name="check" />
-                <div><b>{{ payTypeByCode(s.payment.typeCode)?.label }} · {{ s.payment.docNo }}</b>{{ s.payment.payeeName }} · {{ fmtMoney(s.payment.amount) }} บาท
-                  <button type="button" class="apt-link" @click="chequeDlg = 'create'">แก้ไข</button>
-                  <button type="button" class="apt-link" @click="s.payment = null">ลบ</button>
-                </div>
-              </div>
-              <div v-else class="apt-table-head-actions">
-                <button type="button" class="apt-btn apt-btn-outline" @click="lockedOr(() => { chequeDlg = 'import' })"><AptIcon name="plus" /> นำเข้าเอกสาร</button>
-                <button type="button" class="apt-btn apt-btn-primary" @click="lockedOr(() => { chequeDlg = 'create' })"><AptIcon name="doc" /> สร้างใหม่</button>
-              </div>
-              <p v-if="s.payment && !amountOk" class="apt-error" style="margin-top: 8px;">ยอดเช็คต้องเท่ากับส่วนต่าง {{ fmtMoney(Math.abs(diff)) }}</p>
-              <p v-if="errors.settle && !s.payment" class="apt-error" style="margin-top: 8px;">กรุณาสร้างหรือนำเข้ารายการเช็ค</p>
+            <div v-if="s.method === 'cheque'" class="apt-field apt-col-start">
+              <label class="apt-label" for="st-cheque-total">จำนวนเงินทั้งหมด</label>
+              <input id="st-cheque-total" class="apt-input" :value="fmtMoney(chequeTotal)" readonly />
             </div>
           </div>
-          <p v-if="errors.settle && !s.method" class="apt-error">กรุณาเลือกวิธี{{ diff > 0 ? 'ชำระส่วนเกิน' : 'รับคืน' }}</p>
+
+          <!-- cheque: same payment table + dialogs as the request page -->
+          <template v-if="s.method === 'cheque'">
+            <PaymentsTable
+              :payments="s.payments"
+              :locked="locked"
+              @locked="warnEdit"
+              @create="chequeDlg = { mode: 'create', payment: null }"
+              @edit="p => { chequeDlg = { mode: 'create', payment: p } }"
+              @remove="removeCheque"
+              @import="chequeDlg = { mode: 'import' }"
+              @print="p => showToast(`พิมพ์เอกสาร ${p.docNo} (ตัวอย่างสาธิต)`)"
+            />
+            <p v-if="s.payments.length && !amountOk" class="apt-error">ยอดรวมรายการโอน/เช็คต้องเท่ากับส่วนต่าง {{ fmtMoney(Math.abs(diff)) }}</p>
+            <p v-if="errors.settle && !s.payments.length" class="apt-error">กรุณาสร้างหรือนำเข้ารายการโอน/เช็ค</p>
+          </template>
         </div>
       </section>
     </div>
 
     <ExpenseRowDialog v-if="rowDlg" :row="rowDlg.row" @save="saveRow" @close="rowDlg = null" />
-    <PaymentEntryDialog v-if="chequeDlg === 'create'" :payment="s.payment" :vendor-id="doc.vendorId" :amount="Math.abs(diff)" @save="p => { s.payment = p; chequeDlg = null }" @close="chequeDlg = null" />
-    <ImportPaymentDialog v-if="chequeDlg === 'import'" @confirm="list => { s.payment = list[0] ? { ...list[0], imported: true } : null; chequeDlg = null }" @close="chequeDlg = null" />
+    <PaymentEntryDialog v-if="chequeDlg?.mode === 'create'" :payment="chequeDlg.payment" :vendor-id="doc.vendorId" :amount="chequeRemaining" @save="saveCheque" @close="chequeDlg = null" />
+    <ImportPaymentDialog v-if="chequeDlg?.mode === 'import'" :exclude="s.payments.map(p => p.id)" @confirm="importCheques" @close="chequeDlg = null" />
   </div>
 </template>
 
@@ -207,19 +202,26 @@ import FileGallery from './FileGallery.vue'
 import ExpenseRowDialog from './ExpenseRowDialog.vue'
 import PaymentEntryDialog from './PaymentEntryDialog.vue'
 import ImportPaymentDialog from './ImportPaymentDialog.vue'
+import PaymentsTable from './PaymentsTable.vue'
 import { guard, canApprove, roleLabel } from './machine.js'
 import {
-  state, docById, go, ask, warnLocked, move, showToast, fmtDate, fmtMoney, requestTotal, clearTotal,
-  accountName, payTypeByCode, round2, clone, todayIso, OVER_METHODS, UNDER_METHODS, PETTY_CASH_DOCS, PV_DOCS, PAY_FROM_ACCOUNTS
+  state, docById, go, ask, warnLocked, move, showToast, notifySuccess, fmtDate, fmtMoney, requestTotal, clearTotal,
+  accountName, payTypeByCode, round2, clone, todayIso, OVER_METHODS, UNDER_METHODS, PETTY_CASH_DOCS, PV_DOCS, RECEIPT_DOCS, PAY_FROM_ACCOUNTS
 } from './store.js'
 
 const props = defineProps({ docId: { type: String, required: true } })
 const doc = docById(props.docId)
 const status = computed(() => doc.status)
 
-function blankSettle() { return { method: '', amount: null, docRef: '', account: '', date: todayIso(), note: '', payment: null } }
+function blankSettle() { return { method: '', amount: null, docRef: '', account: '', date: todayIso(), note: '', payments: [] } }
+function settleOf(saved) {
+  const { payment, ...rest } = clone(saved || {})
+  const merged = { ...blankSettle(), ...rest }
+  if (payment && !merged.payments.length) merged.payments = [payment] // older single-cheque shape
+  return merged
+}
 const draft = reactive(doc.clearing
-  ? { ...clone(doc.clearing), settle: { ...blankSettle(), ...clone(doc.clearing.settle || {}) } }
+  ? { ...clone(doc.clearing), settle: settleOf(doc.clearing.settle) }
   : { docNo: `CL${doc.docNo}`, date: todayIso(), note: '', files: [], rows: [], settle: blankSettle() })
 const s = draft.settle
 const errors = reactive({ date: false, rows: false, settle: false })
@@ -234,10 +236,13 @@ const clrTotal = computed(() => clearTotal(draft))
 // > 0: spent more than requested (pay the extra) · < 0: spent less (money comes back)
 const diff = computed(() => round2(clrTotal.value - reqTotal.value))
 const methods = computed(() => (diff.value > 0 ? OVER_METHODS : UNDER_METHODS))
+const docOptions = computed(() => ({ 'petty-cash': PETTY_CASH_DOCS, pv: PV_DOCS, receipt: RECEIPT_DOCS })[s.method] || null)
 
+const chequeTotal = computed(() => round2(s.payments.reduce((t, p) => t + Number(p.amount || 0), 0)))
+const chequeRemaining = computed(() => Math.max(0, round2(Math.abs(diff.value) - chequeTotal.value)) || null)
 const amountOk = computed(() => {
   const need = Math.abs(diff.value)
-  if (s.method === 'cheque') return !!s.payment && round2(Number(s.payment.amount)) === need
+  if (s.method === 'cheque') return s.payments.length > 0 && chequeTotal.value === need
   return round2(Number(s.amount || 0)) === need
 })
 const settled = computed(() => {
@@ -269,6 +274,20 @@ function pickMethod(m) {
 // ---------- expense rows ----------
 const rowDlg = ref(null)
 const chequeDlg = ref(null)
+function saveCheque(p) {
+  const i = s.payments.findIndex(x => x.id === p.id)
+  if (i >= 0) s.payments.splice(i, 1, p)
+  else s.payments.push(p)
+  chequeDlg.value = null
+}
+function importCheques(list) {
+  list.forEach(r => s.payments.push({ ...clone(r), imported: true }))
+  chequeDlg.value = null
+}
+async function removeCheque(p) {
+  const { choice } = await ask({ title: 'ลบรายการชำระ', tone: 'danger', message: `ต้องการลบรายการ ${p.docNo} จำนวน ${fmtMoney(p.amount)} บาท หรือไม่`, cancelLabel: 'ยกเลิก', confirmLabel: 'ลบรายการ' })
+  if (choice === 'confirm') s.payments.splice(s.payments.indexOf(p), 1)
+}
 function openRow(row) { lockedOr(() => { rowDlg.value = { row } }) }
 function saveRow(row) {
   const i = draft.rows.findIndex(r => r.id === row.id)
@@ -310,14 +329,13 @@ async function onSave() {
     if (!validate()) return
     persist()
     move(doc, 'submitClear')
-    showToast('บันทึกเอกสารเคลียร์แล้ว สถานะ “รอยืนยันเคลียร์”')
-    go('request', doc.id)
+    notifySuccess('บันทึกเอกสารเคลียร์เรียบร้อยแล้ว สถานะ “รอยืนยันเคลียร์” รอผู้อนุมัติตรวจสอบ')
     return
   }
   // waiting for approval or sent back: save the edits, status stays
   if (status.value === 'awaiting-confirm' && !validate()) return
   persist()
-  showToast(status.value === 'rejected' ? 'บันทึกร่างแล้ว กด “ยื่นคำขออนุมัติ” เมื่อพร้อม' : 'บันทึกเอกสารเคลียร์แล้ว')
+  notifySuccess(status.value === 'rejected' ? 'บันทึกเอกสารเคลียร์เรียบร้อยแล้ว กด “ยื่นคำขออนุมัติ” เมื่อพร้อมให้ตรวจอีกครั้ง' : 'บันทึกเอกสารเคลียร์เรียบร้อยแล้ว')
 }
 
 async function onCancel() {
@@ -332,8 +350,7 @@ async function onCancel() {
   persist()
   doc.rejection = null
   move(doc, 'withdrawClear')
-  showToast('ยกเลิกคำขอเคลียร์แล้ว สถานะกลับเป็น “รอเคลียร์”')
-  go('request', doc.id)
+  notifySuccess('ยกเลิกคำขอเคลียร์เรียบร้อยแล้ว สถานะกลับเป็น “รอเคลียร์”', 'ยกเลิกคำขอเคลียร์สำเร็จ')
 }
 
 function summary() {
@@ -356,8 +373,7 @@ async function onApprove() {
   doc.clearing.jv = `JV-${doc.docNo}`
   doc.rejection = null
   move(doc, 'approve')
-  showToast(`อนุมัติแล้ว สถานะ “เคลียร์แล้ว” · ลงบัญชี ${doc.clearing.jv}`)
-  go('request', doc.id)
+  notifySuccess(`อนุมัติเรียบร้อยแล้ว สถานะ “เคลียร์แล้ว” · ลงบัญชี ${doc.clearing.jv}`, 'อนุมัติสำเร็จ')
 }
 
 async function onReject() {
@@ -370,8 +386,7 @@ async function onReject() {
   persist()
   doc.rejection = { reason, by: roleLabel(state.role), at: new Date().toISOString() }
   move(doc, 'reject', { reason })
-  showToast('ไม่อนุมัติแล้ว สถานะ “ไม่ผ่าน”')
-  go('request', doc.id)
+  notifySuccess('บันทึกการไม่อนุมัติเรียบร้อยแล้ว สถานะ “ไม่ผ่าน”')
 }
 
 async function onResubmit() {
@@ -384,7 +399,6 @@ async function onResubmit() {
   persist()
   doc.rejection = null
   move(doc, 'resubmit')
-  showToast('ยื่นคำขออนุมัติแล้ว สถานะ “รอยืนยันเคลียร์”')
-  go('request', doc.id)
+  notifySuccess('ยื่นคำขออนุมัติเรียบร้อยแล้ว สถานะ “รอยืนยันเคลียร์”')
 }
 </script>

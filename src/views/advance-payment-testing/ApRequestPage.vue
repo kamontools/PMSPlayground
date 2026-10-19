@@ -113,7 +113,7 @@ import ImportPaymentDialog from './ImportPaymentDialog.vue'
 import GlEntryDialog from './GlEntryDialog.vue'
 import { guard, canPay, roleLabel } from './machine.js'
 import {
-  state, VENDORS, docById, nextDocNo, go, ask, warnLocked, move, showToast,
+  state, VENDORS, docById, nextDocNo, go, ask, warnLocked, move, showToast, notifySuccess,
   fmtDate, fmtMoney, requestTotal, clone, todayIso, PAY_FROM_ACCOUNTS
 } from './store.js'
 
@@ -264,8 +264,8 @@ async function onSave() {
       state.postPay = created.id
       go('request', created.id)
     } else {
-      showToast(`สร้างคำขอ ${created.docNo} แล้ว สถานะ “รอเบิก”`)
-      go('list')
+      go('request', created.id)
+      notifySuccess(`สร้างคำขอ ${created.docNo} เรียบร้อยแล้ว สถานะ “รอเบิก”`)
     }
     return
   }
@@ -276,7 +276,7 @@ async function onSave() {
       move(doc, 'pay')
       await askPostPay()
     } else {
-      showToast('บันทึกคำขอแล้ว')
+      notifySuccess('บันทึกคำขอเรียบร้อยแล้ว')
     }
     return
   }
@@ -292,12 +292,12 @@ async function onSave() {
     commit(doc)
     doc.pv = null
     move(doc, 'unpay', { reason: reversed ? `กลับรายการ ${reversed}` : '' })
-    showToast(reversed ? `กลับรายการ ${reversed} แล้ว สถานะ “รอเบิก”` : 'สถานะกลับเป็น “รอเบิก” แล้ว')
+    notifySuccess(reversed ? `กลับรายการบัญชี ${reversed} แล้ว สถานะเปลี่ยนเป็น “รอเบิก”` : 'สถานะเปลี่ยนเป็น “รอเบิก” แล้ว')
     return
   }
 
   commit(doc)
-  showToast('บันทึกคำขอแล้ว')
+  notifySuccess('บันทึกคำขอเรียบร้อยแล้ว')
 }
 
 // ---------- after paying: offer to post the PV ----------
@@ -325,7 +325,7 @@ function onGl() {
 function saveGl(pv) {
   doc.pv = { no: `PV-${doc.docNo}`, ...pv }
   glDlg.value = null
-  showToast(`บันทึกบัญชีแล้ว เลขที่ ${doc.pv.no}`)
+  notifySuccess(`บันทึกบัญชีเรียบร้อยแล้ว เลขที่ ${doc.pv.no}`)
 }
 function glLater() {
   glDlg.value = null
@@ -343,6 +343,6 @@ async function onCancel() {
   if (choice !== 'confirm') return
   move(doc, 'cancel')
   doc.cancellation = { by: roleLabel(state.role), at: new Date().toISOString() }
-  showToast(`ยกเลิกคำขอ ${doc.docNo} แล้ว`)
+  notifySuccess(`ยกเลิกคำขอ ${doc.docNo} เรียบร้อยแล้ว`, 'ยกเลิกคำขอสำเร็จ')
 }
 </script>

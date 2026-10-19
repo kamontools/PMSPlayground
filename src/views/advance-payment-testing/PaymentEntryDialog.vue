@@ -24,7 +24,8 @@
             </select>
             <span v-if="errors.account" class="apt-error">กรุณาเลือกบัญชีที่จ่าย</span>
           </div>
-          <div class="apt-field">
+          <!-- CQW takes its number from ข้อมูลเช็ค below, so no free-text field -->
+          <div v-if="form.typeCode !== 'CQW'" class="apt-field">
             <label class="apt-label" for="pe-docno">เลขที่เอกสารชำระ/เลขที่เช็ค</label>
             <input id="pe-docno" v-model="form.docNo" type="text" class="apt-input" />
           </div>
@@ -131,7 +132,6 @@ function resetForm() {
 function onCheque() {
   const c = CHEQUE_STOCK.find(x => x.no === form.chequeNo)
   form.chequeBook = c ? c.book : ''
-  if (c && !form.docNo) form.docNo = c.no
 }
 function onPdf() { showToast('ดาวน์โหลด PDF (ตัวอย่างสาธิต)') }
 
@@ -149,7 +149,7 @@ function save() {
     amount: Number(form.amount),
     payeeCode: v.code,
     payeeName: form.payeeName || v.name,
-    docNo: form.docNo || form.chequeNo || `69${Math.floor(100000 + Math.random() * 899999)}`,
+    docNo: (form.typeCode === 'CQW' ? form.chequeNo : form.docNo) || `69${Math.floor(100000 + Math.random() * 899999)}`,
     passDate: form.typeCode === 'CQW' ? form.passDate : form.payDate
   })
 }
