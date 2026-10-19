@@ -176,19 +176,34 @@
               <button type="button" class="pca-back-btn" @click="page = 'list'">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l-6 6 6 6"/></svg>
               </button>
-              <h1 class="pca-title">สร้างเงินทดรองจ่าย</h1>
+              <h1 class="pca-title">สร้างเงินทดรองจ่าย {{ nextDocNo }}</h1>
+              <span class="pca-status pcv3-status--draft">ฉบับร่าง</span>
             </div>
-            <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveCreate" @click="saveCreate">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
-              บันทึก
-            </button>
           </div>
 
-          <StepperBar :steps="createStepper" class="pcv3-stepper" />
+          <div class="pcv3-detail-grid">
+          <aside class="pcv3-rail">
+            <StepperBar :steps="createStepper" vertical />
+            <dl class="pcv3-facts">
+              <div><dt>ผู้เบิก</dt><dd>{{ createForm.payee.trim() || '—' }}</dd></div>
+              <div><dt>ครบกำหนดเคลียร์</dt><dd>{{ createForm.dueDate ? isoToThaiDate(createForm.dueDate) : '—' }}</dd></div>
+              <div><dt>ยอดเบิก</dt><dd>{{ createAmount > 0 ? formatAmount(createAmount) + ' บาท' : '—' }}</dd></div>
+            </dl>
+          </aside>
 
-          <div class="pca-card">
-            <h2 class="pca-card-title">รายละเอียด</h2>
+          <div class="pcv3-main">
+          <StepperBar :steps="createStepper" class="pcv3-stepper pcv3-stepper--h" />
 
+          <!-- 1. request -->
+          <section class="pcv3-sec pcv3-sec--active">
+            <div class="pcv3-sec-head pcv3-sec-head--static">
+              <span class="pcv3-sec-num">1</span>
+              <span class="pcv3-sec-titles">
+                <span class="pcv3-sec-title">ข้อมูลคำขอ<span class="pcv3-sec-badge">ต้องทำตอนนี้</span></span>
+                <span class="pcv3-sec-summary">ระบุวันที่ รายละเอียด และผู้เบิก</span>
+              </span>
+            </div>
+            <div class="pcv3-sec-body">
             <div class="pca-form-grid pca-form-grid-3">
               <div class="pca-field">
                 <label>เลขที่เอกสาร</label>
@@ -227,16 +242,29 @@
                 </button>
               </div>
             </div>
-          </div>
+<template v-if="!createPayOpen">
+                <div class="pcv3-sec-actions">
+                  <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveCreate" @click="saveCreate">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
+                    {{ createAmount > 0 ? 'บันทึกคำขอและการเบิกเงิน' : 'บันทึกคำขอ' }}
+                  </button>
+                  <span v-if="!canSaveCreate" class="pcv3-sec-actions-hint">ระบุวันที่บันทึกและวันที่ครบกำหนดเคลียร์ก่อนบันทึก</span>
+                </div>
+</template>
+            </div>
+          </section>
 
-          <div class="pca-card pcv3-disclose-card" :class="{ open: createPayOpen }">
-            <button type="button" class="pcv3-disclose" :aria-expanded="createPayOpen" @click="toggleCreatePay">
-              <svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
-              <span class="pcv3-disclose-title">วิธีการชำระ</span>
-              <span class="pcv2-optional-tag" style="margin-left:0">ไม่บังคับ</span>
-              <span class="pcv3-disclose-hint">{{ createPayOpen ? 'ปิดเพื่อกรอกภายหลังในขั้นตอนเบิกเงิน' : 'กรอกตอนนี้จะข้ามขั้นเบิกเงิน ไปเป็นรอเคลียร์ทันที' }}</span>
+          <!-- 2. disburse (optional at creation) -->
+          <section class="pcv3-sec" :class="createPayOpen ? 'pcv3-sec--active' : 'pcv3-sec--optional'">
+            <button type="button" class="pcv3-sec-head" :aria-expanded="createPayOpen" @click="toggleCreatePay">
+              <span class="pcv3-sec-num">2</span>
+              <span class="pcv3-sec-titles">
+                <span class="pcv3-sec-title">เบิกเงิน<span class="pcv2-optional-tag" style="margin-left:0">ไม่บังคับ</span></span>
+                <span class="pcv3-sec-summary">{{ createPayOpen ? 'ปิดเพื่อกรอกภายหลัง — รายการจะเป็นสถานะรอเบิก' : 'จ่ายเงินแล้ว? กรอกตอนนี้เพื่อข้ามไปเป็นรอเคลียร์ทันที' }}</span>
+              </span>
+              <span class="pcv3-sec-toggle">{{ createPayOpen ? 'ไม่กรอกตอนนี้' : 'กรอกตอนนี้' }}<svg class="pcv3-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg></span>
             </button>
-            <div v-if="createPayOpen" class="pcv3-disclose-body">
+            <div v-if="createPayOpen" class="pcv3-sec-body">
             <div class="pca-form-grid pca-form-grid-2">
               <div class="pca-field">
                 <label>ชำระโดย</label>
@@ -413,7 +441,27 @@
                 </div>
               </div>
             </template>
+                <div class="pcv3-sec-actions">
+                  <button type="button" class="pca-btn pca-btn-primary" :disabled="!canSaveCreate" @click="saveCreate">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h10l2 2v10H4z"/><path d="M7 4v4h6V4M6 16v-5h8v5"/></svg>
+                    {{ createAmount > 0 ? 'บันทึกคำขอและการเบิกเงิน' : 'บันทึกคำขอ' }}
+                  </button>
+                  <span v-if="!canSaveCreate" class="pcv3-sec-actions-hint">ระบุวันที่บันทึกและวันที่ครบกำหนดเคลียร์ก่อนบันทึก</span>
+                </div>
             </div>
+          </section>
+
+          <!-- 3. clear -->
+          <section class="pcv3-sec pcv3-sec--pending">
+            <div class="pcv3-sec-head pcv3-sec-head--static">
+              <span class="pcv3-sec-num"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="10" height="8" rx="1.5"/><path d="M7 9V7a3 3 0 016 0v2"/></svg></span>
+              <span class="pcv3-sec-titles">
+                <span class="pcv3-sec-title">เคลียร์เงิน</span>
+                <span class="pcv3-sec-summary">เปิดให้กรอกหลังบันทึกการเบิกเงินแล้ว</span>
+              </span>
+            </div>
+          </section>
+          </div>
           </div>
         </template>
 
@@ -1301,7 +1349,7 @@ function miniDotClass(item, i) {
 const createStepper = computed(() => WORKFLOW_STEPS.map((s, i) => ({
   ...s,
   state: stepState(i, 0),
-  sub: i === 0 ? 'กำลังทำ' : i === 1 && createAmount.value > 0 ? 'จะข้ามขั้นนี้' : 'ยังไม่ถึง'
+  sub: i === 0 ? 'กำลังทำ' : i === 1 && createAmount.value > 0 ? 'บันทึกพร้อมคำขอ' : i === 1 && createPayOpen.value ? 'กำลังกรอก' : 'ยังไม่ถึง'
 })))
 
 const createPayOpen = ref(false)
@@ -2001,6 +2049,11 @@ td.pcv2-col-sticky { z-index: 1; }
 .pcv3-sec-body > template + .pcv3-sec-actions, .pcv3-sec-body .pca-form-grid + .pcv3-sec-actions { border-top: none; padding-top: 4px; }
 .pcv3-sec-actions-hint { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
 
+.pcv3-sec-head--static { cursor: default; }
+.pcv3-sec--optional { border-style: dashed; }
+.pcv3-sec--optional .pcv3-sec-num { background: var(--color-white); border: 1.5px dashed var(--color-stroke); }
+.pcv3-status--draft { background: var(--color-white); border: 1px solid var(--color-dividers); color: var(--color-text-tertiary); }
+
 .pcv3-disclose {
   width: 100%; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   font-family: inherit; text-align: left;
@@ -2011,8 +2064,6 @@ td.pcv2-col-sticky { z-index: 1; }
 .pcv3-disclose-title { font-size: var(--font-size-md); font-weight: 700; color: var(--color-text-primary); }
 .pcv3-disclose--inline .pcv3-disclose-title { font-size: var(--font-size-sm); }
 .pcv3-disclose-hint { font-size: var(--font-size-xs); color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.pcv3-disclose-body { margin-top: 16px; }
-.pcv3-disclose-card:not(.open) { padding-top: 18px; padding-bottom: 18px; }
 
 .pcv3-detail-grid { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 20px; align-items: start; }
 .pcv3-rail { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 12px; }
