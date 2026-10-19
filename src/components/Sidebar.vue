@@ -49,14 +49,33 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/prototype/advance-payment" class="nav-link" active-class="active">
-              💸 เงินทดรองจ่าย (request → clearing)
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/prototype/advance-payment-v3" class="nav-link" active-class="active">
-              💸 เงินทดรองจ่าย v3 (คู่มือขั้นตอน)
-            </router-link>
+            <button
+              type="button"
+              class="nav-link nav-group-toggle"
+              :class="{ 'has-active': advanceActive }"
+              :aria-expanded="advanceOpen"
+              @click="advanceOpen = !advanceOpen"
+            >
+              <span>💸 เงินทดรองจ่าย</span>
+              <span class="nav-chevron" :class="{ open: advanceOpen }">▸</span>
+            </button>
+            <ul v-show="advanceOpen" class="nav-sublist">
+              <li>
+                <router-link to="/prototype/advance-payment" class="nav-link nav-sublink" active-class="active">
+                  Request → clearing
+                </router-link>
+              </li>
+              <li>
+                <router-link to="/prototype/advance-payment-v3" class="nav-link nav-sublink" active-class="active">
+                  v3 (คู่มือขั้นตอน)
+                </router-link>
+              </li>
+              <li>
+                <router-link to="/prototype/advance-payment-testing" class="nav-link nav-sublink" active-class="active">
+                  Testing version
+                </router-link>
+              </li>
+            </ul>
           </li>
         </ul>
       </div>
@@ -148,7 +167,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const advanceActive = computed(() => route.path.startsWith('/prototype/advance-payment'))
+const advanceOpen = ref(advanceActive.value)
+watch(advanceActive, (active) => { if (active) advanceOpen.value = true })
 
 const components = ref([
   { id: 'autocomplete', name: 'AutoComplete' },
@@ -266,6 +291,45 @@ onMounted(async () => {
   color: #1C70F7;
   border-left-color: #1C70F7;
   font-weight: 700;
+}
+
+.nav-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-group-toggle.has-active {
+  color: #1C70F7;
+  font-weight: 700;
+}
+
+.nav-chevron {
+  font-size: 12px;
+  color: #585A5C;
+  transition: transform 0.2s ease;
+}
+
+.nav-chevron.open {
+  transform: rotate(90deg);
+}
+
+.nav-sublist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-sublink {
+  padding-left: 40px;
 }
 
 .sidebar::-webkit-scrollbar {

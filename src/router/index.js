@@ -13,6 +13,7 @@ import PmsSelfServiceOnboarding from '../views/PmsSelfServiceOnboarding.vue'
 import AdvancePaymentDemo from '../views/AdvancePaymentDemo.vue'
 import AdvancePaymentDemoV2 from '../views/AdvancePaymentDemoV2.vue'
 import AdvancePaymentDemoV3 from '../views/AdvancePaymentDemoV3.vue'
+import AdvancePaymentDemoTesting from '../views/AdvancePaymentDemoTesting.vue'
 import SelfOnboardWizard from '../views/SelfOnboardWizard.vue'
 const routes = [
   {
@@ -74,6 +75,11 @@ const routes = [
     path: '/prototype/advance-payment-v3',
     name: 'AdvancePaymentDemoV3',
     component: AdvancePaymentDemoV3
+  },
+  {
+    path: '/prototype/advance-payment-testing',
+    name: 'AdvancePaymentDemoTesting',
+    component: AdvancePaymentDemoTesting
   },
   {
     path: '/migrate-permissions',

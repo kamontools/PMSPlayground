@@ -45,6 +45,13 @@ src/
       SsoAccountPicker.vue        # Account/project picker used within setup
       store.js                    # Shared reactive state + validators for the wizard
       wizard.css                  # Shared styles for the self-onboard components
+    AdvancePaymentDemoTesting.vue  # Prototype: เงินทดรองจ่าย testing version (shell + dev bar)
+    advance-payment-testing/      # Testing-version parts
+      machine.js                  # Statuses, guard() messages for locked actions, transition() + log
+      store.js                    # In-memory docs (fictional seed, one+ per status), role, nav, ask() dialog, toast
+      ApListPage.vue / ApRequestPage.vue / ApClearPage.vue  # The three pages
+      *Dialog.vue                 # GL (PV), payment entry, import payment, expense row, app-wide dialog
+      testing.css                 # apt- prefixed styles
   components/
     Sidebar.vue                   # Persistent nav sidebar
     examples/                     # Live component examples (Button, Input, Dropdown, etc.)
@@ -69,6 +76,7 @@ server/index.js                   # Express API server
 | `/prototype/advance-payment` | AdvancePaymentDemo | เงินทดรองจ่าย request → clearing flow |
 | `/prototype/advance-payment-v2` | AdvancePaymentDemoV2 | เงินทดรองจ่าย alt version: status filters + inline status change, 2-section layout |
 | `/prototype/advance-payment-v3` | AdvancePaymentDemoV3 | v2 + top stepper and step-by-step collapsible detail sections (progressive disclosure); helpers in `advance-payment-v3/` |
+| `/prototype/advance-payment-testing` | AdvancePaymentDemoTesting | เงินทดรองจ่าย testing version for usability tests: full state machine (รอเบิก → รอเคลียร์ → รอยืนยันเคลียร์ ⇄ ไม่ผ่าน → เคลียร์แล้ว / ยกเลิก), approve/reject, PV posting, role switcher + reset; parts in `advance-payment-testing/` |
 | `/migrate-permissions` | MigratePermissions | Permissions migration prototype |
 | `/room-price-quiz` | RoomPriceQuiz | Room price quiz prototype |
 
