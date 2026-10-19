@@ -3,7 +3,7 @@
     <div class="apt-pagehead">
       <div class="apt-pagehead-left"><h1>เงินทดรองจ่าย</h1></div>
       <div class="apt-pagehead-actions">
-        <button type="button" class="apt-btn apt-btn-primary" @click="go('request', null)"><AptIcon name="save" /> สร้างคำขอ</button>
+        <button type="button" class="apt-btn apt-btn-primary" @click="go(props.detailPage, null)"><AptIcon name="save" /> สร้างคำขอ</button>
       </div>
     </div>
 
@@ -54,7 +54,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="d in pageRows" :key="d.id" class="clickable" tabindex="0" @click="go('request', d.id)" @keydown.enter="go('request', d.id)">
+              <tr v-for="d in pageRows" :key="d.id" class="clickable" tabindex="0" @click="go(props.detailPage, d.id)" @keydown.enter="go(props.detailPage, d.id)">
                 <td><strong>{{ d.docNo }}</strong></td>
                 <td><StatusChip :status="d.status" /></td>
                 <td><span v-if="d.pv">{{ d.pv.no }}</span><span v-else class="apt-muted">ยังไม่ลง</span></td>
@@ -62,7 +62,7 @@
                 <td>{{ fmtDate(d.dueDate) }}</td>
                 <td class="wrap">{{ d.description }}</td>
                 <td>{{ payBy(d) }}</td>
-                <td class="num">{{ d.payments.length ? fmtMoney(requestTotal(d)) : '-' }}</td>
+                <td class="num">{{ d.requestedAmount ? fmtMoney(d.requestedAmount) : '-' }}</td>
                 <td class="num">{{ d.clearing ? fmtMoney(clearTotal(d.clearing)) : '-' }}</td>
               </tr>
               <tr v-if="!pageRows.length"><td colspan="9" class="empty">ไม่พบรายการ</td></tr>
@@ -81,7 +81,11 @@ import AptIcon from './AptIcon.vue'
 import StatusChip from './StatusChip.vue'
 import PagerBar from './PagerBar.vue'
 import { FILTERS } from './machine.js'
-import { state, go, fmtDate, fmtMoney, requestTotal, clearTotal, payTypeByCode } from './store.js'
+import { useAptStore, fmtDate, fmtMoney, clearTotal, payTypeByCode } from './store.js'
+
+// detailPage: where a row (or สร้างคำขอ) opens — 'request' in the classic version, 'detail' in the step version
+const props = defineProps({ detailPage: { type: String, default: 'request' } })
+const { state, go } = useAptStore()
 
 const year = new Date().getFullYear()
 const draft = reactive({ from: `${year}-01-01`, to: `${year}-12-31`, q: '' })

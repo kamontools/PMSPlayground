@@ -29,7 +29,9 @@
 
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
-import { state, closeDialog } from './store.js'
+import { useAptStore } from './store.js'
+
+const { state, closeDialog } = useAptStore()
 
 const dlg = computed(() => state.dialog)
 const reason = ref('')

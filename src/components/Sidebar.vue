@@ -75,6 +75,11 @@
                   Testing version
                 </router-link>
               </li>
+              <li>
+                <router-link to="/prototype/advance-payment-testing-step" class="nav-link nav-sublink" active-class="active">
+                  Testing version (step)
+                </router-link>
+              </li>
             </ul>
           </li>
         </ul>

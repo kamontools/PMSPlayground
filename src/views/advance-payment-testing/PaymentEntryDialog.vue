@@ -47,13 +47,14 @@
             </div>
             <div class="apt-field">
               <label class="apt-label" for="pe-chqstatus">สถานะ</label>
-              <select id="pe-chqstatus" v-model="form.chequeStatus" class="apt-select">
+              <select id="pe-chqstatus" v-model="form.chequeStatus" class="apt-select" @change="onChequeStatus">
                 <option v-for="s in CHEQUE_STATUSES" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
             <div class="apt-field">
               <label class="apt-label" for="pe-pass">วันที่ผ่าน</label>
-              <input id="pe-pass" v-model="form.passDate" type="date" class="apt-input" />
+              <!-- a cheque still in hand hasn't cleared, so it has no pass date yet -->
+              <input id="pe-pass" v-model="form.passDate" type="date" class="apt-input" :disabled="inHand" />
             </div>
           </div>
         </div>
@@ -103,9 +104,11 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import AptIcon from './AptIcon.vue'
-import { PAY_TYPES, PAY_FROM_ACCOUNTS, CHEQUE_STOCK, CHEQUE_STATUSES, VENDORS, vendorById, todayIso, uid, clone, showToast } from './store.js'
+import { PAY_TYPES, PAY_FROM_ACCOUNTS, CHEQUE_STOCK, CHEQUE_STATUSES, VENDORS, vendorById, todayIso, uid, clone, useAptStore } from './store.js'
+
+const { showToast } = useAptStore()
 
 const props = defineProps({
   payment: { type: Object, default: null },
@@ -117,7 +120,7 @@ const emit = defineEmits(['save', 'close'])
 function blank() {
   return {
     id: uid('P'), typeCode: 'CQW', account: '', docNo: '', chequeNo: '', chequeBook: '', chequeStatus: 'N : ในมือ',
-    passDate: todayIso(), vendorId: props.vendorId, payeeName: '', payDate: todayIso(), amount: props.amount, note: '', status: 'N'
+    passDate: '', vendorId: props.vendorId, payeeName: '', payDate: todayIso(), amount: props.amount, note: '', status: 'N'
   }
 }
 const form = reactive(props.payment ? { ...blank(), ...clone(props.payment) } : blank())
@@ -133,6 +136,8 @@ function onCheque() {
   const c = CHEQUE_STOCK.find(x => x.no === form.chequeNo)
   form.chequeBook = c ? c.book : ''
 }
+const inHand = computed(() => form.chequeStatus.startsWith('N'))
+function onChequeStatus() { if (inHand.value) form.passDate = '' }
 function onPdf() { showToast('ดาวน์โหลด PDF (ตัวอย่างสาธิต)') }
 
 function save() {
@@ -150,7 +155,7 @@ function save() {
     payeeCode: v.code,
     payeeName: form.payeeName || v.name,
     docNo: (form.typeCode === 'CQW' ? form.chequeNo : form.docNo) || `69${Math.floor(100000 + Math.random() * 899999)}`,
-    passDate: form.typeCode === 'CQW' ? form.passDate : form.payDate
+    passDate: form.typeCode === 'CQW' ? (inHand.value ? '' : form.passDate) : form.payDate
   })
 }
 </script>

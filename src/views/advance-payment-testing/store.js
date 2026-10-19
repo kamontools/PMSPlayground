@@ -1,6 +1,6 @@
-// Shared in-memory state for the testing version: documents, current role, navigation,
-// the single app-wide dialog, and the toast. All names below are fictional sample data.
-import { reactive } from 'vue'
+// In-memory data for the testing versions: reference data, seed documents, and a per-version store
+// (docs, navigation, the app-wide dialog, toast). All names below are fictional sample data.
+import { reactive, provide, inject } from 'vue'
 import { transition } from './machine.js'
 
 // ---------- reference data ----------
@@ -40,15 +40,19 @@ export const GL_ACCOUNTS = [
   { code: '1-131-01', name: 'เงินทดรองจ่าย' },
   { code: '2-113-02', name: 'เช็คจ่าย' }
 ]
-export const EXPENSE_ACCOUNTS = [
-  { code: '5-411-01', name: 'ค่าใช้จ่ายเบ็ดเตล็ด' },
-  { code: '5-412-01', name: 'ค่าดอกไม้' },
-  { code: '5-413-01', name: 'ค่าเครื่องดื่ม' },
-  { code: '5-414-01', name: 'ค่าเดินทาง' },
-  { code: '5-415-01', name: 'ค่าซ่อมบำรุง' },
-  { code: '5-416-01', name: 'ค่าวัสดุสำนักงาน' },
-  { code: '5-417-01', name: 'ค่าจัดกิจกรรม' }
+// Expense items use their own P00X codes (not GL codes) so they aren't confused with the chart of accounts;
+// each one posts to a 5-xxx expense account.
+export const EXPENSE_TYPES = [
+  { code: 'P001', name: 'ค่าใช้จ่ายเบ็ดเตล็ด', account: '5-411-01' },
+  { code: 'P002', name: 'ค่าดอกไม้', account: '5-412-01' },
+  { code: 'P003', name: 'ค่าเครื่องดื่ม', account: '5-413-01' },
+  { code: 'P004', name: 'ค่าเดินทาง', account: '5-414-01' },
+  { code: 'P005', name: 'ค่าซ่อมบำรุง', account: '5-415-01' },
+  { code: 'P006', name: 'ค่าวัสดุสำนักงาน', account: '5-416-01' },
+  { code: 'P007', name: 'ค่าจัดกิจกรรม', account: '5-417-01' }
 ]
+export function expenseByCode(code) { return EXPENSE_TYPES.find(e => e.code === code) }
+export const EXPENSE_ACCOUNTS = EXPENSE_TYPES.map(e => ({ code: e.account, name: e.name }))
 export function accountName(code) {
   return [...GL_ACCOUNTS, ...EXPENSE_ACCOUNTS].find(a => a.code === code)?.name || ''
 }
@@ -69,12 +73,14 @@ export const UNDER_METHODS = [
 export const PETTY_CASH_DOCS = ['690001', '690002', '690003']
 export const PV_DOCS = ['PV-2026-0101', 'PV-2026-0102', 'PV-2026-0103']
 export const RECEIPT_DOCS = ['RC-690015', 'RC-690016', 'RC-690017']
+// Where the settled difference posts, by settlement method.
+const SETTLE_ACCOUNTS = { cash: '1-111-01', 'petty-cash': '1-111-02', pv: '1-112-01', cheque: '2-113-02', receipt: '1-111-01', transfer: '1-112-01', other: '1-111-01' }
 
 // Existing payment documents that can be linked via "นำเข้าเอกสาร".
 const IMPORTABLE_SEED = [
   { id: 'IMP1', payDate: '2026-10-05', passDate: '2026-10-05', docNo: '6909000001', payeeCode: 'S00001', payeeName: 'Everything Jingle Bell', typeCode: 'CAW', amount: 24847.54, status: 'N' },
   { id: 'IMP2', payDate: '2026-10-08', passDate: '2026-10-09', docNo: '6909000002', payeeCode: '00200', payeeName: 'Water House', typeCode: 'ATP', amount: 5000, status: 'N' },
-  { id: 'IMP3', payDate: '2026-10-10', passDate: '2026-10-12', docNo: '6909000003', payeeCode: '10022', payeeName: 'A-Z Company', typeCode: 'CQW', amount: 12000, status: 'N' },
+  { id: 'IMP3', payDate: '2026-10-10', passDate: '', docNo: '6909000003', payeeCode: '10022', payeeName: 'A-Z Company', typeCode: 'CQW', amount: 12000, status: 'N' },
   { id: 'IMP4', payDate: '2026-10-14', passDate: '2026-10-14', docNo: '6909000004', payeeCode: '00160', payeeName: 'Surgent', typeCode: 'CAW', amount: 3500, status: 'N' }
 ]
 
@@ -108,7 +114,7 @@ export function round2(n) { return Math.round(n * 100) / 100 }
 function pay(id, payDate, passDate, docNo, vendorId, typeCode, amount, extra = {}) {
   const v = vendorById(vendorId)
   return {
-    id, payDate, passDate, docNo, payeeCode: v.code, payeeName: v.name, vendorId, typeCode, amount,
+    id, payDate, passDate: typeCode === 'CQW' ? '' : passDate, docNo, payeeCode: v.code, payeeName: v.name, vendorId, typeCode, amount,
     status: 'N', account: PAY_FROM_ACCOUNTS[0], chequeNo: typeCode === 'CQW' ? docNo : '', chequeBook: typeCode === 'CQW' ? 'B-0112' : '',
     chequeStatus: 'N : ในมือ', note: '', ...extra
   }
@@ -133,8 +139,9 @@ function logEntry(action, from, to, by, at, reason = '') { return { action, from
 
 function seedDocs() {
   const docs = []
+  const REQUESTED = { 1: 8000, 2: 12000, 3: 12000, 4: 15000, 5: 12000, 6: 8000, 7: 12000, 8: 3000, 9: 10000, 10: 4500 }
   const base = (n, status, createdAt, dueDate, vendorId, description, extra = {}) => ({
-    id: `D${n}`, docNo: `69000${pad(n)}`, status, createdAt, dueDate, vendorId, description,
+    id: `D${n}`, docNo: `69000${pad(n)}`, status, createdAt, dueDate, vendorId, description, requestedAmount: REQUESTED[n],
     files: [], payments: [], pv: null, clearing: null, rejection: null, cancellation: null, log: [], ...extra
   })
 
@@ -142,7 +149,7 @@ function seedDocs() {
   docs.push(base(1, 'awaiting-disburse', '2026-10-15', '2026-10-30', 'V05', 'ค่าจัดซื้ออุปกรณ์สำนักงานส่วนกลาง', {
     log: [logEntry('create', null, 'awaiting-disburse', 'ผู้เบิก', '2026-10-15T09:10:00+07:00')]
   }))
-  docs.push(base(2, 'awaiting-disburse', '2026-10-16', '2026-11-05', 'V01', 'เบิกเงินจัดประชุมใหญ่สามัญประจำปี (ค่าสถานที่ อาหารว่าง ของที่ระลึก) ประมาณ 12,000 บาท', {
+  docs.push(base(2, 'awaiting-disburse', '2026-10-16', '2026-11-05', 'V01', 'เบิกเงินจัดประชุมใหญ่สามัญประจำปี (ค่าสถานที่ อาหารว่าง ของที่ระลึก)', {
     log: [logEntry('create', null, 'awaiting-disburse', 'ผู้เบิก', '2026-10-16T10:00:00+07:00')]
   }))
 
@@ -174,9 +181,9 @@ function seedDocs() {
   d5.clearing = {
     docNo: 'CL6900005', date: '2026-10-10', note: '', files: [file('ใบเสร็จค่าส่วนกลาง-ตัวอย่าง.pdf', 1.2 * 1024 * 1024, '2026-10-15')],
     rows: [
-      { id: 'R51', account: '5-412-01', detail: 'ประดับงานประชุม', amount: 4000 },
-      { id: 'R52', account: '5-413-01', detail: 'เอาไว้เสิร์ฟแขก', amount: 4000 },
-      { id: 'R53', account: '5-413-01', detail: 'เอาไว้เสิร์ฟแขก', amount: 4000 }
+      { id: 'R51', code: 'P002', detail: 'ประดับงานประชุม', amount: 4000 },
+      { id: 'R52', code: 'P003', detail: 'เอาไว้เสิร์ฟแขก', amount: 4000 },
+      { id: 'R53', code: 'P003', detail: 'เอาไว้เสิร์ฟแขก', amount: 4000 }
     ],
     settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payments: [] }
   }
@@ -194,7 +201,7 @@ function seedDocs() {
   d6.pv = pvFor(d6, 'PV-6900006')
   d6.clearing = {
     docNo: 'CL6900006', date: '2026-10-04', note: '', files: [],
-    rows: [{ id: 'R61', account: '5-417-01', detail: 'ดอกไม้และอุปกรณ์ตกแต่ง', amount: 6500 }],
+    rows: [{ id: 'R61', code: 'P007', detail: 'ดอกไม้และอุปกรณ์ตกแต่ง', amount: 6500 }],
     settle: { method: 'cash', amount: 1500, docRef: '', account: '', date: '', note: '', payments: [] }
   }
   d6.rejection = { reason: 'ไม่มีใบเสร็จแนบสำหรับค่าตกแต่ง กรุณาแนบหลักฐานให้ครบ', by: 'ผู้อนุมัติ', at: '2026-10-06T10:30:00+07:00' }
@@ -215,12 +222,12 @@ function seedDocs() {
   d7.clearing = {
     docNo: 'CL6900007', date: '2026-09-24', note: '', files: [file('ใบเสร็จค่าส่วนกลาง-ตัวอย่าง.pdf', 1.2 * 1024 * 1024, '2026-09-24')],
     rows: [
-      { id: 'R71', account: '5-412-01', detail: 'ประดับงานประชุม', amount: 4000 },
-      { id: 'R72', account: '5-413-01', detail: 'เอาไว้เสิร์ฟแขก', amount: 8000 }
+      { id: 'R71', code: 'P002', detail: 'ประดับงานประชุม', amount: 4000 },
+      { id: 'R72', code: 'P003', detail: 'เอาไว้เสิร์ฟแขก', amount: 8000 }
     ],
-    settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payments: [] },
-    jv: 'JV-6900007'
+    settle: { method: '', amount: null, docRef: '', account: '', date: '', note: '', payments: [] }
   }
+  d7.clearing.gl = buildClearingGl(d7, d7.clearing, 'JV-6900007')
   d7.log = [
     logEntry('create', null, 'awaiting-disburse', 'ผู้เบิก', '2026-09-10T09:00:00+07:00'),
     logEntry('pay', 'awaiting-disburse', 'awaiting-clear', 'ส่วนกลาง', '2026-09-10T13:00:00+07:00'),
@@ -252,79 +259,118 @@ function seedDocs() {
   return docs
 }
 
-// ---------- state ----------
-export const state = reactive({
-  docs: seedDocs(),
-  importable: clone(IMPORTABLE_SEED),
-  role: 'finance',
-  nav: { page: 'list', docId: null },
-  seq: 11,
-  postPay: null,
-  toast: '',
-  dialog: null
-})
+// ---------- per-version store ----------
+// Each prototype shell creates its own store (own docs, nav, dialog, reset) and provides it to its pages,
+// so the classic and step versions never share data.
+const STORE_KEY = Symbol('apt-store')
+export function provideAptStore(store) { provide(STORE_KEY, store) }
+export function useAptStore() { return inject(STORE_KEY) }
 
-export function docById(id) { return state.docs.find(d => d.id === id) }
-
-export function nextDocNo() {
-  const n = state.seq++
-  return { id: `D${n}`, docNo: `69000${pad(n)}` }
+// One store per version, kept for the whole browser session so leaving the route doesn't wipe a test in progress
+// (same as the original module-level state); only the Testing bar's reset or a page reload starts over.
+const storesByVersion = {}
+export function aptStoreFor(version) {
+  if (!storesByVersion[version]) storesByVersion[version] = createAptStore()
+  return storesByVersion[version]
 }
 
-export function resetAll() {
-  state.docs = seedDocs()
-  state.importable = clone(IMPORTABLE_SEED)
-  state.seq = 11
-  state.nav = { page: 'list', docId: null }
-  state.dialog = null
-  showToast('รีเซ็ตข้อมูลตัวอย่างแล้ว')
-}
-
-export function go(page, docId = null) {
-  state.nav = { page, docId }
-  window.scrollTo({ top: 0 })
-}
-
-let toastTimer = null
-export function showToast(msg) {
-  state.toast = msg
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { state.toast = '' }, 2600)
-}
-
-/**
- * Open the app-wide dialog and wait for the user's choice.
- * opts: { title, message, tone: 'success'|'warning'|'danger'|'info', confirmLabel, cancelLabel,
- *         secondaryLabel, reason: { label, max } (required textarea), summary: [{ label, value }] }
- * Resolves { choice: 'confirm' | 'secondary' | 'cancel', reason }.
- */
-export function ask(opts) {
-  return new Promise(resolve => {
-    state.dialog = { tone: 'info', cancelLabel: 'ปิด', ...opts, resolve }
+export function createAptStore() {
+  const state = reactive({
+    docs: seedDocs(),
+    importable: clone(IMPORTABLE_SEED),
+    nav: { page: 'list', docId: null },
+    seq: 11,
+    postPay: null,
+    toast: '',
+    dialog: null
   })
-}
-export function closeDialog(choice, reason = '') {
-  const d = state.dialog
-  state.dialog = null
-  d?.resolve({ choice, reason })
-}
 
-/** Success feedback after a save: a dialog the user closes, staying on the current page. */
-export function notifySuccess(message, title = 'บันทึกสำเร็จแล้ว') {
-  return ask({ title, message, tone: 'success', cancelLabel: 'ปิด' })
-}
+  function docById(id) { return state.docs.find(d => d.id === id) }
 
-/** Show the guard message for a locked action. Offers a jump to the clearing doc when relevant. */
-export async function warnLocked(lock, docId) {
-  const { choice } = await ask({
-    title: lock.title, message: lock.message, tone: 'warning',
-    cancelLabel: 'ปิด', confirmLabel: lock.goClear ? 'ไปที่เอกสารเคลียร์' : null
-  })
-  if (choice === 'confirm' && lock.goClear) go('clear', docId)
-}
+  function nextDocNo() {
+    const n = state.seq++
+    return { id: `D${n}`, docNo: `69000${pad(n)}` }
+  }
 
-export function move(doc, action, extra = {}) {
-  return transition(doc, action, { role: state.role, ...extra })
+  let toastTimer = null
+  function showToast(msg) {
+    state.toast = msg
+    clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => { state.toast = '' }, 2600)
+  }
+
+  function resetAll() {
+    state.docs = seedDocs()
+    state.importable = clone(IMPORTABLE_SEED)
+    state.seq = 11
+    state.nav = { page: 'list', docId: null }
+    state.dialog = null
+    showToast('รีเซ็ตข้อมูลตัวอย่างแล้ว')
+  }
+
+  function go(page, docId = null) {
+    state.nav = { page, docId }
+    window.scrollTo({ top: 0 })
+  }
+
+  /**
+   * Open the app-wide dialog and wait for the user's choice.
+   * opts: { title, message, tone: 'success'|'warning'|'danger'|'info', confirmLabel, cancelLabel,
+   *         secondaryLabel, reason: { label, max } (required textarea), summary: [{ label, value }] }
+   * Resolves { choice: 'confirm' | 'secondary' | 'cancel', reason }.
+   */
+  function ask(opts) {
+    return new Promise(resolve => {
+      state.dialog = { tone: 'info', cancelLabel: 'ปิด', ...opts, resolve }
+    })
+  }
+  function closeDialog(choice, reason = '') {
+    const d = state.dialog
+    state.dialog = null
+    d?.resolve({ choice, reason })
+  }
+
+  /** Success feedback after a save: a dialog the user closes, staying on the current page. */
+  function notifySuccess(message, title = 'บันทึกสำเร็จแล้ว') {
+    return ask({ title, message, tone: 'success', cancelLabel: 'ปิด' })
+  }
+
+  /** Show the guard message for a locked action; onGoClear runs when the user picks "ไปที่เอกสารเคลียร์". */
+  async function warnLocked(lock, onGoClear) {
+    const { choice } = await ask({
+      title: lock.title, message: lock.message, tone: 'warning',
+      cancelLabel: 'ปิด', confirmLabel: lock.goClear && onGoClear ? 'ไปที่เอกสารเคลียร์' : null
+    })
+    if (choice === 'confirm' && lock.goClear) onGoClear?.()
+  }
+
+  function move(doc, action, extra = {}) {
+    return transition(doc, action, extra)
+  }
+
+  return { state, docById, nextDocNo, resetAll, go, showToast, ask, closeDialog, notifySuccess, warnLocked, move }
 }
 
 export function buildPv(doc, no) { return pvFor(doc, no) }
+
+/**
+ * Journal for approving a clearing, as specified for the prototype:
+ * Dr เงินทดรองจ่าย (amount paid out) / Cr each expense account, with the settled difference balancing it.
+ */
+export function buildClearingGl(doc, clearing, no = '') {
+  const req = requestTotal(doc)
+  const diff = round2(clearTotal(clearing) - req)
+  const credits = {}
+  clearing.rows.forEach(r => {
+    const acc = expenseByCode(r.code)?.account || '5-411-01'
+    credits[acc] = round2((credits[acc] || 0) + Number(r.amount))
+  })
+  const lines = [
+    { account: '1-131-01', detail: '', debit: req, credit: 0 },
+    ...Object.entries(credits).map(([account, amt]) => ({ account, detail: '', debit: 0, credit: amt }))
+  ]
+  const settleAcc = SETTLE_ACCOUNTS[clearing.settle?.method] || '1-111-01'
+  if (diff > 0) lines.push({ account: settleAcc, detail: 'ชำระส่วนที่เกิน', debit: diff, credit: 0 })
+  if (diff < 0) lines.push({ account: settleAcc, detail: 'รับคืนส่วนที่เหลือ', debit: 0, credit: -diff })
+  return { no, date: clearing.date, detail: `เคลียร์เงินทดรองจ่าย ${doc.docNo}`, lines }
+}

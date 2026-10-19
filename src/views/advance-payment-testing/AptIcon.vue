@@ -36,7 +36,9 @@ const ICONS = {
   download: ['M10 3v10', 'M6 9l4 4 4-4', 'M4 16h12'],
   calc: ['M4 3h12v14H4z', 'M7 6h6', 'M7 10h1', 'M10 10h1', 'M13 10h0', 'M7 13h1', 'M10 13h1'],
   chair: ['M6 3h8v6H6z', 'M5 9h10v3H5z', 'M6 12v5', 'M14 12v5'],
-  card: ['M3 5h14v10H3z', 'M3 8h14', 'M6 12h3']
+  card: ['M3 5h14v10H3z', 'M3 8h14', 'M6 12h3'],
+  lock: ['M5 9h10v8H5z', 'M7 9V7a3 3 0 016 0v2'],
+  chevron: ['M5 8l5 5 5-5']
 }
 const props = defineProps({ name: { type: String, required: true } })
 const paths = computed(() => ICONS[props.name] || [])

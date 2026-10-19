@@ -1,8 +1,8 @@
 <template>
-  <div class="apt-overlay" role="dialog" aria-modal="true" aria-label="บันทึกบัญชี ใบสำคัญจ่าย">
+  <div class="apt-overlay" role="dialog" aria-modal="true" :aria-label="title">
     <div class="apt-dialog apt-dialog--lg">
       <div class="apt-dialog-head">
-        <h2>บันทึกบัญชี : ใบสำคัญจ่าย : PV<span v-if="readonly && pv"> · {{ pv.no }}</span></h2>
+        <h2>{{ title }}<span v-if="readonly && entry.no"> · {{ entry.no }}</span></h2>
       </div>
       <div class="apt-dialog-body">
         <div class="apt-grid apt-grid-12">
@@ -91,17 +91,18 @@
 <script setup>
 import { reactive, computed } from 'vue'
 import AptIcon from './AptIcon.vue'
-import { GL_ACCOUNTS, EXPENSE_ACCOUNTS, accountName, fmtMoney, round2, clone, buildPv, todayIso } from './store.js'
+import { GL_ACCOUNTS, EXPENSE_ACCOUNTS, accountName, fmtMoney, round2, clone, todayIso } from './store.js'
 
+// Used for both the PV (paying a request) and the JV (approving a clearing); the caller builds the starting entry.
 const props = defineProps({
-  doc: { type: Object, required: true },
+  entry: { type: Object, required: true },
+  title: { type: String, default: 'บันทึกบัญชี : ใบสำคัญจ่าย : PV' },
   readonly: { type: Boolean, default: false }
 })
 const emit = defineEmits(['save', 'later', 'close'])
 
 const accounts = [...GL_ACCOUNTS, ...EXPENSE_ACCOUNTS]
-const pv = props.doc.pv
-const start = pv ? clone(pv) : buildPv(props.doc, '')
+const start = clone(props.entry)
 const form = reactive({ date: start.date || todayIso(), detail: start.detail || '', lines: start.lines })
 const errors = reactive({ date: false })
 

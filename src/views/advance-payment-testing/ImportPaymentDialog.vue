@@ -58,7 +58,9 @@
 <script setup>
 import { reactive, ref, computed } from 'vue'
 import AptIcon from './AptIcon.vue'
-import { state, PAY_TYPES, payTypeByCode, fmtDate, fmtMoney } from './store.js'
+import { useAptStore, PAY_TYPES, payTypeByCode, fmtDate, fmtMoney } from './store.js'
+
+const { state } = useAptStore()
 
 const props = defineProps({ exclude: { type: Array, default: () => [] } })
 const emit = defineEmits(['confirm', 'close'])

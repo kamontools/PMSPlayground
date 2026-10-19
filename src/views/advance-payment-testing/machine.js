@@ -16,15 +16,8 @@ export function statusMeta(status) {
   return STATUSES.find(s => s.value === status) || { value: status, label: status, tone: 'neutral' }
 }
 
-export const ROLES = [
-  { value: 'requester', label: 'ผู้เบิก' },
-  { value: 'finance', label: 'ส่วนกลาง' },
-  { value: 'approver', label: 'ผู้อนุมัติ' }
-]
-
-export function roleLabel(role) {
-  return ROLES.find(r => r.value === role)?.label || role
-}
+// No role gating in the prototype: everyone sees every action, so testers don't switch roles mid-task.
+export const ACTOR = 'ผู้ใช้ทดสอบ'
 
 // Clearing has been submitted (or decided), so the request itself is frozen.
 export function hasClearing(status) {
@@ -59,10 +52,6 @@ export function guard(status, page, action) {
   return null
 }
 
-/** Only ส่วนกลาง can record a payment (T3); only ผู้อนุมัติ can approve/reject (T7/T9). */
-export function canPay(role) { return role === 'finance' }
-export function canApprove(role) { return role === 'approver' }
-
 export const TRANSITION_LABELS = {
   create: 'สร้างคำขอ',
   pay: 'ระบุการชำระเงิน',
@@ -89,13 +78,13 @@ const EDGES = {
 }
 
 /** Move a document along an allowed edge and append to its log. Throws on an illegal move. */
-export function transition(doc, action, { role, reason } = {}) {
+export function transition(doc, action, { reason } = {}) {
   const edge = EDGES[action]
   const from = doc.status ?? null
   if (!edge || !edge.from.includes(from)) {
     throw new Error(`transition "${action}" not allowed from "${from}"`)
   }
   doc.status = edge.to
-  doc.log.push({ action, from, to: edge.to, by: roleLabel(role), at: new Date().toISOString(), reason: reason || '' })
+  doc.log.push({ action, from, to: edge.to, by: ACTOR, at: new Date().toISOString(), reason: reason || '' })
   return doc
 }

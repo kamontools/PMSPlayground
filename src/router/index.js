@@ -14,6 +14,7 @@ import AdvancePaymentDemo from '../views/AdvancePaymentDemo.vue'
 import AdvancePaymentDemoV2 from '../views/AdvancePaymentDemoV2.vue'
 import AdvancePaymentDemoV3 from '../views/AdvancePaymentDemoV3.vue'
 import AdvancePaymentDemoTesting from '../views/AdvancePaymentDemoTesting.vue'
+import AdvancePaymentDemoTestingStep from '../views/AdvancePaymentDemoTestingStep.vue'
 import SelfOnboardWizard from '../views/SelfOnboardWizard.vue'
 const routes = [
   {
@@ -80,6 +81,11 @@ const routes = [
     path: '/prototype/advance-payment-testing',
     name: 'AdvancePaymentDemoTesting',
     component: AdvancePaymentDemoTesting
+  },
+  {
+    path: '/prototype/advance-payment-testing-step',
+    name: 'AdvancePaymentDemoTestingStep',
+    component: AdvancePaymentDemoTestingStep
   },
   {
     path: '/migrate-permissions',

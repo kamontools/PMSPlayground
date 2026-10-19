@@ -24,7 +24,9 @@
 <script setup>
 import { ref } from 'vue'
 import AptIcon from './AptIcon.vue'
-import { fmtDate, todayIso, uid, showToast } from './store.js'
+import { useAptStore, fmtDate, todayIso, uid } from './store.js'
+
+const { showToast } = useAptStore()
 
 // Files are only listed in memory (name/size/date) — nothing is uploaded anywhere.
 const props = defineProps({
