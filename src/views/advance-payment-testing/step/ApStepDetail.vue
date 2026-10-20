@@ -42,17 +42,17 @@
           <StepSection
             id="aps-0" :num="1" title="ข้อมูลคำขอ"
             :state="state0" :badge="rf.isNew ? 'ต้องทำตอนนี้' : ''"
-            :open="isOpen(0)" :toggleable="false" :class="{ 'apt-sec--editing': editing }"
+            :open="isOpen(0)" :toggleable="false"
           >
             <template v-if="editing" #action>
               <!-- editing: cancel + save take แก้ไข's place (save rightmost); save waits for a change so a double-click on แก้ไข can't save -->
-              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cancelEdit">ยกเลิกการแก้ไข</button>
-              <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" :disabled="!rf.dirty" @click="saveRequest"><AptIcon name="save" /> บันทึก</button>
+              <button type="button" class="apt-btn apt-btn-ghost" @click="cancelEdit">ยกเลิกการแก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-primary" :disabled="!rf.dirty" @click="saveRequest"><AptIcon name="save" /> บันทึก</button>
             </template>
             <template v-else-if="!rf.isNew" #action>
               <!-- locked statuses keep the button so the guard() warning still explains why -->
-              <button type="button" class="apt-btn apt-btn-danger apt-btn-sm" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิกคำขอ</button>
-              <button type="button" class="apt-btn apt-btn-outline apt-btn-sm" @click="startEdit"><AptIcon name="edit" /> แก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-danger" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิกคำขอ</button>
+              <button type="button" class="apt-btn apt-btn-outline" @click="startEdit"><AptIcon name="edit" /> แก้ไข</button>
             </template>
             <RequestFields v-if="rf.isNew || editing" :rf="rf" />
             <template v-else>
@@ -73,15 +73,15 @@
             id="aps-1" :num="2" title="การจ่ายชำระ"
             :state="rf.isNew ? 'optional' : state1" :tone="rf.status === 'cancelled' ? 'muted' : ''"
             :badge="state1 === 'active' && !rf.isNew ? 'ต้องทำตอนนี้' : ''"
-            :open="isOpen(1)" :toggleable="false" :class="{ 'apt-sec--editing': payEditing }"
+            :open="isOpen(1)" :toggleable="false"
           >
             <template #chip><span v-if="rf.isNew" class="apt-optional-tag">ไม่บังคับ</span></template>
             <template v-if="payEditing" #action>
-              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cancelPayEdit">ยกเลิกการแก้ไข</button>
-              <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" :disabled="!rf.dirty" @click="savePayments"><AptIcon name="save" /> บันทึก</button>
+              <button type="button" class="apt-btn apt-btn-ghost" @click="cancelPayEdit">ยกเลิกการแก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-primary" :disabled="!rf.dirty" @click="savePayments"><AptIcon name="save" /> บันทึก</button>
             </template>
             <template v-else-if="!paymentsEditable" #action>
-              <button type="button" class="apt-btn apt-btn-outline apt-btn-sm" @click="startPayEdit"><AptIcon name="edit" /> แก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-outline" @click="startPayEdit"><AptIcon name="edit" /> แก้ไข</button>
             </template>
             <!-- creating / รอเบิก with no payment yet: hidden behind one button until the user adds one -->
             <button v-if="!showPayments" type="button" class="apt-btn apt-btn-outline" @click="payOpen = true"><AptIcon name="plus" /> เพิ่มการจ่ายชำระ</button>
@@ -101,23 +101,23 @@
             id="aps-2" :num="3" title="เคลียร์เงิน"
             :state="state2" :tone="rf.status === 'rejected' ? 'error' : rf.status === 'cancelled' ? 'muted' : ''"
             :badge="badge2"
-            :open="isOpen(2)" :toggleable="false" :class="{ 'apt-sec--editing': clearEditing }"
+            :open="isOpen(2)" :toggleable="false"
           >
             <template #chip><StatusChip v-if="['awaiting-confirm', 'rejected'].includes(rf.status)" :status="rf.status" /></template>
             <template v-if="cf && clearEditing" #action>
-              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cancelClearEdit">ยกเลิกการแก้ไข</button>
-              <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" :disabled="!cf.dirty" @click="saveClearing"><AptIcon name="save" /> บันทึก</button>
+              <button type="button" class="apt-btn apt-btn-ghost" @click="cancelClearEdit">ยกเลิกการแก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-primary" :disabled="!cf.dirty" @click="saveClearing"><AptIcon name="save" /> บันทึก</button>
             </template>
             <!-- view state: edit, withdraw, then a divider and the decision — all at the section's top right -->
             <template v-else-if="cf && !clearEditable && ['awaiting-confirm', 'rejected'].includes(rf.status)" #action>
-              <button type="button" class="apt-btn apt-btn-outline apt-btn-sm" @click="startClearEdit"><AptIcon name="edit" /> แก้ไข</button>
-              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cf.onCancel">ยกเลิกการเคลียร์</button>
+              <button type="button" class="apt-btn apt-btn-outline" @click="startClearEdit"><AptIcon name="edit" /> แก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-ghost" @click="cf.onCancel">ยกเลิกการเคลียร์</button>
               <span class="apt-vsep" aria-hidden="true"></span>
               <template v-if="rf.status === 'awaiting-confirm'">
-                <button type="button" class="apt-btn apt-btn-danger apt-btn-sm" @click="cf.onReject">ไม่อนุมัติ</button>
-                <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" @click="cf.onApprove">อนุมัติ <AptIcon name="next" /></button>
+                <button type="button" class="apt-btn apt-btn-danger" @click="cf.onReject">ไม่อนุมัติ</button>
+                <button type="button" class="apt-btn apt-btn-primary" @click="cf.onApprove">อนุมัติ <AptIcon name="next" /></button>
               </template>
-              <button v-else type="button" class="apt-btn apt-btn-primary apt-btn-sm" @click="cf.onResubmit">ยื่นคำขออนุมัติ <AptIcon name="next" /></button>
+              <button v-else type="button" class="apt-btn apt-btn-primary" @click="cf.onResubmit">ยื่นคำขออนุมัติ <AptIcon name="next" /></button>
             </template>
             <template v-if="cf">
               <div v-if="rf.status === 'rejected' && rf.doc.rejection" class="apt-banner apt-banner--error" role="alert">

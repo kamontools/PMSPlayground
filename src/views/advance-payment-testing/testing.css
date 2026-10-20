@@ -293,14 +293,13 @@
 /* ---------- list ---------- */
 .apt-tabs { display: flex; gap: 12px; margin-bottom: 16px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; }
 .apt-tab {
-  flex-shrink: 0; display: inline-flex; align-items: center; gap: 14px;
-  padding: 12px 24px; border-radius: var(--radius-lg); border: 1.5px solid var(--color-stroke);
-  background: var(--color-white); font: inherit; font-size: var(--font-size-md); color: var(--color-text-primary); cursor: pointer;
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 20px; border-radius: 12px; border: 2px solid var(--color-dividers);
+  background: var(--color-white); font: inherit; font-size: var(--font-size-md); font-weight: 600; color: var(--color-text-primary); cursor: pointer;
 }
-.apt-tab b { font-weight: 700; color: var(--color-text-tertiary); }
+.apt-tab b { font-weight: inherit; color: inherit; }
 .apt-tab:hover { border-color: var(--color-primary-500); }
-.apt-tab.active { border-color: var(--color-primary-500); color: var(--color-primary-500); font-weight: 700; box-shadow: 0 0 0 3px var(--color-primary-200); }
-.apt-tab.active b { color: var(--color-primary-500); }
+.apt-tab.active { border-color: var(--color-primary-500); color: var(--color-primary-500); background: #F5F9FF; }
 .apt-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .apt-filters .apt-input { width: auto; }
 .apt-filters .apt-search { flex: 1; min-width: 220px; max-width: 480px; }
@@ -489,11 +488,6 @@
 .apt-sec-headrow { display: flex; align-items: center; }
 .apt-sec-headrow > .apt-sec-head { flex: 1; min-width: 0; }
 .apt-sec-headact { flex-shrink: 0; padding-right: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-/* editing: the header (with ยกเลิกการแก้ไข / บันทึก) sticks under the page header so save stays on screen */
-.apt-sec--editing .apt-sec-headrow {
-  position: sticky; top: var(--apt-head-h); z-index: 5; background: var(--color-white);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0; box-shadow: 0 1px 0 var(--color-dividers);
-}
 .apt-sec-headact .apt-vsep { width: 1px; align-self: stretch; background: var(--color-dividers); margin: 0 2px; }
 .apt-sec-head--static { cursor: default; }
 .apt-sec-head:focus-visible { outline: 2px solid var(--color-primary-500); outline-offset: -2px; }
@@ -523,7 +517,7 @@
 .apt-sec-hint { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 .apt-sec-actions .apt-vsep { width: 1px; align-self: stretch; background: var(--color-dividers); margin: 0 2px; }
 
-.apt-kv { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 24px; row-gap: 12px; border-top: 1px solid var(--color-dividers); padding-top: 12px; }
+.apt-kv { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 24px; row-gap: 12px; }
 .apt-kv > div { min-width: 0; }
 .apt-kv-wide { grid-column: span 3; }
 .apt-kv-full { grid-column: 1 / -1; }
