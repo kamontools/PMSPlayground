@@ -11,7 +11,7 @@ import { useAptStore, VENDORS, requestTotal, round2, clone, todayIso, fmtDate, f
  * opts.onPaymentAdded — called after a payment row is added/imported (classic uses it to dismiss the coach mark)
  */
 export function useRequestForm({ docId = null, detailPage = 'request', onGoClear, onPaymentAdded } = {}) {
-  const { state, docById, nextDocNo, go, ask, warnLocked, move, showToast, notifySuccess } = useAptStore()
+  const { state, docById, nextDocNo, go, ask, warnLocked, move, showToast, notifySuccess, refreshing } = useAptStore()
 
   const isNew = !docId
   const doc = isNew ? null : docById(docId)
@@ -24,6 +24,9 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     return { createdAt: d.createdAt, dueDate: d.dueDate, vendorId: d.vendorId, description: d.description, requestedAmount: d.requestedAmount ?? null, files: clone(d.files), payments: clone(d.payments) }
   }
   const draft = reactive(isNew ? blankDraft() : draftOf(doc))
+  // unsaved edits: the form no longer matches the saved request (or the blank form)
+  const blankSnap = JSON.stringify(draft)
+  const dirty = computed(() => JSON.stringify(draft) !== (isNew ? blankSnap : JSON.stringify(draftOf(doc))))
   const errors = reactive({ createdAt: false, requestedAmount: false, vendorId: false, description: false })
 
   // Form edits are frozen once the request is in clearing, cleared or cancelled.
@@ -105,24 +108,30 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
       commit(created)
       move(created, 'create')
       state.docs.unshift(created)
+      // the success dialog comes first, on the create page; closing it opens the saved request
       if (created.payments.length) {
         move(created, 'pay')
-        state.postPay = created.id
-        go(detailPage, created.id)
+        const { choice } = await ask(postPayDialog())
+        if (choice !== 'confirm') await ask(paidLaterDialog(created))
+        state.postPay = choice === 'confirm' ? created.id : null // the detail page opens the PV preview
+        await refreshing(() => go(detailPage, created.id))
       } else {
-        go(detailPage, created.id)
-        notifySuccess(`สร้างคำขอ ${created.docNo} เรียบร้อยแล้ว สถานะ “รอเบิก”`)
+        await notifySuccess(`สร้างคำขอ ${created.docNo} เรียบร้อยแล้ว สถานะ “รอเบิก”`)
+        await refreshing(() => go(detailPage, created.id))
       }
       return true
     }
 
+    // Saves below: the dialog comes first, then refreshing() applies the change behind a loading overlay.
     if (status.value === 'awaiting-disburse') {
-      commit(doc)
-      if (doc.payments.length) {
-        move(doc, 'pay')
-        await askPostPay()
+      if (draft.payments.length) {
+        const { choice } = await ask(postPayDialog())
+        if (choice !== 'confirm') await ask(paidLaterDialog({ ...doc, ...draft }))
+        await refreshing(() => { commit(doc); move(doc, 'pay') })
+        if (choice === 'confirm') glDlg.value = { readonly: false }
       } else {
-        notifySuccess('บันทึกคำขอเรียบร้อยแล้ว')
+        await notifySuccess('บันทึกคำขอเรียบร้อยแล้ว')
+        await refreshing(() => commit(doc))
       }
       return true
     }
@@ -135,15 +144,17 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
       })
       if (choice !== 'confirm') return false
       const reversed = doc.pv?.no
-      commit(doc)
-      doc.pv = null
-      move(doc, 'unpay', { reason: reversed ? `กลับรายการ ${reversed}` : '' })
-      notifySuccess(reversed ? `กลับรายการบัญชี ${reversed} แล้ว สถานะเปลี่ยนเป็น “รอเบิก”` : 'สถานะเปลี่ยนเป็น “รอเบิก” แล้ว')
+      await notifySuccess(reversed ? `กลับรายการบัญชี ${reversed} แล้ว สถานะเปลี่ยนเป็น “รอเบิก”` : 'สถานะเปลี่ยนเป็น “รอเบิก” แล้ว')
+      await refreshing(() => {
+        commit(doc)
+        doc.pv = null
+        move(doc, 'unpay', { reason: reversed ? `กลับรายการ ${reversed}` : '' })
+      })
       return true
     }
 
-    commit(doc)
-    notifySuccess('บันทึกคำขอเรียบร้อยแล้ว')
+    await notifySuccess('บันทึกคำขอเรียบร้อยแล้ว')
+    await refreshing(() => commit(doc))
     return true
   }
 
@@ -155,30 +166,32 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
 
   // ---------- after paying: offer to post the PV ----------
   const glDlg = ref(null)
-  async function askPostPay() {
-    const { choice } = await ask({
+  function postPayDialog() {
+    return {
       title: 'บันทึกสำเร็จแล้ว', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย',
       message: 'หลังจากจ่ายชำระ รายการคำขอนี้เปลี่ยนสถานะเป็น “รอเคลียร์” แล้ว คุณต้องการบันทึกบัญชีของรายการนี้เลยหรือไม่'
-    })
-    if (choice === 'confirm') glDlg.value = { readonly: false }
-    else notifyPaidLater()
+    }
   }
 
   // Clearing usually happens weeks later (once the money is spent), so after paying we say so explicitly.
-  function clearLaterNote() {
-    const due = doc.dueDate ? ` · ครบกำหนดเคลียร์ ${fmtDate(doc.dueDate)}` : ''
+  function clearLaterNote(d = doc) {
+    const due = d.dueDate ? ` · ครบกำหนดเคลียร์ ${fmtDate(d.dueDate)}` : ''
     return {
       title: 'ยังไม่ต้องเคลียร์เงินตอนนี้',
-      text: `เมื่อใช้เงินเสร็จแล้ว (เช่น อีก 1–2 เดือน) ค่อยกลับมาเปิดคำขอ ${doc.docNo} จาก tab “รอเคลียร์” ในหน้ารายการ แล้วเลือก “เคลียร์เงิน”${due}`
+      text: `เมื่อใช้เงินเสร็จแล้ว (เช่น อีก 1–2 เดือน) ค่อยกลับมาเปิดคำขอ ${d.docNo} จาก tab “รอเคลียร์” ในหน้ารายการ แล้วเลือก “เคลียร์เงิน”${due}`
     }
   }
-  function notifyPaidLater() {
-    notifySuccess('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง', 'จ่ายชำระเรียบร้อยแล้ว', clearLaterNote())
+  function paidLaterDialog(d = doc) {
+    return { title: 'จ่ายชำระเรียบร้อยแล้ว', message: 'ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง', note: clearLaterNote(d), tone: 'success', cancelLabel: 'ปิด' }
   }
+  function notifyPaidLater() {
+    ask(paidLaterDialog())
+  }
+  // a new request saved with payments, and the user chose “บันทึกบัญชีเลย”: open the PV preview here
   onMounted(() => {
     if (doc && state.postPay === doc.id) {
       state.postPay = null
-      askPostPay()
+      glDlg.value = { readonly: false }
     }
   })
 
@@ -201,13 +214,15 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
       message: `ต้องการยกเลิกคำขอ ${doc.docNo} หรือไม่ เมื่อยกเลิกแล้วจะแก้ไขเอกสารนี้ไม่ได้อีก`
     })
     if (choice !== 'confirm') return
-    move(doc, 'cancel')
-    doc.cancellation = { by: ACTOR, at: new Date().toISOString() }
-    notifySuccess(`ยกเลิกคำขอ ${doc.docNo} เรียบร้อยแล้ว`, 'ยกเลิกคำขอสำเร็จ')
+    await notifySuccess(`ยกเลิกคำขอ ${doc.docNo} เรียบร้อยแล้ว`, 'ยกเลิกคำขอสำเร็จ')
+    await refreshing(() => {
+      move(doc, 'cancel')
+      doc.cancellation = { by: ACTOR, at: new Date().toISOString() }
+    })
   }
 
   return reactive({
-    isNew, doc, status, draft, errors, locked, unpaid, paymentDlg, importOpen, glDlg,
+    isNew, doc, status, draft, dirty, errors, locked, unpaid, paymentDlg, importOpen, glDlg,
     warnEdit, openPayment, savePayment, removePayment, openImport, importPayments,
     onSave, resetDraft, onCancel, saveGl, glLater
   })

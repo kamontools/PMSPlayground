@@ -4,12 +4,12 @@
     <p class="apt-hint">{{ hint }}</p>
     <div class="apt-files">
       <div v-for="f in files" :key="f.id" class="apt-file">
-        <div class="apt-file-box">
+        <div class="apt-file-box" role="button" tabindex="0" :aria-label="`ดูไฟล์ ${f.name}`" @click="openFile(f)" @keydown.enter="openFile(f)">
           <AptIcon name="file" />
           <span class="apt-file-tag">{{ ext(f.name) }}</span>
-          <button type="button" class="apt-file-del" :aria-label="`ลบไฟล์ ${f.name}`" @click="remove(f)"><AptIcon name="trash" /></button>
+          <button type="button" class="apt-file-del" :aria-label="`ลบไฟล์ ${f.name}`" @click.stop="remove(f)"><AptIcon name="trash" /></button>
         </div>
-        <div class="apt-file-name" :title="f.name">{{ f.name }}</div>
+        <button type="button" class="apt-file-name" :title="f.name" @click="openFile(f)">{{ f.name }}</button>
         <div class="apt-file-meta">{{ size(f.size) }} · {{ fmtDate(f.date) }}</div>
       </div>
       <button v-if="!max || files.length < max" type="button" class="apt-file-add" @click="pick">
@@ -26,9 +26,9 @@ import { ref } from 'vue'
 import AptIcon from './AptIcon.vue'
 import { useAptStore, fmtDate, todayIso, uid } from './store.js'
 
-const { showToast } = useAptStore()
+const { showToast, openFile } = useAptStore()
 
-// Files are only listed in memory (name/size/date) — nothing is uploaded anywhere.
+// Files stay in memory (name/size/date + an object URL for previewing) — nothing is uploaded anywhere.
 const props = defineProps({
   files: { type: Array, required: true },
   max: { type: Number, default: 0 },
@@ -58,7 +58,7 @@ function onFiles(e) {
     if (props.max && props.files.length >= props.max) { showToast(`แนบได้สูงสุด ${props.max} ไฟล์`); break }
     if (!/\.(jpe?g|png|pdf)$/i.test(file.name)) { showToast(`${file.name}: รองรับเฉพาะ .jpeg, .png, .pdf`); continue }
     if (file.size > LIMIT) { showToast(`${file.name}: ไฟล์ใหญ่เกิน 10 MB`); continue }
-    props.files.push({ id: uid('f'), name: file.name, size: file.size, date: todayIso() })
+    props.files.push({ id: uid('f'), name: file.name, size: file.size, date: todayIso(), url: URL.createObjectURL(file) })
   }
 }
 </script>

@@ -282,7 +282,9 @@ export function createAptStore() {
     seq: 11,
     postPay: null,
     toast: '',
-    dialog: null
+    dialog: null,
+    loading: false, // full-page overlay + spinner while the page "reloads" after a save
+    preview: null // file shown in the preview dialog
   })
 
   function docById(id) { return state.docs.find(d => d.id === id) }
@@ -305,11 +307,14 @@ export function createAptStore() {
     state.seq = 11
     state.nav = { page: 'list', docId: null }
     state.dialog = null
+    state.loading = false
+    state.preview = null
     showToast('รีเซ็ตข้อมูลตัวอย่างแล้ว')
   }
 
-  function go(page, docId = null) {
-    state.nav = { page, docId }
+  /** focus: what the opened page should jump to ('pay' | 'clear' | 'review'), set by the list's row shortcuts */
+  function go(page, docId = null, focus = null) {
+    state.nav = { page, docId, focus }
     window.scrollTo({ top: 0 })
   }
 
@@ -348,7 +353,22 @@ export function createAptStore() {
     return transition(doc, action, extra)
   }
 
-  return { state, docById, nextDocNo, resetAll, go, showToast, ask, closeDialog, notifySuccess, warnLocked, move }
+  /**
+   * Apply a save to the page only after the user closed its dialog: overlay + spinner, then the change, so the
+   * status and layout never shift underneath an open dialog.
+   */
+  async function refreshing(apply) {
+    state.loading = true
+    await new Promise(r => setTimeout(r, 700)) // long enough to see the mascot type
+    apply?.()
+    await new Promise(r => setTimeout(r, 500))
+    state.loading = false
+  }
+
+  function openFile(file) { state.preview = file }
+  function closeFile() { state.preview = null }
+
+  return { state, docById, nextDocNo, resetAll, go, showToast, ask, closeDialog, notifySuccess, warnLocked, move, refreshing, openFile, closeFile }
 }
 
 export function buildPv(doc, no) { return pvFor(doc, no) }

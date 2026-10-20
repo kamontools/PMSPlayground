@@ -4,7 +4,7 @@ import { fmtDate, fmtMoney, requestTotal } from '../store.js'
 
 export const STEP_TITLES = ['สร้างคำขอ', 'จ่ายชำระ', 'เคลียร์เงิน']
 
-/** Which section a status is working on: 0 request, 1 disburse, 2 clear, 3 all done, -1 cancelled. */
+/** Which step a status is working on: 0 request, 1 disburse, 2 clear, 3 all done, -1 cancelled. */
 export function currentStep(status) {
   switch (status) {
     case null: return 0
@@ -18,7 +18,7 @@ export function currentStep(status) {
   }
 }
 
-/** 'done' | 'active' | 'pending' for section i (cancelled docs: only the request counts as done). */
+/** 'done' | 'active' | 'pending' for step / section i (cancelled docs: only the request counts as done). */
 export function sectionState(i, status) {
   const cur = currentStep(status)
   if (cur === -1) return i === 0 ? 'done' : 'pending'
@@ -30,12 +30,12 @@ export function sectionState(i, status) {
 // รอเคลียร์ isn't urgent: people clear weeks later, once the money is spent
 const CLEAR_SUB = { 'awaiting-clear': 'ทำได้เมื่อใช้เงินเสร็จ', 'awaiting-confirm': 'รออนุมัติ', rejected: 'ไม่ผ่าน · แก้ไขแล้วยื่นใหม่' }
 
-/** Steps for StepperBar: [{ key, title, sub, state }]. */
-export function buildSteps(doc, { payOpen = false } = {}) {
+/** Steps for StepperBar: [{ key, title, sub, state }]. draftPaid: a new request already has payment rows. */
+export function buildSteps(doc, { draftPaid = false } = {}) {
   const status = doc?.status ?? null
   const subs = [
     doc ? `บันทึก ${fmtDate(doc.createdAt)}` : 'กำลังทำ',
-    !doc ? (payOpen ? 'กรอกพร้อมคำขอ' : 'ไม่บังคับ')
+    !doc ? (draftPaid ? 'กรอกพร้อมคำขอ' : 'ไม่บังคับ')
       : status === 'cancelled' ? 'ยกเลิกแล้ว'
       : status === 'awaiting-disburse' ? 'กำลังทำ'
       : `จ่ายแล้ว ${fmtMoney(requestTotal(doc))} บาท`,

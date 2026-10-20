@@ -20,12 +20,12 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import AptIcon from './AptIcon.vue'
 import { useAptStore } from './store.js'
 
-// Toolbar print button. While the request is waiting to be cleared or waiting for clearing approval it becomes a
+// Toolbar print button. Once a clearing is in progress or done (รอเคลียร์, รอยืนยันเคลียร์, เคลียร์แล้ว) it becomes a
 // dropdown that can also print the clearing request; otherwise it just prints the request.
 const props = defineProps({ doc: { type: Object, required: true } })
 const { showToast } = useAptStore()
 
-const withClearing = computed(() => ['awaiting-clear', 'awaiting-confirm'].includes(props.doc.status))
+const withClearing = computed(() => ['awaiting-clear', 'awaiting-confirm', 'cleared'].includes(props.doc.status))
 const open = ref(false)
 
 function print(kind) {

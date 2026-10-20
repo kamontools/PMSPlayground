@@ -51,6 +51,7 @@
                 <th>ชำระโดย</th>
                 <th class="num">ยอดคำขอ</th>
                 <th class="num">ยอดเคลียร์</th>
+                <th class="actions apt-col-sticky" aria-label="ทางลัด"></th>
               </tr>
             </thead>
             <tbody>
@@ -64,8 +65,18 @@
                 <td>{{ payBy(d) }}</td>
                 <td class="num">{{ d.requestedAmount ? fmtMoney(d.requestedAmount) : '-' }}</td>
                 <td class="num">{{ d.clearing ? fmtMoney(clearTotal(d.clearing)) : '-' }}</td>
+                <td class="actions apt-col-sticky" @click.stop @keydown.enter.stop>
+                  <div class="apt-row-actions">
+                    <button v-if="SHORTCUTS[d.status]" type="button" class="apt-btn apt-btn-outline apt-btn-sm apt-row-shortcut" @click="openShortcut(d)">
+                      <AptIcon v-if="SHORTCUTS[d.status].icon" :name="SHORTCUTS[d.status].icon" /> {{ SHORTCUTS[d.status].label }}
+                    </button>
+                    <button type="button" class="apt-icon-btn" :aria-label="`แก้ไข ${d.docNo}`" title="แก้ไข" @click="go(props.detailPage, d.id)"><AptIcon name="edit" /></button>
+                    <button type="button" class="apt-icon-btn" :aria-label="`พิมพ์ ${d.docNo}`" title="พิมพ์คำขอ" @click="showToast(`เปิดหน้าพิมพ์คำขอ ${d.docNo} (ตัวอย่างสาธิต)`)"><AptIcon name="print" /></button>
+                    <button type="button" class="apt-icon-btn" :aria-label="`คัดลอกลิงก์ ${d.docNo}`" title="คัดลอกลิงก์" @click="copyLink(d)"><AptIcon name="link" /></button>
+                  </div>
+                </td>
               </tr>
-              <tr v-if="!pageRows.length"><td colspan="9" class="empty">ไม่พบรายการ</td></tr>
+              <tr v-if="!pageRows.length"><td colspan="10" class="empty">ไม่พบรายการ</td></tr>
             </tbody>
           </table>
         </div>
@@ -85,7 +96,7 @@ import { useAptStore, fmtDate, fmtMoney, clearTotal, payTypeByCode } from './sto
 
 // detailPage: where a row (or สร้างคำขอ) opens — 'request' in the classic version, 'detail' in the step version
 const props = defineProps({ detailPage: { type: String, default: 'request' } })
-const { state, go } = useAptStore()
+const { state, go, showToast } = useAptStore()
 
 const year = new Date().getFullYear()
 const draft = reactive({ from: `${year}-01-01`, to: `${year}-12-31`, q: '' })
@@ -119,6 +130,27 @@ const rows = computed(() => {
   return [...list].sort((a, b) => (sortAsc.value ? 1 : -1) * a.docNo.localeCompare(b.docNo))
 })
 const pageRows = computed(() => rows.value.slice((page.value - 1) * size.value, page.value * size.value))
+
+// row shortcut to the next thing to do for that status
+const SHORTCUTS = {
+  'awaiting-disburse': { label: 'เพิ่มการชำระเงิน', focus: 'pay', icon: 'plus' },
+  'awaiting-clear': { label: 'เคลียร์เงิน', focus: 'clear' },
+  'awaiting-confirm': { label: 'ตรวจสอบ', focus: 'review' },
+  rejected: { label: 'ตรวจสอบ', focus: 'review' }
+}
+function openShortcut(d) {
+  const { focus } = SHORTCUTS[d.status]
+  if (props.detailPage !== 'request') return go(props.detailPage, d.id, focus) // step: one page, it scrolls to the section
+  if (focus === 'pay') go('request', d.id, 'pay') // classic: payments live on the request page
+  else go('clear', d.id)
+}
+
+// demo only: copies a link to the request and confirms with a toast
+async function copyLink(d) {
+  const url = `${location.origin}${location.pathname}#${d.docNo}`
+  try { await navigator.clipboard.writeText(url) } catch { /* clipboard blocked: the toast still explains it */ }
+  showToast(`คัดลอกลิงก์คำขอ ${d.docNo} แล้ว`)
+}
 
 function payBy(d) {
   const types = [...new Set(d.payments.map(p => p.typeCode))]

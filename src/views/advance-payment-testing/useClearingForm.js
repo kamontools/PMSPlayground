@@ -12,7 +12,7 @@ import {
  * opts.onLeave  — what [ยกเลิก] does before anything was submitted (classic: back to the request page)
  */
 export function useClearingForm({ docId, onLeave } = {}) {
-  const { docById, ask, warnLocked, move, showToast, notifySuccess } = useAptStore()
+  const { docById, ask, warnLocked, move, showToast, notifySuccess, refreshing } = useAptStore()
   const doc = docById(docId)
   const status = computed(() => doc.status)
 
@@ -23,9 +23,12 @@ export function useClearingForm({ docId, onLeave } = {}) {
     if (payment && !merged.payments.length) merged.payments = [payment] // older single-cheque shape
     return merged
   }
-  const draft = reactive(doc.clearing
-    ? { ...clone(doc.clearing), settle: settleOf(doc.clearing.settle) }
-    : { docNo: `CL${doc.docNo}`, date: todayIso(), note: '', files: [], rows: [], settle: blankSettle() })
+  function draftOf() {
+    return doc.clearing
+      ? { ...clone(doc.clearing), settle: settleOf(doc.clearing.settle) }
+      : { docNo: `CL${doc.docNo}`, date: todayIso(), note: '', files: [], rows: [], settle: blankSettle() }
+  }
+  const draft = reactive(draftOf())
   const s = draft.settle
   const errors = reactive({ date: false, rows: false, settle: false })
 
@@ -40,6 +43,17 @@ export function useClearingForm({ docId, onLeave } = {}) {
   const diff = computed(() => round2(clrTotal.value - reqTotal.value))
   const methods = computed(() => (diff.value > 0 ? OVER_METHODS : UNDER_METHODS))
   const docOptions = computed(() => ({ 'petty-cash': PETTY_CASH_DOCS, pv: PV_DOCS, receipt: RECEIPT_DOCS })[s.method] || null)
+
+  // unsaved edits (a balanced clearing drops its settlement on save, so ignore it when comparing)
+  function snap(d) { return JSON.stringify({ ...d, settle: diff.value === 0 ? null : d.settle }) }
+  const dirty = computed(() => snap(draft) !== snap(draftOf()))
+  function resetDraft() {
+    const fresh = draftOf()
+    Object.assign(s, fresh.settle)
+    delete fresh.settle
+    Object.assign(draft, fresh)
+    Object.keys(errors).forEach(k => { errors[k] = false })
+  }
 
   const chequeTotal = computed(() => round2(s.payments.reduce((t, p) => t + Number(p.amount || 0), 0)))
   const chequeRemaining = computed(() => Math.max(0, round2(Math.abs(diff.value) - chequeTotal.value)) || null)
@@ -126,20 +140,22 @@ export function useClearingForm({ docId, onLeave } = {}) {
     doc.clearing = data
   }
 
+  /** Returns true once something was saved (the step version uses it to leave edit mode). */
   async function onSave() {
     const lock = guard(status.value, 'clear', 'save')
-    if (lock) return warnLocked(lock)
+    if (lock) { warnLocked(lock); return false }
+    // the dialog comes first, then refreshing() applies the change behind a loading overlay
     if (status.value === 'awaiting-clear') {
-      if (!validate()) return
-      persist()
-      move(doc, 'submitClear')
-      notifySuccess('บันทึกเอกสารเคลียร์เรียบร้อยแล้ว สถานะ “รอยืนยันเคลียร์” รอผู้อนุมัติตรวจสอบ')
-      return
+      if (!validate()) return false
+      await notifySuccess('บันทึกเอกสารเคลียร์เรียบร้อยแล้ว สถานะ “รอยืนยันเคลียร์” รอผู้อนุมัติตรวจสอบ')
+      await refreshing(() => { persist(); move(doc, 'submitClear') })
+      return true
     }
     // waiting for approval or sent back: save the edits, status stays
-    if (status.value === 'awaiting-confirm' && !validate()) return
-    persist()
-    notifySuccess(status.value === 'rejected' ? 'บันทึกเอกสารเคลียร์เรียบร้อยแล้ว กด “ยื่นคำขออนุมัติ” เมื่อพร้อมให้ตรวจอีกครั้ง' : 'บันทึกเอกสารเคลียร์เรียบร้อยแล้ว')
+    if (status.value === 'awaiting-confirm' && !validate()) return false
+    await notifySuccess(status.value === 'rejected' ? 'บันทึกเอกสารเคลียร์เรียบร้อยแล้ว กด “ยื่นคำขออนุมัติ” เมื่อพร้อมให้ตรวจอีกครั้ง' : 'บันทึกเอกสารเคลียร์เรียบร้อยแล้ว')
+    await refreshing(persist)
+    return true
   }
 
   async function onCancel() {
@@ -151,10 +167,8 @@ export function useClearingForm({ docId, onLeave } = {}) {
       message: 'สถานะจะกลับเป็น “รอเคลียร์” เพื่อให้แก้ไขคำขอหรือเอกสารเคลียร์ได้ ระบบจะเก็บประวัติการยกเลิกครั้งนี้ไว้'
     })
     if (choice !== 'confirm') return
-    persist()
-    doc.rejection = null
-    move(doc, 'withdrawClear')
-    notifySuccess('ยกเลิกคำขอเคลียร์เรียบร้อยแล้ว สถานะกลับเป็น “รอเคลียร์”', 'ยกเลิกคำขอเคลียร์สำเร็จ')
+    await notifySuccess('ยกเลิกคำขอเคลียร์เรียบร้อยแล้ว สถานะกลับเป็น “รอเคลียร์”', 'ยกเลิกคำขอเคลียร์สำเร็จ')
+    await refreshing(() => { persist(); doc.rejection = null; move(doc, 'withdrawClear') })
   }
 
   function summary() {
@@ -173,10 +187,10 @@ export function useClearingForm({ docId, onLeave } = {}) {
       summary: summary()
     })
     if (choice !== 'confirm') return
-    persist()
-    doc.rejection = null
-    move(doc, 'approve')
-    await askPostGl()
+    const post = await askPostGl()
+    await refreshing(() => { persist(); doc.rejection = null; move(doc, 'approve') })
+    if (post) glDlg.value = { readonly: false }
+    else showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
   }
 
   // ---------- after approving: offer to post the clearing JV (same flow as the PV after paying) ----------
@@ -186,8 +200,7 @@ export function useClearingForm({ docId, onLeave } = {}) {
       title: 'อนุมัติสำเร็จ', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย',
       message: 'อนุมัติแล้ว เอกสารนี้เปลี่ยนสถานะเป็น “เคลียร์แล้ว” คุณต้องการบันทึกบัญชีของรายการนี้เลยหรือไม่'
     })
-    if (choice === 'confirm') glDlg.value = { readonly: false }
-    else showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
+    return choice === 'confirm'
   }
   function saveGl(entry) {
     doc.clearing.gl = { no: `JV-${doc.docNo}`, ...entry }
@@ -206,10 +219,12 @@ export function useClearingForm({ docId, onLeave } = {}) {
       reason: { label: 'เหตุผลที่ไม่อนุมัติ', max: 250 }
     })
     if (choice !== 'confirm') return
-    persist()
-    doc.rejection = { reason, by: ACTOR, at: new Date().toISOString() }
-    move(doc, 'reject', { reason })
-    notifySuccess('บันทึกการไม่อนุมัติเรียบร้อยแล้ว สถานะ “ไม่ผ่าน”')
+    await notifySuccess('บันทึกการไม่อนุมัติเรียบร้อยแล้ว สถานะ “ไม่ผ่าน”')
+    await refreshing(() => {
+      persist()
+      doc.rejection = { reason, by: ACTOR, at: new Date().toISOString() }
+      move(doc, 'reject', { reason })
+    })
   }
 
   async function onResubmit() {
@@ -219,14 +234,12 @@ export function useClearingForm({ docId, onLeave } = {}) {
       message: `ยื่นเอกสารเคลียร์ ${draft.docNo} ให้ผู้อนุมัติตรวจอีกครั้งหรือไม่`, summary: summary()
     })
     if (choice !== 'confirm') return
-    persist()
-    doc.rejection = null
-    move(doc, 'resubmit')
-    notifySuccess('ยื่นคำขออนุมัติเรียบร้อยแล้ว สถานะ “รอยืนยันเคลียร์”')
+    await notifySuccess('ยื่นคำขออนุมัติเรียบร้อยแล้ว สถานะ “รอยืนยันเคลียร์”')
+    await refreshing(() => { persist(); doc.rejection = null; move(doc, 'resubmit') })
   }
 
   return reactive({
-    doc, status, draft, s, errors, locked, reqTotal, clrTotal, diff, methods, docOptions, chequeTotal, chequeRemaining,
+    doc, status, draft, dirty, resetDraft, s, errors, locked, reqTotal, clrTotal, diff, methods, docOptions, chequeTotal, chequeRemaining,
     amountOk, settled, diffTag, rowDlg, chequeDlg, glDlg,
     warnEdit, pickMethod, openRow, saveRow, removeRow, saveCheque, importCheques, removeCheque, setSettleEl,
     onSave, onCancel, onApprove, onReject, onResubmit, saveGl, glLater

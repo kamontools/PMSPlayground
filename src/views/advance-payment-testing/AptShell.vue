@@ -68,10 +68,21 @@
         <router-link to="/prototype/advance-payment-testing" class="apt-devbar-link" exact-active-class="active">แบบแยกหน้า</router-link>
         <router-link to="/prototype/advance-payment-testing-step" class="apt-devbar-link" exact-active-class="active">แบบ step</router-link>
       </div>
+      <button type="button" @click="previewLoading">ดู loading</button>
       <button type="button" @click="onReset">รีเซ็ตข้อมูล</button>
     </div>
 
     <AppDialog />
+    <FilePreviewDialog />
+    <!-- after a save's dialog closes: the page "reloads" behind this before showing the new status -->
+    <transition name="apt-loading-fade">
+      <div v-if="state.loading" class="apt-loading" role="status" aria-live="polite">
+        <div class="apt-loading-card">
+          <MascotLoader />
+          <span class="apt-loading-text">กำลังอัปเดตข้อมูล<span class="apt-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>
+        </div>
+      </div>
+    </transition>
     <transition name="apt-toast-fade">
       <div v-if="state.toast" class="apt-toast" role="status">{{ state.toast }}</div>
     </transition>
@@ -84,6 +95,8 @@
 import './testing.css'
 import AptIcon from './AptIcon.vue'
 import AppDialog from './AppDialog.vue'
+import FilePreviewDialog from './FilePreviewDialog.vue'
+import MascotLoader from './MascotLoader.vue'
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useAptStore } from './store.js'
 
@@ -116,6 +129,12 @@ function openDatePicker(event) {
   const el = event.target
   if (el?.tagName !== 'INPUT' || el.type !== 'date' || el.readOnly || el.disabled) return
   try { el.showPicker?.() } catch { /* not allowed here (e.g. cross-origin frame): fall back to the icon */ }
+}
+
+// shows the save loader for a few seconds so its animation can be reviewed (a real save shows it ~1 s)
+function previewLoading() {
+  state.loading = true
+  setTimeout(() => { state.loading = false }, 4000)
 }
 
 async function onReset() {

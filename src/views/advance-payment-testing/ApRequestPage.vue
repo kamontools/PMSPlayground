@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import AptIcon from './AptIcon.vue'
 import StatusChip from './StatusChip.vue'
 import RequestFields from './RequestFields.vue'
@@ -63,7 +63,7 @@ import { useRequestForm } from './useRequestForm.js'
 import { useAptStore, fmtDate } from './store.js'
 
 const props = defineProps({ docId: { type: String, default: null } })
-const { go } = useAptStore()
+const { state, go } = useAptStore()
 
 function goClear() { go('clear', props.docId) }
 const rf = useRequestForm({ docId: props.docId, detailPage: 'request', onGoClear: goClear, onPaymentAdded: () => dismissCoach() })
@@ -98,4 +98,9 @@ async function focusPayment() {
   setTimeout(() => document.addEventListener('click', dismissCoach, true), 0)
 }
 onBeforeUnmount(() => document.removeEventListener('click', dismissCoach, true))
+// opened from the list's "เพิ่มการชำระ" shortcut
+onMounted(() => {
+  if (state.nav.focus === 'pay') focusPayment()
+  state.nav.focus = null
+})
 </script>

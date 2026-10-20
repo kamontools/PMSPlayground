@@ -43,6 +43,7 @@
     <div class="apt-table-head" style="margin-top: 24px;">
       <h3 class="apt-subtitle">รายการค่าใช้จ่าย</h3>
       <button type="button" class="apt-btn apt-btn-outline" @click="cf.openRow(null)"><AptIcon name="plus" /> เพิ่มรายการ</button>
+      <div v-if="coach" class="apt-coach" role="status">{{ coach }}</div>
     </div>
     <div class="apt-table-wrap" :class="{ 'apt-field--error': cf.errors.rows }">
       <table class="apt-table">
@@ -162,6 +163,6 @@ import { useAptStore, fmtMoney, expenseByCode, PAY_FROM_ACCOUNTS } from './store
 
 // cf: the object returned by useClearingForm() · its dialogs live in ClearingDialogs (rendered at page level)
 // showRequest: the read-only "request being cleared" row (the step version already shows the request above)
-defineProps({ cf: { type: Object, required: true }, showRequest: { type: Boolean, default: true } })
+defineProps({ cf: { type: Object, required: true }, showRequest: { type: Boolean, default: true }, coach: { type: String, default: '' } })
 const { showToast } = useAptStore()
 </script>
