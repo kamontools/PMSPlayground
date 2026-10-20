@@ -75,14 +75,14 @@
     <AppDialog />
     <FilePreviewDialog />
     <!-- after a save's dialog closes: the page "reloads" behind this before showing the new status -->
-    <transition name="apt-loading-fade">
-      <div v-if="state.loading" class="apt-loading" role="status" aria-live="polite">
-        <div class="apt-loading-card">
-          <MascotLoader />
-          <span class="apt-loading-text">กำลังอัปเดตข้อมูล<span class="apt-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>
-        </div>
+    <!-- v-show, not v-if: the mascot image is loaded with the page, so a ~1 s save loader never shows up empty.
+         No <transition> or opacity fade either: those can leave the overlay invisible when frames are throttled. -->
+    <div v-show="state.loading" class="apt-loading" role="status" aria-live="polite">
+      <div class="apt-loading-card">
+        <MascotLoader />
+        <span class="apt-loading-text">กำลังอัปเดตข้อมูล<span class="apt-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span></span>
       </div>
-    </transition>
+    </div>
     <transition name="apt-toast-fade">
       <div v-if="state.toast" class="apt-toast" role="status">{{ state.toast }}</div>
     </transition>

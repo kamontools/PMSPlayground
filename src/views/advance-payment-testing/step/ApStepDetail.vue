@@ -11,15 +11,15 @@
         <button type="button" class="apt-btn apt-btn-primary" @click="saveRequest"><AptIcon name="save" /> {{ saveLabel }}</button>
       </div>
       <div v-else class="apt-pagehead-actions">
-        <!-- locked statuses keep the button so the guard() warning still explains why -->
-        <button type="button" class="apt-btn apt-btn-danger" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิกคำขอ</button>
         <GlMenu :doc="rf.doc" />
         <PrintMenu :doc="rf.doc" />
         <!-- the next thing to do: jump to its section and point at where to fill it in -->
-        <template v-if="rf.status === 'awaiting-disburse' || rf.status === 'awaiting-clear'">
+        <template v-if="['awaiting-disburse', 'awaiting-clear', 'awaiting-confirm'].includes(rf.status)">
           <span class="apt-vsep" aria-hidden="true"></span>
           <button v-if="rf.status === 'awaiting-disburse'" type="button" class="apt-btn apt-btn-primary" @click="jumpTo(1)"><AptIcon name="next" /> จ่ายชำระ</button>
-          <button v-else type="button" class="apt-btn apt-btn-primary" @click="jumpTo(2)"><AptIcon name="next" /> เคลียร์เงิน</button>
+          <button v-else-if="rf.status === 'awaiting-clear'" type="button" class="apt-btn apt-btn-primary" @click="jumpTo(2)"><AptIcon name="next" /> เคลียร์เงิน</button>
+          <!-- รอยืนยันเคลียร์: the approver reviews the clearing (read-only), its decision buttons sit on that section -->
+          <button v-else type="button" class="apt-btn apt-btn-primary" @click="goToSection(2)"><AptIcon name="next" /> ตรวจสอบ</button>
         </template>
       </div>
     </div>
@@ -42,9 +42,16 @@
           <StepSection
             id="aps-0" :num="1" title="ข้อมูลคำขอ"
             :state="state0" :badge="rf.isNew ? 'ต้องทำตอนนี้' : ''"
-            :open="isOpen(0)" :toggleable="false"
+            :open="isOpen(0)" :toggleable="false" :class="{ 'apt-sec--editing': editing }"
           >
-            <template v-if="!rf.isNew && !editing" #action>
+            <template v-if="editing" #action>
+              <!-- editing: cancel + save take แก้ไข's place (save rightmost); save waits for a change so a double-click on แก้ไข can't save -->
+              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cancelEdit">ยกเลิกการแก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" :disabled="!rf.dirty" @click="saveRequest"><AptIcon name="save" /> บันทึก</button>
+            </template>
+            <template v-else-if="!rf.isNew" #action>
+              <!-- locked statuses keep the button so the guard() warning still explains why -->
+              <button type="button" class="apt-btn apt-btn-danger apt-btn-sm" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิกคำขอ</button>
               <button type="button" class="apt-btn apt-btn-outline apt-btn-sm" @click="startEdit"><AptIcon name="edit" /> แก้ไข</button>
             </template>
             <RequestFields v-if="rf.isNew || editing" :rf="rf" />
@@ -59,10 +66,6 @@
                 <div class="apt-kv-full"><dt>เอกสารประกอบ</dt><dd><FileLinks :files="rf.doc.files" /></dd></div>
               </dl>
             </template>
-            <div v-if="editing" class="apt-sec-actions">
-              <button type="button" class="apt-btn apt-btn-ghost" @click="cancelEdit">ยกเลิกการแก้ไข</button>
-              <button type="button" class="apt-btn apt-btn-primary" @click="saveRequest"><AptIcon name="save" /> บันทึก</button>
-            </div>
           </StepSection>
 
           <!-- 2 · การจ่ายชำระ (optional while creating) -->
@@ -70,10 +73,14 @@
             id="aps-1" :num="2" title="การจ่ายชำระ"
             :state="rf.isNew ? 'optional' : state1" :tone="rf.status === 'cancelled' ? 'muted' : ''"
             :badge="state1 === 'active' && !rf.isNew ? 'ต้องทำตอนนี้' : ''"
-            :open="isOpen(1)" :toggleable="false"
+            :open="isOpen(1)" :toggleable="false" :class="{ 'apt-sec--editing': payEditing }"
           >
             <template #chip><span v-if="rf.isNew" class="apt-optional-tag">ไม่บังคับ</span></template>
-            <template v-if="!paymentsEditable" #action>
+            <template v-if="payEditing" #action>
+              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cancelPayEdit">ยกเลิกการแก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" :disabled="!rf.dirty" @click="savePayments"><AptIcon name="save" /> บันทึก</button>
+            </template>
+            <template v-else-if="!paymentsEditable" #action>
               <button type="button" class="apt-btn apt-btn-outline apt-btn-sm" @click="startPayEdit"><AptIcon name="edit" /> แก้ไข</button>
             </template>
             <!-- creating / รอเบิก with no payment yet: hidden behind one button until the user adds one -->
@@ -82,13 +89,10 @@
               <RequestPayments v-if="showPayments" :rf="rf" :readonly="!paymentsEditable" :coach="coach === 1 && 'กรอกชำระที่นี่แล้วกดบันทึก'" />
             </Transition>
             <!-- creating: saved from the toolbar -->
-            <div v-if="!rf.isNew && (payEditing || (paymentsEditable && showPayments))" class="apt-sec-actions">
-              <template v-if="payEditing">
-                <button type="button" class="apt-btn apt-btn-ghost" @click="cancelPayEdit">ยกเลิกการแก้ไข</button>
-                <button type="button" class="apt-btn apt-btn-primary" @click="savePayments"><AptIcon name="save" /> บันทึก</button>
-              </template>
-              <button v-else type="button" class="apt-btn apt-btn-primary" @click="saveRequest"><AptIcon name="save" /> {{ saveLabel }}</button>
-              <span v-if="!payEditing" class="apt-sec-hint">{{ saveHint }}</span>
+            <!-- รอเบิก: first-time entry, so its save stays at the end of the form -->
+            <div v-if="!rf.isNew && !payEditing && paymentsEditable && showPayments" class="apt-sec-actions">
+              <button type="button" class="apt-btn apt-btn-primary" @click="saveRequest"><AptIcon name="save" /> {{ saveLabel }}</button>
+              <span class="apt-sec-hint">{{ saveHint }}</span>
             </div>
           </StepSection>
 
@@ -97,11 +101,23 @@
             id="aps-2" :num="3" title="เคลียร์เงิน"
             :state="state2" :tone="rf.status === 'rejected' ? 'error' : rf.status === 'cancelled' ? 'muted' : ''"
             :badge="badge2"
-            :open="isOpen(2)" :toggleable="false"
+            :open="isOpen(2)" :toggleable="false" :class="{ 'apt-sec--editing': clearEditing }"
           >
             <template #chip><StatusChip v-if="['awaiting-confirm', 'rejected'].includes(rf.status)" :status="rf.status" /></template>
-            <template v-if="cf && !clearEditable && ['awaiting-confirm', 'rejected'].includes(rf.status)" #action>
+            <template v-if="cf && clearEditing" #action>
+              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cancelClearEdit">ยกเลิกการแก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" :disabled="!cf.dirty" @click="saveClearing"><AptIcon name="save" /> บันทึก</button>
+            </template>
+            <!-- view state: edit, withdraw, then a divider and the decision — all at the section's top right -->
+            <template v-else-if="cf && !clearEditable && ['awaiting-confirm', 'rejected'].includes(rf.status)" #action>
               <button type="button" class="apt-btn apt-btn-outline apt-btn-sm" @click="startClearEdit"><AptIcon name="edit" /> แก้ไข</button>
+              <button type="button" class="apt-btn apt-btn-ghost apt-btn-sm" @click="cf.onCancel">ยกเลิกการเคลียร์</button>
+              <span class="apt-vsep" aria-hidden="true"></span>
+              <template v-if="rf.status === 'awaiting-confirm'">
+                <button type="button" class="apt-btn apt-btn-danger apt-btn-sm" @click="cf.onReject">ไม่อนุมัติ</button>
+                <button type="button" class="apt-btn apt-btn-primary apt-btn-sm" @click="cf.onApprove">อนุมัติ <AptIcon name="next" /></button>
+              </template>
+              <button v-else type="button" class="apt-btn apt-btn-primary apt-btn-sm" @click="cf.onResubmit">ยื่นคำขออนุมัติ <AptIcon name="next" /></button>
             </template>
             <template v-if="cf">
               <div v-if="rf.status === 'rejected' && rf.doc.rejection" class="apt-banner apt-banner--error" role="alert">
@@ -114,26 +130,10 @@
                 <ClearingFields v-if="showClearing && clearEditable" :cf="cf" :show-request="false" :coach="coach === 2 ? 'กรอกค่าใช้จ่ายที่นี่แล้วกดบันทึก' : ''" />
               </Transition>
               <ClearingView v-if="showClearing && !clearEditable" :cf="cf" />
-              <!-- เคลียร์แล้ว: nothing left to do here; printing the clearing is in the toolbar's พิมพ์ menu -->
-              <div v-if="showClearing && rf.status !== 'cleared'" class="apt-sec-actions">
-                <template v-if="rf.status === 'awaiting-clear'">
-                  <button type="button" class="apt-btn apt-btn-primary" @click="cf.onSave"><AptIcon name="save" /> บันทึกเอกสารเคลียร์</button>
-                  <span class="apt-sec-hint">บันทึกแล้วสถานะจะเป็น “รอยืนยันเคลียร์” เพื่อรอผู้อนุมัติ</span>
-                </template>
-                <template v-else-if="clearEditing">
-                  <button type="button" class="apt-btn apt-btn-ghost" @click="cancelClearEdit">ยกเลิกการแก้ไข</button>
-                  <button type="button" class="apt-btn apt-btn-primary" @click="saveClearing"><AptIcon name="save" /> บันทึก</button>
-                </template>
-                <!-- view state: withdraw first, then a divider, then the decision -->
-                <template v-else-if="rf.status === 'awaiting-confirm' || rf.status === 'rejected'">
-                  <button type="button" class="apt-btn apt-btn-ghost" @click="cf.onCancel">ยกเลิกการเคลียร์</button>
-                  <span class="apt-vsep" aria-hidden="true"></span>
-                  <template v-if="rf.status === 'awaiting-confirm'">
-                    <button type="button" class="apt-btn apt-btn-danger" @click="cf.onReject">ไม่อนุมัติ</button>
-                    <button type="button" class="apt-btn apt-btn-primary" @click="cf.onApprove">อนุมัติ <AptIcon name="next" /></button>
-                  </template>
-                  <button v-else type="button" class="apt-btn apt-btn-primary" @click="cf.onResubmit">ยื่นคำขออนุมัติ <AptIcon name="next" /></button>
-                </template>
+              <!-- รอเคลียร์: first-time entry, so submitting stays at the end of the form; editing saves from the header -->
+              <div v-if="showClearing && rf.status === 'awaiting-clear'" class="apt-sec-actions">
+                <button type="button" class="apt-btn apt-btn-primary" @click="cf.onSave"><AptIcon name="save" /> บันทึกเอกสารเคลียร์</button>
+                <span class="apt-sec-hint">บันทึกแล้วสถานะจะเป็น “รอยืนยันเคลียร์” เพื่อรอผู้อนุมัติ</span>
               </div>
             </template>
           </StepSection>

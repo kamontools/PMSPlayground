@@ -1,6 +1,7 @@
 <template>
-  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path v-for="(d, i) in paths" :key="i" :d="d" />
+  <!-- LOS outline icons: 1.5px stroke at any rendered size (design system › Iconography) -->
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path v-for="(d, i) in paths" :key="i" :d="d" vector-effect="non-scaling-stroke" />
   </svg>
 </template>
 
