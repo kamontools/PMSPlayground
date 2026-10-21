@@ -56,6 +56,7 @@ src/
       ApListPage.vue / ApRequestPage.vue / ApClearPage.vue  # Classic pages
       step/                       # Step version: ApStepDetail.vue, StepSection.vue, steps.js (status → 3 steps)
       *Dialog.vue                 # GL (PV/JV), payment entry, import payment, expense row, app-wide dialog
+      printDocs.js                # A4 print previews (new tab): คำขอเงินทดรองจ่าย + เอกสารเคลียร์, PV-style layout
       testing.css                 # apt- prefixed styles
   components/
     Sidebar.vue                   # Persistent nav sidebar

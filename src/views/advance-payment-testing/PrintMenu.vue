@@ -9,7 +9,7 @@
       </button>
       <ul v-if="open" class="apt-menu-list" role="menu">
         <li role="none"><button type="button" role="menuitem" @click="print('request')"><AptIcon name="doc" /> พิมพ์คำขอ</button></li>
-        <li role="none"><button type="button" role="menuitem" @click="print('clearing')"><AptIcon name="file" /> พิมพ์คำขอเคลียร์</button></li>
+        <li role="none"><button type="button" role="menuitem" @click="print('clearing')"><AptIcon name="file" /> พิมพ์เอกสารเคลียร์</button></li>
       </ul>
     </template>
   </div>
@@ -19,18 +19,21 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import AptIcon from './AptIcon.vue'
 import { useAptStore } from './store.js'
+import { printRequest, printClearing } from './printDocs.js'
 
-// Toolbar print button. Once a clearing is in progress or done (รอเคลียร์, รอยืนยันเคลียร์, เคลียร์แล้ว) it becomes a
-// dropdown that can also print the clearing request; otherwise it just prints the request.
+// Toolbar print button. Once a clearing is in progress or done (รอเคลียร์, รอยืนยันเคลียร์, ไม่ผ่าน, เคลียร์แล้ว) it becomes a
+// dropdown that can also print the clearing document; otherwise it just prints the request. Both open an A4 preview tab.
 const props = defineProps({ doc: { type: Object, required: true } })
 const { showToast } = useAptStore()
 
-const withClearing = computed(() => ['awaiting-clear', 'awaiting-confirm', 'cleared'].includes(props.doc.status))
+const withClearing = computed(() => ['awaiting-clear', 'awaiting-confirm', 'rejected', 'cleared'].includes(props.doc.status))
 const open = ref(false)
 
 function print(kind) {
   open.value = false
-  showToast(kind === 'clearing' ? `เปิดหน้าพิมพ์คำขอเคลียร์ ${props.doc.docNo} (ตัวอย่างสาธิต)` : `เปิดหน้าพิมพ์คำขอ ${props.doc.docNo} (ตัวอย่างสาธิต)`)
+  if (kind === 'request') return printRequest(props.doc)
+  if (!props.doc.clearing) return showToast('ยังไม่มีเอกสารเคลียร์ให้พิมพ์ บันทึกเอกสารเคลียร์ก่อนนะ')
+  printClearing(props.doc)
 }
 
 // close on an outside click or Esc

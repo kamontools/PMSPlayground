@@ -71,7 +71,7 @@
                       <AptIcon v-if="SHORTCUTS[d.status].icon" :name="SHORTCUTS[d.status].icon" /> {{ SHORTCUTS[d.status].label }}
                     </button>
                     <button type="button" class="apt-icon-btn" :aria-label="`แก้ไข ${d.docNo}`" title="แก้ไข" @click="go(props.detailPage, d.id)"><AptIcon name="edit" /></button>
-                    <button type="button" class="apt-icon-btn" :aria-label="`พิมพ์ ${d.docNo}`" title="พิมพ์คำขอ" @click="showToast(`เปิดหน้าพิมพ์คำขอ ${d.docNo} (ตัวอย่างสาธิต)`)"><AptIcon name="print" /></button>
+                    <button type="button" class="apt-icon-btn" :aria-label="`พิมพ์ ${d.docNo}`" title="พิมพ์คำขอ" @click="printRequest(d)"><AptIcon name="print" /></button>
                     <button type="button" class="apt-icon-btn" :aria-label="`คัดลอกลิงก์ ${d.docNo}`" title="คัดลอกลิงก์" @click="copyLink(d)"><AptIcon name="link" /></button>
                   </div>
                 </td>
@@ -92,6 +92,7 @@ import AptIcon from './AptIcon.vue'
 import StatusChip from './StatusChip.vue'
 import PagerBar from './PagerBar.vue'
 import { FILTERS } from './machine.js'
+import { printRequest } from './printDocs.js'
 import { useAptStore, fmtDate, fmtMoney, clearTotal, payTypeByCode } from './store.js'
 
 // detailPage: where a row (or สร้างคำขอ) opens — 'request' in the classic version, 'detail' in the step version

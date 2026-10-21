@@ -8,7 +8,7 @@
       <div class="apt-pagehead-actions">
         <button type="button" class="apt-btn apt-btn-danger" @click="cf.onCancel"><AptIcon name="cancel" /> ยกเลิก</button>
         <GlMenu :doc="cf.doc" />
-        <button type="button" class="apt-btn apt-btn-outline" @click="showToast('เปิดหน้าพิมพ์เอกสารเคลียร์ (ตัวอย่างสาธิต)')"><AptIcon name="print" /> พิมพ์เอกสารเคลียร์</button>
+        <button type="button" class="apt-btn apt-btn-outline" @click="printClear"><AptIcon name="print" /> พิมพ์เอกสารเคลียร์</button>
         <button type="button" class="apt-btn apt-btn-primary" @click="cf.onSave"><AptIcon name="save" /> บันทึก</button>
         <template v-if="cf.status === 'awaiting-confirm'">
           <span class="apt-vsep" aria-hidden="true"></span>
@@ -46,6 +46,7 @@ import StatusChip from './StatusChip.vue'
 import ClearingFields from './ClearingFields.vue'
 import ClearingDialogs from './ClearingDialogs.vue'
 import GlMenu from './GlMenu.vue'
+import { printClearing } from './printDocs.js'
 import { useClearingForm } from './useClearingForm.js'
 import { useAptStore, fmtDate } from './store.js'
 
@@ -54,4 +55,6 @@ const { go, showToast } = useAptStore()
 
 function backToRequest() { go('request', props.docId) }
 const cf = useClearingForm({ docId: props.docId, onLeave: backToRequest })
+// prints what's on screen, saved or not
+function printClear() { printClearing({ ...cf.doc, clearing: cf.draft }) }
 </script>
