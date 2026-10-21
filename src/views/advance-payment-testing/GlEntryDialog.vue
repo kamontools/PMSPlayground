@@ -5,7 +5,13 @@
         <h2>{{ title }}<span v-if="readonly && entry.no"> · {{ entry.no }}</span></h2>
       </div>
       <div class="apt-dialog-body">
-        <div class="apt-grid apt-grid-12">
+        <div class="apt-grid apt-gl-head">
+          <div class="apt-field">
+            <label class="apt-label" for="gl-type">ประเภทเอกสาร</label>
+            <select id="gl-type" v-model="docType" class="apt-select" :disabled="readonly">
+              <option v-for="(name, code) in DOC_TYPES" :key="code" :value="code">{{ code }} : {{ name }}</option>
+            </select>
+          </div>
           <div class="apt-field" :class="{ 'apt-field--error': errors.date }">
             <label class="apt-label" for="gl-date">วันที่<span class="apt-req">*</span></label>
             <input id="gl-date" v-model="form.date" type="date" class="apt-input" :readonly="readonly" />
@@ -78,6 +84,7 @@
       <div class="apt-dialog-foot apt-dialog-foot--end">
         <template v-if="readonly">
           <button type="button" class="apt-btn apt-btn-ghost" @click="emit('close')">ปิด</button>
+          <button type="button" class="apt-btn apt-btn-outline" @click="print"><AptIcon name="print" /> พิมพ์ {{ docType }}</button>
         </template>
         <template v-else>
           <button type="button" class="apt-btn apt-btn-ghost" @click="emit('later')">ลงบัญชีในภายหลัง</button>
@@ -89,16 +96,25 @@
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import AptIcon from './AptIcon.vue'
-import { GL_ACCOUNTS, EXPENSE_ACCOUNTS, accountName, fmtMoney, round2, clone, todayIso } from './store.js'
+import { useAptStore, GL_ACCOUNTS, EXPENSE_ACCOUNTS, accountName, fmtMoney, round2, clone, todayIso } from './store.js'
 
-// Used for both the PV (paying a request) and the JV (approving a clearing); the caller builds the starting entry.
+// Used for both postings: after paying (PV by default) and after approving a clearing (JV by default); the caller
+// builds the starting entry. The user can post either one as a PV or a JV; a posted entry keeps the type it was posted as.
 const props = defineProps({
   entry: { type: Object, required: true },
-  title: { type: String, default: 'บันทึกบัญชี : ใบสำคัญจ่าย : PV' },
+  type: { type: String, default: 'PV' }, // default document type: 'PV' | 'JV'
   readonly: { type: Boolean, default: false }
 })
+const { showToast } = useAptStore()
+
+const DOC_TYPES = { PV: 'ใบสำคัญจ่าย', JV: 'ใบสำคัญทั่วไป' }
+const docType = ref(props.entry.type || props.type)
+const title = computed(() => `บันทึกบัญชี : ${DOC_TYPES[docType.value]} : ${docType.value}`)
+function print() {
+  showToast(`เปิดหน้าพิมพ์ ${props.entry.no} (ตัวอย่างสาธิต)`)
+}
 const emit = defineEmits(['save', 'later', 'close'])
 
 const accounts = [...GL_ACCOUNTS, ...EXPENSE_ACCOUNTS]
@@ -116,6 +132,6 @@ function addLine() { form.lines.push({ account: '', detail: '', debit: 0, credit
 function save() {
   errors.date = !form.date
   if (errors.date || !balanced.value) return
-  emit('save', { date: form.date, detail: form.detail, lines: form.lines.filter(l => l.account) })
+  emit('save', { type: docType.value, date: form.date, detail: form.detail, lines: form.lines.filter(l => l.account) })
 }
 </script>

@@ -256,6 +256,14 @@
 .apt-table-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .apt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--color-dividers); }
 .apt-table { width: 100%; border-collapse: collapse; }
+/* capped tables (e.g. รายการโอน / เช็ค): header + N rows tall, the body scrolls under a sticky header */
+/* heights: header 46 + rows 55 + bottom border 1 + room for a thin horizontal scrollbar */
+.apt-table-wrap--rows { --apt-th-h: 46px; --apt-tr-h: 55px; max-height: calc(var(--apt-th-h) + var(--apt-max-rows) * var(--apt-tr-h) + 13px); overflow-y: auto; scrollbar-width: thin; }
+.apt-table-wrap--rows thead th { position: sticky; top: 0; z-index: 1; }
+.apt-table-wrap--rows thead th.apt-col-sticky { z-index: 2; }
+.apt-table-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 12px; }
+.apt-table-foot .apt-label { margin: 0; white-space: nowrap; }
+.apt-table-foot .apt-input { width: 200px; }
 .apt-table th {
   text-align: left; font-size: var(--font-size-sm); font-weight: 400; color: var(--color-text-primary);
   background: var(--color-disabled-bg); padding: 12px 14px; white-space: nowrap;
@@ -330,14 +338,14 @@
 .apt-link--plain svg { width: 16px; height: 16px; }
 .apt-link { border: none; background: none; padding: 0; font: inherit; font-weight: 600; color: var(--color-primary-500); cursor: pointer; text-decoration: underline; }
 
-/* ---------- tooltip pointing at payment table ---------- */
+/* ---------- tooltip pointing at the table's add button (below it, so the section's save at the top right stays visible) ---------- */
 .apt-coach {
-  position: absolute; right: 0; bottom: calc(100% + 12px); z-index: 5;
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 5;
   background: var(--color-text-primary); color: var(--color-white);
   font-size: var(--font-size-sm); padding: 10px 14px; border-radius: var(--radius-lg);
   box-shadow: 0 6px 18px rgba(0,0,0,.18); max-width: 320px;
 }
-.apt-coach::after { content: ''; position: absolute; right: 48px; top: 100%; border: 7px solid transparent; border-top-color: var(--color-text-primary); }
+.apt-coach::after { content: ''; position: absolute; right: 48px; bottom: 100%; border: 7px solid transparent; border-bottom-color: var(--color-text-primary); }
 
 /* ---------- totals ---------- */
 .apt-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; margin-top: 16px; }
@@ -411,6 +419,12 @@
 .apt-glmenu-item.is-posted .apt-glmenu-state { color: var(--color-success); font-weight: 600; }
 .apt-glmenu-item.is-posted .apt-glmenu-state .apt-link { display: block; font-size: var(--font-size-sm); }
 .apt-glmenu-todo { color: var(--color-attention); font-weight: 600; }
+.apt-glmenu-type { width: 190px; flex-shrink: 0; }
+.apt-glmenu-print { flex-shrink: 0; }
+.apt-glmenu-item.is-unavailable .apt-glmenu-state, .apt-glmenu-todo { min-width: 72px; }
+/* GL entry dialog header: document type · date · detail */
+.apt-gl-head { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); }
+@media (max-width: 640px) { .apt-gl-head { grid-template-columns: 1fr; } .apt-glmenu-item { flex-wrap: wrap; } }
 .apt-dialog-note {
   display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; padding: 12px 14px;
   background: var(--color-primary-200); color: var(--color-primary-click); border-radius: var(--radius-lg);

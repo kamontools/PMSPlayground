@@ -2,7 +2,7 @@
   <div>
     <GlEntryDialog
       v-if="cf.glDlg"
-      title="บันทึกบัญชี : ใบสำคัญทั่วไป : JV"
+      type="JV"
       :entry="cf.doc.clearing.gl || buildClearingGl(cf.doc, cf.doc.clearing)"
       :readonly="cf.glDlg.readonly"
       @save="cf.saveGl"

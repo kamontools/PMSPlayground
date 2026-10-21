@@ -8,7 +8,7 @@
       </div>
       <div v-if="coach" class="apt-coach" role="status">{{ typeof coach === 'string' ? coach : 'กรุณากรอกข้อมูล ในส่วนนี้ แล้วกดบันทึก' }}</div>
     </div>
-    <div class="apt-table-wrap">
+    <div class="apt-table-wrap" :class="{ 'apt-table-wrap--rows': maxRows }" :style="maxRows ? { '--apt-max-rows': maxRows } : null">
       <table class="apt-table">
         <thead>
           <tr>
@@ -45,7 +45,8 @@ const props = defineProps({
   locked: { type: Boolean, default: false },
   readonly: { type: Boolean, default: false }, // view-only: no add/import/edit/remove, print stays
   total: { type: String, default: '' }, // shown next to the title (view-only request payments)
-  coach: { type: [Boolean, String], default: false } // true = default text, or the text to show
+  coach: { type: [Boolean, String], default: false }, // true = default text, or the text to show
+  maxRows: { type: Number, default: 0 } // > 0: body scrolls past this many rows, header stays put
 })
 const emit = defineEmits(['locked', 'create', 'import', 'edit', 'remove', 'print'])
 

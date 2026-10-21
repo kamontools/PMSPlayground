@@ -2,7 +2,7 @@
   <div>
     <PaymentEntryDialog v-if="rf.paymentDlg" :payment="rf.paymentDlg.payment" :vendor-id="rf.draft.vendorId" :amount="rf.unpaid" @save="rf.savePayment" @close="rf.paymentDlg = null" />
     <ImportPaymentDialog v-if="rf.importOpen" :exclude="rf.draft.payments.map(p => p.id)" @confirm="rf.importPayments" @close="rf.importOpen = false" />
-    <GlEntryDialog v-if="rf.glDlg" :entry="rf.doc.pv || buildPv(rf.doc, '')" :readonly="rf.glDlg.readonly" @save="rf.saveGl" @later="rf.glLater" @close="rf.glDlg = null" />
+    <GlEntryDialog v-if="rf.glDlg" :entry="rf.doc.pv || buildPv(rf.doc, '')" type="PV" :readonly="rf.glDlg.readonly" @save="rf.saveGl" @later="rf.glLater" @close="rf.glDlg = null" />
   </div>
 </template>
 

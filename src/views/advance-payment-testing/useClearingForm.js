@@ -203,7 +203,7 @@ export function useClearingForm({ docId, onLeave } = {}) {
     return choice === 'confirm'
   }
   function saveGl(entry) {
-    doc.clearing.gl = { no: `JV-${doc.docNo}`, ...entry }
+    doc.clearing.gl = { no: `${entry.type}-${doc.docNo}`, ...entry }
     glDlg.value = null
     notifySuccess(`บันทึกบัญชีเรียบร้อยแล้ว เลขที่ ${doc.clearing.gl.no}`)
   }

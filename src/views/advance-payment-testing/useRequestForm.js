@@ -111,8 +111,7 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
       // the success dialog comes first, on the create page; closing it opens the saved request
       if (created.payments.length) {
         move(created, 'pay')
-        const { choice } = await ask(postPayDialog())
-        if (choice !== 'confirm') await ask(paidLaterDialog(created))
+        const { choice } = await ask(postPayDialog(created))
         state.postPay = choice === 'confirm' ? created.id : null // the detail page opens the PV preview
         await refreshing(() => go(detailPage, created.id))
       } else {
@@ -125,8 +124,7 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     // Saves below: the dialog comes first, then refreshing() applies the change behind a loading overlay.
     if (status.value === 'awaiting-disburse') {
       if (draft.payments.length) {
-        const { choice } = await ask(postPayDialog())
-        if (choice !== 'confirm') await ask(paidLaterDialog({ ...doc, ...draft }))
+        const { choice } = await ask(postPayDialog({ ...doc, ...draft }))
         await refreshing(() => { commit(doc); move(doc, 'pay') })
         if (choice === 'confirm') glDlg.value = { readonly: false }
       } else {
@@ -164,28 +162,13 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     Object.keys(errors).forEach(k => { errors[k] = false })
   }
 
-  // ---------- after paying: offer to post the PV ----------
+  // ---------- after paying: the status becomes รอเคลียร์ — just say when it can be cleared, and offer to post the PV ----------
   const glDlg = ref(null)
-  function postPayDialog() {
-    return {
-      title: 'บันทึกสำเร็จแล้ว', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย',
-      message: 'หลังจากจ่ายชำระ รายการคำขอนี้เปลี่ยนสถานะเป็น “รอเคลียร์” แล้ว คุณต้องการบันทึกบัญชีของรายการนี้เลยหรือไม่'
-    }
+  function clearLaterText(d = doc) {
+    return d?.dueDate ? `คุณสามารถเคลียร์ภายหลัง ในวันที่ ${fmtDate(d.dueDate)} ได้` : 'คุณสามารถเคลียร์ภายหลังได้'
   }
-
-  // Clearing usually happens weeks later (once the money is spent), so after paying we say so explicitly.
-  function clearLaterNote(d = doc) {
-    const due = d.dueDate ? ` · ครบกำหนดเคลียร์ ${fmtDate(d.dueDate)}` : ''
-    return {
-      title: 'ยังไม่ต้องเคลียร์เงินตอนนี้',
-      text: `เมื่อใช้เงินเสร็จแล้ว (เช่น อีก 1–2 เดือน) ค่อยกลับมาเปิดคำขอ ${d.docNo} จาก tab “รอเคลียร์” ในหน้ารายการ แล้วเลือก “เคลียร์เงิน”${due}`
-    }
-  }
-  function paidLaterDialog(d = doc) {
-    return { title: 'จ่ายชำระเรียบร้อยแล้ว', message: 'ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง', note: clearLaterNote(d), tone: 'success', cancelLabel: 'ปิด' }
-  }
-  function notifyPaidLater() {
-    ask(paidLaterDialog())
+  function postPayDialog(d = doc) {
+    return { title: 'บันทึกสำเร็จแล้ว', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย', message: clearLaterText(d) }
   }
   // a new request saved with payments, and the user chose “บันทึกบัญชีเลย”: open the PV preview here
   onMounted(() => {
@@ -195,14 +178,14 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     }
   })
 
-  function saveGl(pv) {
-    doc.pv = { no: `PV-${doc.docNo}`, ...pv }
+  function saveGl(entry) {
+    doc.pv = { no: `${entry.type}-${doc.docNo}`, ...entry }
     glDlg.value = null
-    notifySuccess(`บันทึกบัญชีเรียบร้อยแล้ว เลขที่ ${doc.pv.no}`, 'บันทึกสำเร็จแล้ว', status.value === 'awaiting-clear' ? clearLaterNote() : null)
+    notifySuccess(`บันทึกบัญชีเรียบร้อยแล้ว เลขที่ ${doc.pv.no}`)
   }
   function glLater() {
     glDlg.value = null
-    notifyPaidLater()
+    showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
   }
 
   // ---------- cancel (T2) ----------
