@@ -162,13 +162,15 @@ export function useRequestForm({ docId = null, detailPage = 'request', onGoClear
     Object.keys(errors).forEach(k => { errors[k] = false })
   }
 
-  // ---------- after paying: the status becomes รอเคลียร์ — just say when it can be cleared, and offer to post the PV ----------
+  // ---------- after paying: say what changed (รอเคลียร์, clear later) and why the PV button is there ----------
   const glDlg = ref(null)
-  function clearLaterText(d = doc) {
-    return d?.dueDate ? `คุณสามารถเคลียร์ภายหลัง ในวันที่ ${fmtDate(d.dueDate)} ได้` : 'คุณสามารถเคลียร์ภายหลังได้'
-  }
   function postPayDialog(d = doc) {
-    return { title: 'บันทึกสำเร็จแล้ว', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย', message: clearLaterText(d) }
+    const due = d?.dueDate ? ` (ภายในวันที่ ${fmtDate(d.dueDate)})` : ''
+    return {
+      title: 'จ่ายชำระเรียบร้อยแล้ว', tone: 'success', cancelLabel: 'ปิด', confirmLabel: 'บันทึกบัญชีเลย',
+      message: `คำขอ ${d.docNo} เปลี่ยนสถานะเป็น “รอเคลียร์” แล้ว คุณสามารถเคลียร์เงินภายหลังได้เมื่อใช้เงินเสร็จ${due}`,
+      question: 'ต้องการบันทึกบัญชีของการจ่ายชำระนี้เลยหรือไม่'
+    }
   }
   // a new request saved with payments, and the user chose “บันทึกบัญชีเลย”: open the PV preview here
   onMounted(() => {

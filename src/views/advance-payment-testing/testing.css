@@ -383,6 +383,7 @@
 .apt-dialog--danger .apt-dialog-head h2 { color: var(--color-error); }
 .apt-dialog-body { padding: 18px 24px; overflow-y: auto; font-size: var(--font-size-sm); line-height: 1.5; }
 .apt-dialog-body p { margin: 0 0 12px; }
+.apt-dialog-body .apt-dialog-question { font-weight: 600; }
 .apt-dialog-foot { display: flex; gap: 12px; padding: 8px 24px 22px; flex-wrap: wrap; }
 .apt-dialog-foot .apt-btn { flex: 1; height: 44px; font-size: var(--font-size-sm); } /* dialog footer buttons: 44px */
 .apt-dialog-foot--end { justify-content: flex-end; }

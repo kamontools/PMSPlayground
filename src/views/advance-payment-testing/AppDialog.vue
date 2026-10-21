@@ -4,6 +4,8 @@
       <div class="apt-dialog-head"><h2>{{ dlg.title }}</h2></div>
       <div class="apt-dialog-body">
         <p v-if="dlg.message">{{ dlg.message }}</p>
+        <!-- what the primary button does, asked on its own line -->
+        <p v-if="dlg.question" class="apt-dialog-question">{{ dlg.question }}</p>
         <dl v-if="dlg.summary?.length" class="apt-summary">
           <template v-for="row in dlg.summary" :key="row.label">
             <dt>{{ row.label }}</dt><dd>{{ row.value }}</dd>
