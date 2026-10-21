@@ -69,7 +69,7 @@
                 <div><dt>เงินที่ขอเบิก</dt><dd>{{ rf.doc.requestedAmount ? `${fmtMoney(rf.doc.requestedAmount)} บาท` : '—' }}</dd></div>
                 <div><dt>ผู้จัดจำหน่าย/ผู้เบิก</dt><dd>{{ vendorById(rf.doc.vendorId)?.name || '—' }}</dd></div>
                 <div class="apt-kv-wide"><dt>คำอธิบาย</dt><dd>{{ rf.doc.description }}</dd></div>
-                <div class="apt-kv-full"><dt>เอกสารประกอบ</dt><dd><FileLinks :files="rf.doc.files" /></dd></div>
+                <div class="apt-kv-full"><dt>เอกสารประกอบ</dt><dd><FileGallery :files="rf.doc.files" readonly /></dd></div>
               </dl>
             </template>
           </StepSection>
@@ -160,7 +160,7 @@ import RequestFields from '../RequestFields.vue'
 import RequestPayments from '../RequestPayments.vue'
 import ClearingFields from '../ClearingFields.vue'
 import ClearingView from '../ClearingView.vue'
-import FileLinks from '../FileLinks.vue'
+import FileGallery from '../FileGallery.vue'
 import RequestDialogs from '../RequestDialogs.vue'
 import ClearingDialogs from '../ClearingDialogs.vue'
 import GlMenu from '../GlMenu.vue'

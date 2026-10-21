@@ -207,6 +207,19 @@
   font-size: var(--font-size-xs); font-weight: 600; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .apt-file-name:hover { color: var(--color-primary-500); text-decoration: underline; }
+a.apt-file-name { text-decoration: none; }
+/* view-only card: a link to the file, with an eye over a dark overlay on hover / keyboard focus */
+.apt-file-box--view { overflow: hidden; cursor: pointer; text-decoration: none; }
+.apt-file-box--view:focus-visible { outline: 2px solid var(--color-primary-500); outline-offset: 2px; }
+.apt-file-eye {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(24, 24, 25, .55); color: var(--color-white); opacity: 0; transition: opacity .15s;
+}
+.apt-file-eye svg { width: 28px; height: 28px; }
+.apt-file-box--view:hover .apt-file-eye, .apt-file-box--view:focus-visible .apt-file-eye { opacity: 1; }
+.apt-file-box--view > svg { transition: opacity .15s; }
+.apt-file-box--view:hover > svg, .apt-file-box--view:focus-visible > svg { opacity: 0; } /* only the eye shows, not the file icon under it */
+@media (prefers-reduced-motion: reduce) { .apt-file-eye, .apt-file-box--view > svg { transition: none; } }
 .apt-file-links { display: inline-flex; flex-wrap: wrap; gap: 4px 16px; }
 
 /* ---------- file preview ---------- */

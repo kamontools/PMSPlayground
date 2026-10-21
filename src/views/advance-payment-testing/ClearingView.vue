@@ -4,7 +4,7 @@
       <div><dt>เลขที่เอกสารเคลียร์</dt><dd>{{ cf.draft.docNo }}</dd></div>
       <div><dt>วันที่เคลียร์</dt><dd>{{ fmtDate(cf.draft.date) }}</dd></div>
       <div class="apt-kv-wide"><dt>หมายเหตุประกอบการเคลียร์</dt><dd>{{ cf.draft.note || '—' }}</dd></div>
-      <div class="apt-kv-full"><dt>เอกสารแนบ</dt><dd><FileLinks :files="cf.draft.files" /></dd></div>
+      <div class="apt-kv-full"><dt>เอกสารแนบ</dt><dd><FileGallery :files="cf.draft.files" readonly /></dd></div>
     </dl>
 
     <div class="apt-table-head" style="margin-top: 24px;">
@@ -61,7 +61,7 @@
 <script setup>
 import { computed } from 'vue'
 import PaymentsTable from './PaymentsTable.vue'
-import FileLinks from './FileLinks.vue'
+import FileGallery from './FileGallery.vue'
 import { useAptStore, fmtDate, fmtMoney, expenseByCode } from './store.js'
 
 // Read-only clearing (step version's view state): same data as ClearingFields, no inputs or row actions.
