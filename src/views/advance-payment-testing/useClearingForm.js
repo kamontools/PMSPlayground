@@ -23,9 +23,11 @@ export function useClearingForm({ docId, onLeave } = {}) {
     if (payment && !merged.payments.length) merged.payments = [payment] // older single-cheque shape
     return merged
   }
+  // the posted JV (clearing.gl) belongs to the request, not the form: kept out of the draft so posting or reversing it never looks like an edit
   function draftOf() {
+    const { gl, ...saved } = doc.clearing || {}
     return doc.clearing
-      ? { ...clone(doc.clearing), settle: settleOf(doc.clearing.settle) }
+      ? { ...clone(saved), settle: settleOf(doc.clearing.settle) }
       : { docNo: `CL${doc.docNo}`, date: todayIso(), note: '', files: [], rows: [], settle: blankSettle() }
   }
   const draft = reactive(draftOf())
@@ -137,7 +139,7 @@ export function useClearingForm({ docId, onLeave } = {}) {
   function persist() {
     const data = clone(draft)
     if (diff.value === 0) data.settle = blankSettle()
-    doc.clearing = data
+    doc.clearing = { ...data, gl: doc.clearing?.gl ?? null }
   }
 
   /** Returns true once something was saved (the step version uses it to leave edit mode). */
@@ -212,6 +214,21 @@ export function useClearingForm({ docId, onLeave } = {}) {
     showToast('ยังไม่ได้บันทึกบัญชี กดปุ่ม “บันทึกบัญชี” ได้ภายหลัง')
   }
 
+  // ---------- undo an approval: back to รอยืนยันเคลียร์, reversing the clearing JV if it was posted ----------
+  async function onUnapprove() {
+    const jv = doc.clearing?.gl?.no
+    const { choice } = await ask({
+      title: 'ถอยอนุมัติ', tone: 'warning', cancelLabel: 'ยกเลิก', confirmLabel: 'ยืนยันถอยอนุมัติ',
+      message: `ถอยการอนุมัติเอกสารเคลียร์ ${draft.docNo} สถานะจะกลับเป็น “รอยืนยันเคลียร์” เพื่อให้แก้ไขหรือตรวจสอบใหม่ได้${jv ? ` และกลับรายการบัญชี ${jv}` : ''} ต้องการดำเนินการต่อหรือไม่`
+    })
+    if (choice !== 'confirm') return
+    await notifySuccess(jv ? `ถอยอนุมัติและกลับรายการบัญชี ${jv} แล้ว สถานะ “รอยืนยันเคลียร์”` : 'ถอยอนุมัติแล้ว สถานะ “รอยืนยันเคลียร์”', 'ถอยอนุมัติสำเร็จ')
+    await refreshing(() => {
+      doc.clearing.gl = null
+      move(doc, 'unapprove', { reason: jv ? `กลับรายการ ${jv}` : '' })
+    })
+  }
+
   async function onReject() {
     const { choice, reason } = await ask({
       title: 'ไม่อนุมัติเอกสารเคลียร์', tone: 'danger', cancelLabel: 'ปิด', confirmLabel: 'ยืนยันไม่อนุมัติ',
@@ -242,6 +259,6 @@ export function useClearingForm({ docId, onLeave } = {}) {
     doc, status, draft, dirty, resetDraft, s, errors, locked, reqTotal, clrTotal, diff, methods, docOptions, chequeTotal, chequeRemaining,
     amountOk, settled, diffTag, rowDlg, chequeDlg, glDlg,
     warnEdit, pickMethod, openRow, saveRow, removeRow, saveCheque, importCheques, removeCheque, setSettleEl,
-    onSave, onCancel, onApprove, onReject, onResubmit, saveGl, glLater
+    onSave, onCancel, onApprove, onUnapprove, onReject, onResubmit, saveGl, glLater
   })
 }

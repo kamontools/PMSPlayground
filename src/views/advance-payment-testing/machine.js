@@ -61,7 +61,8 @@ export const TRANSITION_LABELS = {
   withdrawClear: 'ยกเลิกคำขอเคลียร์',
   reject: 'ไม่อนุมัติ',
   resubmit: 'ยื่นคำขออนุมัติอีกครั้ง',
-  approve: 'อนุมัติ'
+  approve: 'อนุมัติ',
+  unapprove: 'ถอยอนุมัติ'
 }
 
 // Allowed edges: action -> [from statuses] -> to
@@ -74,7 +75,8 @@ const EDGES = {
   withdrawClear: { from: ['awaiting-confirm', 'rejected'], to: 'awaiting-clear' },
   reject: { from: ['awaiting-confirm'], to: 'rejected' },
   resubmit: { from: ['rejected'], to: 'awaiting-confirm' },
-  approve: { from: ['awaiting-confirm'], to: 'cleared' }
+  approve: { from: ['awaiting-confirm'], to: 'cleared' },
+  unapprove: { from: ['cleared'], to: 'awaiting-confirm' } // step version: undo an approval (reverses its JV)
 }
 
 /** Move a document along an allowed edge and append to its log. Throws on an illegal move. */

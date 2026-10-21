@@ -11,15 +11,17 @@
         <GlMenu :doc="rf.doc" />
         <PrintMenu :doc="rf.doc" />
         <!-- the next thing to do: jump to its section and point at where to fill it in -->
-        <template v-if="['awaiting-disburse', 'awaiting-clear', 'awaiting-confirm'].includes(rf.status)">
+        <template v-if="['awaiting-disburse', 'awaiting-clear', 'awaiting-confirm', 'cleared'].includes(rf.status)">
           <span class="apt-vsep" aria-hidden="true"></span>
           <button v-if="rf.status === 'awaiting-disburse'" type="button" class="apt-btn apt-btn-primary" @click="jumpTo(1)"><AptIcon name="next" /> จ่ายชำระ</button>
           <button v-else-if="rf.status === 'awaiting-clear'" type="button" class="apt-btn apt-btn-primary" @click="jumpTo(2)"><AptIcon name="next" /> เคลียร์เงิน</button>
           <!-- รอยืนยันเคลียร์: the approver decides from the toolbar, the clearing below is read-only -->
-          <template v-else-if="cf">
+          <template v-else-if="rf.status === 'awaiting-confirm' && cf">
             <button type="button" class="apt-btn apt-btn-danger" @click="decide(cf.onReject)">ไม่อนุมัติ</button>
             <button type="button" class="apt-btn apt-btn-primary" @click="decide(cf.onApprove)">อนุมัติ <AptIcon name="next" /></button>
           </template>
+          <!-- เคลียร์แล้ว: the approval can be undone (back to รอยืนยันเคลียร์) — toolbar only, never a list shortcut -->
+          <button v-else-if="rf.status === 'cleared' && cf" type="button" class="apt-btn apt-btn-outline" @click="cf.onUnapprove"><AptIcon name="undo" /> ถอยอนุมัติ</button>
         </template>
       </div>
     </div>
@@ -52,7 +54,8 @@
               <button type="button" class="apt-btn apt-btn-ghost" @click="cancelEdit">ยกเลิกการแก้ไข</button>
               <button type="button" class="apt-btn apt-btn-primary" :disabled="!rf.dirty" @click="saveRequest"><AptIcon name="save" /> บันทึก</button>
             </template>
-            <template v-else #action>
+            <!-- cancelled: nothing left to do, so no actions -->
+            <template v-else-if="rf.status !== 'cancelled'" #action>
               <!-- locked statuses keep the button so the guard() warning still explains why -->
               <button type="button" class="apt-btn apt-btn-danger" @click="rf.onCancel"><AptIcon name="cancel" /> ยกเลิกคำขอ</button>
               <button type="button" class="apt-btn apt-btn-outline" @click="startEdit"><AptIcon name="edit" /> แก้ไข</button>
